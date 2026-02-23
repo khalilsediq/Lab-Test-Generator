@@ -7,11 +7,11 @@ export default function Sidebar({
 }) {
   return (
     <div className="w-72 bg-gray-900 text-white min-h-screen p-6 shadow-2xl flex flex-col">
-      <div className="flex justify-center mb-8 bg-white p-3 rounded-2xl shadow-lg ring ring-red-500/20">
+      <div className="flex justify-center mb-8 p-2">
         <img
           src={logo}
           alt="Bukhari Lab Logo"
-          className="w-full h-auto object-contain rounded"
+          className="w-48 h-auto object-contain mix-blend-screen"
         />
       </div>
 

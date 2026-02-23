@@ -40,11 +40,11 @@ export default function ReportPreview({
         {/* Header */}
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
           <div className="flex items-center space-x-4">
-            <div className="w-16 md:w-20">
+            <div className="w-24 md:w-32">
               <img
                 src={logo}
                 alt="Bukhari Lab Logo"
-                className="w-full h-auto"
+                className="w-full h-auto mix-blend-multiply"
               />
             </div>
             <div>
