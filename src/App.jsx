@@ -53,7 +53,7 @@ function App() {
         <div className="mt-8 flex justify-end max-w-4xl">
           <button
             onClick={() => setShowPreview(true)}
-            className="px-8 py-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/40 active:translate-y-0 flex items-center space-x-3"
+            className="px-8 py-4 bg-linear-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-xl font-bold shadow-xl shadow-red-500/30 transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-red-500/40 active:translate-y-0 flex items-center space-x-3"
           >
             <span>Generate Report</span>
             <svg

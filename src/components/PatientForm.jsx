@@ -7,9 +7,9 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
   return (
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-8 max-w-4xl transition-all duration-300 hover:shadow-md">
       <div className="flex items-center space-x-3 mb-6">
-        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
           <svg
-            className="w-4 h-4 text-blue-600"
+            className="w-4 h-4 text-red-600"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -36,7 +36,7 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
             value={patientDetails.name}
             onChange={handleChange}
             placeholder="e.g. John Doe"
-            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-500/10 transition-all outline-none"
           />
         </div>
 
@@ -51,13 +51,13 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
               value={patientDetails.age}
               onChange={handleChange}
               placeholder="e.g. 45"
-              className="w-24 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+              className="w-24 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-500/10 transition-all outline-none"
             />
             <select
               name="gender"
               value={patientDetails.gender}
               onChange={handleChange}
-              className="flex-1 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-700"
+              className="flex-1 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-500/10 transition-all outline-none text-gray-700"
             >
               <option value="Male">Male</option>
               <option value="Female">Female</option>
@@ -76,7 +76,7 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
             value={patientDetails.mrNo}
             onChange={handleChange}
             placeholder="e.g. MR-100234"
-            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all outline-none text-gray-700 font-mono"
+            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-500/10 transition-all outline-none text-gray-700 font-mono"
           />
         </div>
 
@@ -90,7 +90,7 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
             value={patientDetails.consultant}
             onChange={handleChange}
             placeholder="e.g. Dr. Jane Smith"
-            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
+            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-500/10 transition-all outline-none"
           />
         </div>
       </div>

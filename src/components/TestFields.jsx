@@ -34,9 +34,9 @@ export default function TestFields({
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-4xl transition-all duration-300 hover:shadow-md">
       <div className="flex flex-col space-y-1 mb-8">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
             <svg
-              className="w-4 h-4 text-emerald-600"
+              className="w-4 h-4 text-red-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -51,7 +51,7 @@ export default function TestFields({
           </div>
           <h2 className="text-xl font-bold text-gray-800">Test Entry</h2>
         </div>
-        <p className="text-sm font-medium text-blue-600 ml-11">
+        <p className="text-sm font-medium text-red-600 ml-11">
           {panel?.panel_name || selectedTest}
         </p>
       </div>
@@ -71,7 +71,7 @@ export default function TestFields({
                 step="any"
                 value={testData[field.id] || ""}
                 onChange={(e) => handleChange(e, field.id)}
-                className="w-full md:w-32 px-4 py-2 text-center rounded-lg bg-white border border-gray-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none font-mono font-medium"
+                className="w-full md:w-32 px-4 py-2 text-center rounded-lg bg-white border border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all outline-none font-mono font-medium"
               />
               <span className="text-xs text-gray-500 w-16">{field.unit}</span>
             </div>
