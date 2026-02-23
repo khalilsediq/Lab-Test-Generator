@@ -4,17 +4,33 @@ export default function ReportPreview({
   patientDetails,
   selectedTest,
   testData,
-  testConfig,
+  testTemplates,
 }) {
   if (!show) return null;
 
-  const testNameMap = {
-    cbc: "Complete Blood Count (CBC)",
-    lft: "Liver Function Test",
-    rft: "Renal Function Test",
+  const panel = testTemplates.find((t) => t.panel_id === selectedTest);
+
+  const fields =
+    panel?.parameters.filter(
+      (p) =>
+        p.gender === "all" || p.gender === patientDetails.gender.toLowerCase(),
+    ) || [];
+
+  const formatRange = (range) => {
+    if (!range) return "-";
+    if (range.max === null) return `> ${range.min}`;
+    return `${range.min} - ${range.max}`;
   };
 
-  const fields = testConfig[selectedTest] || [];
+  const isValueAbnormal = (val, range) => {
+    if (!val || !range) return false;
+    const numVal = parseFloat(val);
+    if (isNaN(numVal)) return false;
+    if (range.max === null) {
+      return numVal < range.min;
+    }
+    return numVal < range.min || numVal > range.max;
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -26,7 +42,7 @@ export default function ReportPreview({
               Laboratory Report
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              {testNameMap[selectedTest]}
+              {panel?.panel_name || selectedTest}
             </p>
           </div>
           <button
@@ -107,18 +123,15 @@ export default function ReportPreview({
             </thead>
             <tbody className="divide-y divide-gray-50">
               {fields.map((field) => {
-                const val = testData[field.key];
-                const isAbnormal =
-                  val &&
-                  (parseFloat(val) < parseFloat(field.normal.split(" - ")[0]) ||
-                    parseFloat(val) > parseFloat(field.normal.split(" - ")[1]));
+                const val = testData[field.id];
+                const isAbnormal = isValueAbnormal(val, field.reference_range);
                 return (
                   <tr
-                    key={field.key}
+                    key={field.id}
                     className="hover:bg-gray-50 transition-colors"
                   >
                     <td className="py-4 text-sm font-medium text-gray-700">
-                      {field.label}
+                      {field.name}
                     </td>
                     <td className="py-4 text-sm font-mono font-bold">
                       <span
@@ -132,7 +145,7 @@ export default function ReportPreview({
                       </span>
                     </td>
                     <td className="py-4 text-sm font-mono text-gray-500">
-                      {field.normal}
+                      {formatRange(field.reference_range)}
                     </td>
                     <td className="py-4 text-sm text-gray-500">{field.unit}</td>
                   </tr>
