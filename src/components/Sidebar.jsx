@@ -9,7 +9,7 @@ export default function Sidebar({
         <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center font-bold text-xl shadow-lg ring ring-blue-500/30">
           L
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+        <h1 className="text-2xl font-extrabold tracking-tight bg-linear-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
           LabGen
         </h1>
       </div>
@@ -25,7 +25,7 @@ export default function Sidebar({
             onClick={() => setSelectedTest(test.panel_id)}
             className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
               selectedTest === test.panel_id
-                ? "bg-blue-600/20 text-blue-400 bg-gradient-to-r from-blue-600/20 to-transparent border-l-4 border-blue-500 shadow-inner"
+                ? "bg-blue-600/20 text-blue-400 bg-linear-to-r from-blue-600/20 to-transparent border-l-4 border-blue-500 shadow-inner"
                 : "text-gray-300 hover:bg-gray-800 hover:text-white border-l-4 border-transparent"
             }`}
           >
