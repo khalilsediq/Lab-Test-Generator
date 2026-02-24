@@ -48,60 +48,57 @@ export default function ReportTemplate({
 
   return (
     <div className="bg-white w-[210mm] min-h-[297mm] mx-auto p-[10mm] pb-[250px] text-black font-sans box-border relative print:m-0 print:p-[10mm] print:pb-[250px] print:shadow-none shadow-[0_0_10px_rgba(0,0,0,0.1)]">
-      {/* 1. Header (Logo & Center Info + Barcode placeholders) */}
-      <div className="flex justify-between items-start mb-6">
-        <div className="flex items-center space-x-4">
+      {/* 1. Header (Redesigned to match image) */}
+      <div className="flex justify-between items-center mb-2 px-2">
+        {/* Left Section */}
+        <div
+          className="flex flex-col text-red-600 font-serif font-bold italic leading-none shrink-0"
+          style={{ transform: "scaleY(1.1)", transformOrigin: "left center" }}
+        >
+          <h1 className="text-[38px] tracking-tighter mb-1">BUKHARI LAB</h1>
+          <h2 className="text-[24px] tracking-tight mb-1">AL BASIT MEDICAL</h2>
+          <h2 className="text-[24px] tracking-tight">CENTER</h2>
+        </div>
+
+        {/* Center Section */}
+        <div className="flex flex-col items-center justify-center shrink-0 -mt-2">
           <img
             src={logo}
             alt="Bukhari Lab Logo"
-            className="w-24 object-contain"
+            className="w-[120px] h-[120px] object-contain"
           />
-          <div className="flex flex-col">
-            <h1 className="text-4xl font-serif font-black text-red-600 tracking-tight leading-none mb-1">
-              BUKHARI LAB
-            </h1>
-            <h2 className="text-2xl font-serif font-bold text-red-600 tracking-wide leading-none">
-              AL BASIT MEDICAL CENTER
-            </h2>
+          <div
+            className="text-red-600 font-bold text-xl mt-1"
+            style={{
+              fontFamily:
+                "'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif",
+            }}
+
+            >الباسط میڈیکل سینٹر شاہرگ
+
           </div>
         </div>
 
-        {/* Registration/Barcode Mockup Area */}
-        <div className="flex flex-col items-end text-xs font-semibold">
-          <div className="text-right mb-2">Registration By : Admin Admin</div>
-          <div className="flex items-start space-x-4">
-            <div className="flex flex-col items-center">
-              {/* QR Code Mockup */}
-              <div className="w-16 h-16 bg-gray-200 border-2 border-dashed border-gray-400 flex items-center justify-center text-gray-500 text-[10px]">
-                QR Code
-              </div>
-              <span className="text-[9px] mt-1">Track Online</span>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <div>
-                <p className="font-bold">Patient Number</p>
-                <p className="font-bold text-sm">1-1002-1000</p>
-              </div>
-              <div>
-                <p className="font-bold">Case Number</p>
-                <p className="font-bold text-sm">01-032025-1002</p>
-              </div>
-            </div>
-            <div className="w-8 flex flex-col items-end ml-4">
-              {/* Barcode Strip Mockup */}
-              <div
-                className="h-20 w-8 border border-black"
-                style={{
-                  background:
-                    "repeating-linear-gradient(90deg, #000, #000 2px, #fff 2px, #fff 5px)",
-                }}
-              ></div>
-            </div>
+        {/* Right Section */}
+        <div className="flex flex-col items-center text-red-600 font-serif font-bold italic leading-tight shrink-0">
+          <div
+            className="text-[48px] font-normal not-italic mb-1 leading-none"
+            style={{
+              fontFamily:
+                "'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif",
+              transform: "scaleY(1.2)",
+              transformOrigin: "bottom center",
+            }}
+          >
+            بخاری لیب
           </div>
+          <div className="text-[22px] tracking-wide mt-2">LAB TECHNICIAN</div>
+          <div className="text-[16px] tracking-wide">SYED MOHEEB ULLAH</div>
+          <div className="text-[16px] tracking-widest">0332-3333800</div>
         </div>
       </div>
 
-      <hr className="border-t-2 border-black mb-4" />
+      <hr className="border-t-[4px] border-red-600 mb-6" />
 
       {/* 2. Patient Information Grid */}
       <div className="grid grid-cols-2 gap-x-12 gap-y-2 mb-6 text-sm font-semibold">

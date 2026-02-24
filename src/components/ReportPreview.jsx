@@ -63,7 +63,7 @@ export default function ReportPreview({
       </div>
 
       {/* Print Mode CSS Block (Hidden on Screen, occupies 100% of body on Print) */}
-      <div className="hidden print:block print:absolute print:top-0 print:left-0 print:w-full print:bg-white print:z-[9999]">
+      <div className="hidden print:block print:absolute print:top-0 print:left-0 print:w-full print:bg-white print:z-9999">
         <ReportTemplate
           patientDetails={patientDetails}
           selectedTest={selectedTest}
