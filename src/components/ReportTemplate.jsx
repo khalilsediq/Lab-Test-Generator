@@ -264,7 +264,7 @@ export default function ReportTemplate({
         </div>
 
         <div className="text-center text-xs text-black">
-          <span className="text-blue-700 font-bold">LabGen System</span> -
+          <span className="text-blue-700 font-bold">KS-Lab System</span> -
           Powered by{" "}
           <span className="text-green-600 font-bold">
             Advanced Software Solutions
