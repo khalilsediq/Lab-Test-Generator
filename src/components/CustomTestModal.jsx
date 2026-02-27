@@ -1,79 +1,103 @@
 import { useState } from "react";
 
+const CATEGORIES = [
+  "Hematology",
+  "Coagulation",
+  "Biochemistry",
+  "Liver Function",
+  "Lipids & Cardiac",
+  "Endocrinology",
+  "Iron Studies",
+  "Serology & Infection",
+  "Urine & Fluid",
+  "Microbiology",
+  "Vitamins & Minerals",
+  "Tumour Markers",
+  "Custom",
+];
+
 const emptyParam = () => ({
-  id: `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+  _key: Math.random().toString(36).slice(2),
   name: "",
   abbreviation: "",
   unit: "",
-  gender: "all",
-  reference_range: { min: "", max: "" },
+  gender_applicable: "all",
+  reference_range: {
+    general: "",
+    male_min: "",
+    male_max: "",
+    female_min: "",
+    female_max: "",
+  },
 });
 
 export default function CustomTestModal({ onSave, onClose }) {
+  const [category, setCategory] = useState("");
   const [panelName, setPanelName] = useState("");
   const [params, setParams] = useState([emptyParam()]);
   const [error, setError] = useState("");
 
-  const updateParam = (index, field, value) => {
+  const updateParam = (key, field, val) =>
     setParams((prev) =>
-      prev.map((p, i) =>
-        i === index
-          ? field.startsWith("range_")
-            ? {
-                ...p,
-                reference_range: {
-                  ...p.reference_range,
-                  [field === "range_min" ? "min" : "max"]:
-                    value === "" ? null : parseFloat(value),
-                },
-              }
-            : { ...p, [field]: value }
-          : p,
-      ),
+      prev.map((p) => {
+        if (p._key !== key) return p;
+        if (field.startsWith("rr_")) {
+          return {
+            ...p,
+            reference_range: { ...p.reference_range, [field.slice(3)]: val },
+          };
+        }
+        return { ...p, [field]: val };
+      }),
     );
-  };
 
-  const addParam = () => setParams((prev) => [...prev, emptyParam()]);
-
-  const removeParam = (index) => {
-    if (params.length === 1) return;
-    setParams((prev) => prev.filter((_, i) => i !== index));
-  };
+  const addParam = () => setParams((p) => [...p, emptyParam()]);
+  const removeParam = (key) =>
+    setParams((p) => (p.length > 1 ? p.filter((x) => x._key !== key) : p));
 
   const handleSave = () => {
     if (!panelName.trim()) {
-      setError("Please enter a Panel Name.");
+      setError("Panel name is required.");
       return;
     }
     if (params.some((p) => !p.name.trim())) {
-      setError("All parameters must have a name.");
+      setError("Every parameter needs a name.");
       return;
     }
 
-    const newPanel = {
+    const toNum = (v) => (v === "" || v == null ? null : parseFloat(v));
+
+    onSave({
       panel_id: `CUSTOM_${Date.now()}`,
       panel_name: panelName.trim(),
+      category: category.trim() || "Custom",
       description: "Custom test created in-app.",
       isCustom: true,
       parameters: params.map((p) => ({
-        ...p,
-        id: `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        id: `CUST_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        name: p.name.trim(),
+        abbreviation: p.abbreviation.trim(),
+        unit: p.unit.trim(),
+        gender_applicable: p.gender_applicable,
         reference_range: {
-          min:
-            p.reference_range.min === "" ? null : Number(p.reference_range.min),
-          max:
-            p.reference_range.max === "" ? null : Number(p.reference_range.max),
+          general: p.reference_range.general || null,
+          male_min: toNum(p.reference_range.male_min),
+          male_max: toNum(p.reference_range.male_max),
+          female_min: toNum(p.reference_range.female_min),
+          female_max: toNum(p.reference_range.female_max),
         },
       })),
-    };
-
-    onSave(newPanel);
+    });
     onClose();
   };
 
+  const inp =
+    "w-full px-3 py-2 text-sm rounded-lg bg-white border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/10 outline-none transition-all";
+  const numInp = inp + " font-mono";
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/70 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
           <div className="flex items-center space-x-3">
@@ -97,7 +121,7 @@ export default function CustomTestModal({ onSave, onClose }) {
                 Create Custom Test
               </h2>
               <p className="text-xs text-gray-500">
-                Define a new panel and its parameters
+                Define a new panel with its parameters and reference ranges
               </p>
             </div>
           </div>
@@ -122,22 +146,50 @@ export default function CustomTestModal({ onSave, onClose }) {
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto flex-1 p-6 space-y-6">
-          {/* Panel Name */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">
-              Panel Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={panelName}
-              onChange={(e) => {
-                setPanelName(e.target.value);
-                setError("");
-              }}
-              placeholder="e.g. Thyroid Stimulating Hormone"
-              className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-500/10 transition-all outline-none font-medium"
-            />
+        <div className="overflow-y-auto flex-1 p-6 space-y-5">
+          {/* Panel info */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-gray-700">
+                Category
+              </label>
+              <div className="relative">
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className={inp + " text-gray-700"}
+                >
+                  <option value="">Select or type below…</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <input
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="Or type a new category…"
+                className={inp + " mt-1"}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-gray-700">
+                Panel Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={panelName}
+                onChange={(e) => {
+                  setPanelName(e.target.value);
+                  setError("");
+                }}
+                placeholder="e.g. Thyroid Stimulating Hormone"
+                className={inp}
+              />
+            </div>
           </div>
 
           {/* Parameters */}
@@ -148,7 +200,7 @@ export default function CustomTestModal({ onSave, onClose }) {
               </span>
               <button
                 onClick={addParam}
-                className="text-xs font-semibold text-red-600 hover:text-red-700 flex items-center space-x-1 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center space-x-1 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -167,18 +219,19 @@ export default function CustomTestModal({ onSave, onClose }) {
               </button>
             </div>
 
-            <div className="space-y-3">
-              {params.map((param, index) => (
+            <div className="space-y-4">
+              {params.map((param, idx) => (
                 <div
-                  key={param.id}
+                  key={param._key}
                   className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3"
                 >
+                  {/* Row header */}
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                      Parameter {index + 1}
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      Parameter {idx + 1}
                     </span>
                     <button
-                      onClick={() => removeParam(index)}
+                      onClick={() => removeParam(param._key)}
                       disabled={params.length === 1}
                       className="text-xs text-gray-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
@@ -186,94 +239,182 @@ export default function CustomTestModal({ onSave, onClose }) {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-gray-500">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-1 space-y-1">
+                      <label className="text-[10px] font-semibold text-gray-500 uppercase">
                         Name *
                       </label>
                       <input
                         type="text"
                         value={param.name}
                         onChange={(e) =>
-                          updateParam(index, "name", e.target.value)
+                          updateParam(param._key, "name", e.target.value)
                         }
                         placeholder="e.g. Haemoglobin"
-                        className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/10 outline-none transition-all"
+                        className={inp}
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-gray-500">
+                      <label className="text-[10px] font-semibold text-gray-500 uppercase">
                         Abbreviation
                       </label>
                       <input
                         type="text"
                         value={param.abbreviation}
                         onChange={(e) =>
-                          updateParam(index, "abbreviation", e.target.value)
+                          updateParam(
+                            param._key,
+                            "abbreviation",
+                            e.target.value,
+                          )
                         }
                         placeholder="e.g. Hb"
-                        className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/10 outline-none transition-all"
+                        className={inp}
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-gray-500">
+                      <label className="text-[10px] font-semibold text-gray-500 uppercase">
                         Unit
                       </label>
                       <input
                         type="text"
                         value={param.unit}
                         onChange={(e) =>
-                          updateParam(index, "unit", e.target.value)
+                          updateParam(param._key, "unit", e.target.value)
                         }
                         placeholder="e.g. g/dL"
-                        className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/10 outline-none transition-all"
+                        className={inp}
                       />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-gray-500">
-                        Gender
+                      <label className="text-[10px] font-semibold text-gray-500 uppercase">
+                        Applies To
                       </label>
                       <select
-                        value={param.gender}
+                        value={param.gender_applicable}
                         onChange={(e) =>
-                          updateParam(index, "gender", e.target.value)
+                          updateParam(
+                            param._key,
+                            "gender_applicable",
+                            e.target.value,
+                          )
                         }
-                        className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/10 outline-none transition-all text-gray-700"
+                        className={inp + " text-gray-700"}
                       >
-                        <option value="all">All</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
+                        <option value="all">All genders</option>
+                        <option value="male">Male only</option>
+                        <option value="female">Female only</option>
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-semibold text-gray-500">
-                        Min Range
+                      <label className="text-[10px] font-semibold text-gray-500 uppercase">
+                        General Reference Note
                       </label>
                       <input
-                        type="number"
-                        step="any"
-                        value={param.reference_range.min ?? ""}
+                        type="text"
+                        value={param.reference_range.general}
                         onChange={(e) =>
-                          updateParam(index, "range_min", e.target.value)
+                          updateParam(param._key, "rr_general", e.target.value)
                         }
-                        placeholder="Leave blank if N/A"
-                        className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/10 outline-none transition-all font-mono"
+                        placeholder="e.g. Negative / <5.7"
+                        className={inp}
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-gray-500">
-                        Max Range
-                      </label>
-                      <input
-                        type="number"
-                        step="any"
-                        value={param.reference_range.max ?? ""}
-                        onChange={(e) =>
-                          updateParam(index, "range_max", e.target.value)
-                        }
-                        placeholder="Leave blank if N/A"
-                        className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-gray-200 focus:border-red-500 focus:ring-2 focus:ring-red-500/10 outline-none transition-all font-mono"
-                      />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[10px] font-bold text-blue-600 mb-2">
+                        ♂ Male Range
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-gray-500">
+                            Min
+                          </label>
+                          <input
+                            type="number"
+                            step="any"
+                            value={param.reference_range.male_min}
+                            onChange={(e) =>
+                              updateParam(
+                                param._key,
+                                "rr_male_min",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="—"
+                            className={numInp}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-gray-500">
+                            Max
+                          </label>
+                          <input
+                            type="number"
+                            step="any"
+                            value={param.reference_range.male_max}
+                            onChange={(e) =>
+                              updateParam(
+                                param._key,
+                                "rr_male_max",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="—"
+                            className={numInp}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-pink-600 mb-2">
+                        ♀ Female Range
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-gray-500">
+                            Min
+                          </label>
+                          <input
+                            type="number"
+                            step="any"
+                            value={param.reference_range.female_min}
+                            onChange={(e) =>
+                              updateParam(
+                                param._key,
+                                "rr_female_min",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="—"
+                            className={numInp}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-gray-500">
+                            Max
+                          </label>
+                          <input
+                            type="number"
+                            step="any"
+                            value={param.reference_range.female_max}
+                            onChange={(e) =>
+                              updateParam(
+                                param._key,
+                                "rr_female_max",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="—"
+                            className={numInp}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

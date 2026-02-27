@@ -1,48 +1,84 @@
 import logo from "../assets/images/Logo.png";
 
+// ── helpers ────────────────────────────────────────────────────────────────
+
+const isQual = (p) => {
+  const rr = p?.reference_range;
+  return (
+    p?.unit === "qualitative" ||
+    p?.unit === "semiquantitative" ||
+    p?.unit === "titre" ||
+    (rr?.male_min === null &&
+      rr?.male_max === null &&
+      rr?.female_min === null &&
+      rr?.female_max === null)
+  );
+};
+
+const effectiveRange = (p, editedRanges, panelId) => ({
+  ...p.reference_range,
+  ...(editedRanges?.[panelId]?.[p.id] || {}),
+});
+
+const formatRange = (rr, gender) => {
+  if (!rr) return "—";
+  const [mn, mx] =
+    gender === "Male"
+      ? [rr.male_min, rr.male_max]
+      : [rr.female_min, rr.female_max];
+  if (mn === null && mx === null) return rr.general || "—";
+  if (mn !== null && mx === null) return `≥ ${mn}`;
+  if (mn === null && mx !== null) return `< ${mx}`;
+  return `${mn} – ${mx}`;
+};
+
+const isAbnormal = (val, rr, gender, qual) => {
+  if (qual || !val || !rr) return false;
+  const n = parseFloat(val);
+  if (isNaN(n)) return false;
+  const [mn, mx] =
+    gender === "Male"
+      ? [rr.male_min, rr.male_max]
+      : [rr.female_min, rr.female_max];
+  if (mn !== null && mx === null) return n < mn;
+  if (mn === null && mx !== null) return n > mx;
+  if (mn !== null && mx !== null) return n < mn || n > mx;
+  return false;
+};
+
+const applyOrder = (fields, order) => {
+  if (!order) return fields;
+  return [...fields].sort((a, b) => {
+    const ai = order.indexOf(a.id),
+      bi = order.indexOf(b.id);
+    if (ai < 0) return 1;
+    if (bi < 0) return -1;
+    return ai - bi;
+  });
+};
+
+// ── component ─────────────────────────────────────────────────────────────
+
 export default function ReportTemplate({
   patientDetails,
   selectedTest,
   testData,
   testTemplates,
+  editedRanges,
+  paramOrders,
 }) {
+  const gender = patientDetails.gender;
   const panel = testTemplates.find((t) => t.panel_id === selectedTest);
 
-  const fields =
+  const rawFields =
     panel?.parameters.filter(
       (p) =>
-        p.gender === "all" || p.gender === patientDetails.gender.toLowerCase(),
+        p.gender_applicable === "all" ||
+        p.gender_applicable === gender.toLowerCase(),
     ) || [];
 
-  const formatRange = (range) => {
-    if (!range || (range.min === null && range.max === null)) return "—";
-    if (range.min !== null && range.max === null) return `≥ ${range.min}`;
-    if (range.min === null && range.max !== null) return `< ${range.max}`;
-    if (range.max === 0 && range.min === 0) return "Absent";
-    return `${range.min} – ${range.max}`;
-  };
+  const fields = applyOrder(rawFields, paramOrders?.[selectedTest]);
 
-  const isQualitative = (field) =>
-    field.unit === "qualitative" ||
-    field.unit === "semiquantitative" ||
-    field.unit === "titre" ||
-    (field.reference_range?.min === null &&
-      field.reference_range?.max === null);
-
-  const isValueAbnormal = (val, range, field) => {
-    if (!val || !range) return false;
-    if (isQualitative(field)) return false;
-    const numVal = parseFloat(val);
-    if (isNaN(numVal)) return false;
-    if (range.min !== null && range.max === null) return numVal < range.min;
-    if (range.min === null && range.max !== null) return numVal > range.max;
-    if (range.min !== null && range.max !== null) {
-      return numVal < range.min || numVal > range.max;
-    }
-    return false;
-  };
-
-  // Get current date/time for the report
   const now = new Date();
   const formattedDate = now
     .toLocaleDateString("en-GB", {
@@ -60,9 +96,8 @@ export default function ReportTemplate({
 
   return (
     <div className="bg-white w-[210mm] min-h-[297mm] mx-auto p-[10mm] pb-[250px] text-black font-sans box-border relative print:m-0 print:p-[10mm] print:pb-[250px] print:shadow-none shadow-[0_0_10px_rgba(0,0,0,0.1)]">
-      {/* 1. Header */}
+      {/* ── Header ── */}
       <div className="flex justify-between items-center mb-2 px-2">
-        {/* Left */}
         <div
           className="flex flex-col text-red-600 font-serif font-bold italic leading-none shrink-0"
           style={{ transform: "scaleY(1.1)", transformOrigin: "left center" }}
@@ -72,7 +107,6 @@ export default function ReportTemplate({
           <h2 className="text-[24px] tracking-tight">CENTER</h2>
         </div>
 
-        {/* Center */}
         <div className="flex flex-col items-center justify-center shrink-0 -mt-2">
           <img
             src={logo}
@@ -82,21 +116,18 @@ export default function ReportTemplate({
           <div
             className="text-red-600 font-bold text-xl mt-1"
             style={{
-              fontFamily:
-                "'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif",
+              fontFamily: "'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif",
             }}
           >
             الباسط میڈیکل سینٹر شاہرگ
           </div>
         </div>
 
-        {/* Right */}
         <div className="flex flex-col items-center text-red-600 font-serif font-bold italic leading-tight shrink-0">
           <div
             className="text-[48px] font-normal not-italic mb-1 leading-none"
             style={{
-              fontFamily:
-                "'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif",
+              fontFamily: "'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif",
               transform: "scaleY(1.2)",
               transformOrigin: "bottom center",
             }}
@@ -111,94 +142,75 @@ export default function ReportTemplate({
 
       <hr className="border-t-[4px] border-red-600 mb-6" />
 
-      {/* 2. Patient Information Grid */}
+      {/* ── Patient Info ── */}
       <div className="grid grid-cols-2 gap-x-12 gap-y-2 mb-6 text-sm font-semibold">
-        {/* Left Col */}
         <div className="grid grid-cols-[140px_1fr] gap-x-2 gap-y-1">
-          <div className="text-black">M.R. No :</div>
+          <div>M.R. No :</div>
           <div className="font-normal uppercase">
             {patientDetails.mrNo || "—"}
           </div>
-
-          <div className="text-black">Patient Name :</div>
+          <div>Patient Name :</div>
           <div className="font-normal uppercase">
             {patientDetails.name || "—"}
           </div>
-
-          <div className="text-black">Father/Husband Name:</div>
+          <div>Father/Husband Name:</div>
           <div className="font-normal">—</div>
-
-          <div className="text-black">Age / Sex :</div>
+          <div>Age / Sex :</div>
           <div className="font-normal">
             {patientDetails.age ? `${patientDetails.age} Year(s)` : "—"} /{" "}
-            {patientDetails.gender}
+            {gender}
           </div>
-
-          <div className="text-black">Contact No :</div>
+          <div>Contact No :</div>
           <div className="font-normal">—</div>
-
-          <div className="text-black">Sample Location :</div>
+          <div>Sample Location :</div>
           <div className="font-normal">Collected In Lab</div>
-
-          <div className="text-black">Consultant :</div>
+          <div>Consultant :</div>
           <div className="font-normal uppercase">
             {patientDetails.consultant || "Self"}
           </div>
         </div>
-
-        {/* Right Col */}
         <div className="grid grid-cols-[140px_1fr] gap-x-2 gap-y-1">
-          <div className="text-black">Registration Date :</div>
+          <div>Registration Date :</div>
           <div className="font-normal">{dateTimeStr}</div>
-
-          <div className="text-black">Received Date :</div>
+          <div>Received Date :</div>
           <div className="font-normal">{dateTimeStr}</div>
-
-          <div className="text-black">Reported Date :</div>
+          <div>Reported Date :</div>
           <div className="font-normal">{dateTimeStr}</div>
-
-          <div className="text-black">Printing Date :</div>
+          <div>Printing Date :</div>
           <div className="font-normal">{dateTimeStr}</div>
-
-          <div className="text-black">Address :</div>
+          <div>Address :</div>
           <div className="font-normal">—</div>
-
-          <div className="text-black">Registration At :</div>
+          <div>Registration At :</div>
           <div className="font-normal uppercase">MAIN LAB</div>
-
-          <div className="text-black">Reference :</div>
+          <div>Reference :</div>
           <div className="font-normal">N/A</div>
         </div>
       </div>
 
-      {/* 3. Report Title */}
+      {/* ── Report Title ── */}
       <div className="bg-gray-300 py-1 flex items-center justify-center font-bold text-lg tracking-widest uppercase mb-4 shadow-sm border-t border-b border-gray-400">
         {panel?.panel_name?.replace(" Test", "").replace(" Profile", "") ||
           selectedTest}{" "}
         REPORT
       </div>
 
-      {/* 4. Test Results Table */}
+      {/* ── Results Table ── */}
       <table className="w-full text-sm mb-8 mt-2">
         <thead>
           <tr className="border-b-2 border-gray-400">
             <th className="py-2 text-left font-bold uppercase w-2/5">TEST</th>
-            <th className="py-2 text-left font-bold uppercase w-1/5">RESULT</th>
-            <th className="py-2 text-left font-bold uppercase w-1/5">UNITS</th>
-            <th className="py-2 text-left font-bold uppercase w-1/5">
-              REF. RANGE
-            </th>
+            <th className="py-2 text-left font-bold uppercase w-1/6">RESULT</th>
+            <th className="py-2 text-left font-bold uppercase w-1/6">UNITS</th>
+            <th className="py-2 text-left font-bold uppercase">REF. RANGE</th>
           </tr>
         </thead>
         <tbody>
           {fields.map((field) => {
+            const rr = effectiveRange(field, editedRanges, selectedTest);
+            const qual = isQual(field);
             const val = testData[field.id];
-            const qualitative = isQualitative(field);
-            const isAbnormal = isValueAbnormal(
-              val,
-              field.reference_range,
-              field,
-            );
+            const abn = isAbnormal(val, rr, gender, qual);
+
             return (
               <tr key={field.id} className="border-b border-gray-100">
                 <td className="py-2 font-semibold text-sm">
@@ -210,23 +222,18 @@ export default function ReportTemplate({
                   )}
                 </td>
                 <td
-                  className={`py-2 text-sm font-mono ${
-                    isAbnormal ? "font-bold text-red-700" : ""
-                  }`}
+                  className={`py-2 text-sm font-mono ${abn ? "font-bold text-red-700" : ""}`}
                 >
                   {val || "—"}
-                  {isAbnormal && (
-                    <span className="ml-1 text-red-600 text-xs font-bold">
-                      *
-                    </span>
-                  )}
+                  {abn && <span className="text-red-600 ml-0.5">*</span>}
                 </td>
                 <td className="py-2 text-sm">
-                  {qualitative ? "Qualitative" : field.unit}
+                  {qual ? "Qualitative" : field.unit}
                 </td>
                 <td className="py-2 text-sm font-mono">
-                  {formatRange(field.reference_range)}{" "}
-                  {!qualitative && field.unit ? field.unit : ""}
+                  {qual
+                    ? rr.general || "See report"
+                    : `${formatRange(rr, gender)}${field.unit ? ` ${field.unit}` : ""}`}
                 </td>
               </tr>
             );
@@ -234,7 +241,7 @@ export default function ReportTemplate({
         </tbody>
       </table>
 
-      {/* 5. Footer */}
+      {/* ── Footer ── */}
       <div className="absolute bottom-10 left-[10mm] right-[10mm]">
         <div className="text-right font-bold text-sm mb-2">
           Approved By : Admin Admin
@@ -244,13 +251,11 @@ export default function ReportTemplate({
           Legal Proceeding.
         </div>
         <hr />
-
         <div className="flex justify-between text-xs font-semibold mb-2 mt-1">
           <div>Offline: Print</div>
           <div>Page 1 of 1</div>
           <div>Print At : {dateTimeStr}</div>
         </div>
-
         <div className="flex justify-center space-x-6 text-xs text-black mb-1">
           <div className="flex items-center space-x-1">
             <span className="text-green-500">📱</span>
@@ -261,7 +266,6 @@ export default function ReportTemplate({
             <span>0321 944 4002</span>
           </div>
         </div>
-
         <div className="text-center text-xs text-black">
           <span className="text-blue-700 font-bold">KS-Lab System</span> -
           Powered by{" "}

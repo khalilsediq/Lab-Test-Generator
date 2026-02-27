@@ -4,24 +4,24 @@ import PatientForm from "./components/PatientForm";
 import TestFields from "./components/TestFields";
 import ReportPreview from "./components/ReportPreview";
 import CustomTestModal from "./components/CustomTestModal";
-
 import staticTemplates from "./data/testTemplates.json";
 
-// Merge static templates with any saved custom panels from localStorage
-const loadCustomTests = () => {
+const load = (key, fallback) => {
   try {
-    const saved = localStorage.getItem("customTests");
-    return saved ? JSON.parse(saved) : [];
+    return JSON.parse(localStorage.getItem(key) ?? JSON.stringify(fallback));
   } catch {
-    return [];
+    return fallback;
   }
 };
 
 function App() {
-  const [customTests, setCustomTests] = useState(loadCustomTests);
+  const [customTests, setCustomTests] = useState(() => load("customTests", []));
+  const [editedRanges, setEditedRanges] = useState(() =>
+    load("editedRanges", {}),
+  );
+  const [paramOrders, setParamOrders] = useState(() => load("paramOrders", {}));
   const [showCustomModal, setShowCustomModal] = useState(false);
 
-  // All panels visible to the app = static + custom
   const testTemplates = [...staticTemplates, ...customTests];
 
   const [selectedTest, setSelectedTest] = useState(testTemplates[0].panel_id);
@@ -35,21 +35,34 @@ function App() {
   const [testData, setTestData] = useState({});
   const [showPreview, setShowPreview] = useState(false);
 
+  const persist = (key, value, setter) => {
+    setter(value);
+    localStorage.setItem(key, JSON.stringify(value));
+  };
+
   const handleSaveCustomTest = (newPanel) => {
     const updated = [...customTests, newPanel];
-    setCustomTests(updated);
-    localStorage.setItem("customTests", JSON.stringify(updated));
+    persist("customTests", updated, setCustomTests);
     setSelectedTest(newPanel.panel_id);
   };
 
   const handleDeleteCustomTest = (panelId) => {
     const updated = customTests.filter((t) => t.panel_id !== panelId);
-    setCustomTests(updated);
-    localStorage.setItem("customTests", JSON.stringify(updated));
-    // If deleted panel was selected, fall back to first panel
-    if (selectedTest === panelId) {
-      setSelectedTest(testTemplates[0].panel_id);
-    }
+    persist("customTests", updated, setCustomTests);
+    if (selectedTest === panelId) setSelectedTest(testTemplates[0].panel_id);
+  };
+
+  const handleSaveRange = (panelId, paramId, updatedRange) => {
+    const updated = {
+      ...editedRanges,
+      [panelId]: { ...(editedRanges[panelId] || {}), [paramId]: updatedRange },
+    };
+    persist("editedRanges", updated, setEditedRanges);
+  };
+
+  const handleSaveOrder = (panelId, orderedIds) => {
+    const updated = { ...paramOrders, [panelId]: orderedIds };
+    persist("paramOrders", updated, setParamOrders);
   };
 
   return (
@@ -62,7 +75,6 @@ function App() {
           onCreateCustom={() => setShowCustomModal(true)}
           onDeleteCustom={handleDeleteCustomTest}
         />
-
         <main className="flex-1 p-10 overflow-y-auto w-full relative">
           <header className="mb-10">
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">
@@ -73,20 +85,21 @@ function App() {
               printable report.
             </p>
           </header>
-
           <PatientForm
             patientDetails={patientDetails}
             setPatientDetails={setPatientDetails}
           />
-
           <TestFields
             selectedTest={selectedTest}
             testData={testData}
             setTestData={setTestData}
             patientDetails={patientDetails}
             testTemplates={testTemplates}
+            editedRanges={editedRanges}
+            paramOrders={paramOrders}
+            onSaveRange={handleSaveRange}
+            onSaveOrder={handleSaveOrder}
           />
-
           <div className="mt-8 flex justify-end max-w-4xl">
             <button
               onClick={() => setShowPreview(true)}
@@ -118,6 +131,8 @@ function App() {
         selectedTest={selectedTest}
         testData={testData}
         testTemplates={testTemplates}
+        editedRanges={editedRanges}
+        paramOrders={paramOrders}
       />
 
       {showCustomModal && (
