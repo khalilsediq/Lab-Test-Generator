@@ -7,28 +7,37 @@ export default function ReportPreview({
   selectedTest,
   testData,
   testTemplates,
+  editedRanges,
+  paramOrders,
 }) {
   if (!show) return null;
 
   return (
     <>
-      {/* Screen Mode Modal (Hidden on Print) */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200 print:hidden">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col relative">
-          {/* Header Controls */}
-          <div className="sticky top-0 z-10 p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/90 backdrop-blur">
-            <h2 className="text-xl font-bold text-gray-800">Print Preview</h2>
-            <div className="flex space-x-3">
+      {/* ── Screen modal (hidden on print) ── */}
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/60 backdrop-blur-sm print:hidden">
+        <div className="bg-white w-full sm:rounded-2xl sm:max-w-5xl sm:max-h-[92vh] max-h-[95vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200">
+          {/* Sticky header */}
+          <div className="sticky top-0 z-10 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between bg-white/95 backdrop-blur shrink-0">
+            <div>
+              <h2 className="text-base sm:text-xl font-bold text-gray-800">
+                Print Preview
+              </h2>
+              <p className="text-xs text-gray-400 hidden sm:block mt-0.5">
+                Review before printing or saving as PDF
+              </p>
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-3">
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl text-gray-600 font-medium hover:bg-gray-200 transition-colors"
+                className="px-3 sm:px-4 py-2 rounded-xl text-gray-600 font-medium hover:bg-gray-100 transition-colors text-sm"
               >
                 Close
               </button>
               <button
                 onClick={() => window.print()}
-                className="px-6 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium shadow-lg shadow-red-500/30 transition-all active:scale-95 flex items-center space-x-2"
-                title="Use the Print dialog to Save as PDF"
+                className="flex items-center space-x-1.5 sm:space-x-2 px-4 sm:px-6 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg shadow-red-500/30 transition-all active:scale-95 text-sm"
+                title="Print or Save as PDF"
               >
                 <svg
                   className="w-4 h-4"
@@ -41,34 +50,47 @@ export default function ReportPreview({
                     strokeLinejoin="round"
                     strokeWidth="2"
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  ></path>
+                  />
                 </svg>
-                <span>Save PDF / Print</span>
+                <span className="hidden sm:inline">Save PDF / Print</span>
+                <span className="sm:hidden">Print</span>
               </button>
             </div>
           </div>
 
-          {/* Scaled Down Preview Area */}
-          <div className="p-8 bg-gray-200 flex justify-center items-start flex-1 overflow-auto">
-            <div className="transform origin-top scale-75 md:scale-90 lg:scale-100 transition-transform w-[210mm] h-[297mm] flex-shrink-0 bg-white shadow-2xl">
-              <ReportTemplate
-                patientDetails={patientDetails}
-                selectedTest={selectedTest}
-                testData={testData}
-                testTemplates={testTemplates}
-              />
+          {/* Scrollable preview area */}
+          <div className="flex-1 overflow-y-auto bg-gray-200 p-3 sm:p-6 md:p-8 flex justify-center items-start">
+            {/* Scale report to fit screen */}
+            <div className="w-full flex justify-center">
+              <div className="origin-top transform scale-[0.45] xs:scale-[0.55] sm:scale-75 md:scale-90 lg:scale-100 transition-transform w-[210mm] shrink-0">
+                <ReportTemplate
+                  patientDetails={patientDetails}
+                  selectedTest={selectedTest}
+                  testData={testData}
+                  testTemplates={testTemplates}
+                  editedRanges={editedRanges}
+                  paramOrders={paramOrders}
+                />
+              </div>
             </div>
+          </div>
+
+          {/* Mobile hint */}
+          <div className="bg-amber-50 border-t border-amber-100 px-4 py-2.5 text-center text-xs text-amber-600 font-medium sm:hidden shrink-0">
+            💡 Tip: Use "Print" → "Save as PDF" to export this report
           </div>
         </div>
       </div>
 
-      {/* Print Mode CSS Block (Hidden on Screen, occupies 100% of body on Print) */}
-      <div className="hidden print:block print:absolute print:top-0 print:left-0 print:w-full print:bg-white print:z-9999">
+      {/* ── Print target (100% of page, shown only when printing) ── */}
+      <div className="hidden print:block print:absolute print:top-0 print:left-0 print:w-full print:bg-white print:z-[9999]">
         <ReportTemplate
           patientDetails={patientDetails}
           selectedTest={selectedTest}
           testData={testData}
           testTemplates={testTemplates}
+          editedRanges={editedRanges}
+          paramOrders={paramOrders}
         />
       </div>
     </>
