@@ -3,10 +3,27 @@ import Sidebar from "./components/Sidebar";
 import PatientForm from "./components/PatientForm";
 import TestFields from "./components/TestFields";
 import ReportPreview from "./components/ReportPreview";
+import CustomTestModal from "./components/CustomTestModal";
 
-import testTemplates from "./data/testTemplates.json";
+import staticTemplates from "./data/testTemplates.json";
+
+// Merge static templates with any saved custom panels from localStorage
+const loadCustomTests = () => {
+  try {
+    const saved = localStorage.getItem("customTests");
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+};
 
 function App() {
+  const [customTests, setCustomTests] = useState(loadCustomTests);
+  const [showCustomModal, setShowCustomModal] = useState(false);
+
+  // All panels visible to the app = static + custom
+  const testTemplates = [...staticTemplates, ...customTests];
+
   const [selectedTest, setSelectedTest] = useState(testTemplates[0].panel_id);
   const [patientDetails, setPatientDetails] = useState({
     name: "",
@@ -18,6 +35,23 @@ function App() {
   const [testData, setTestData] = useState({});
   const [showPreview, setShowPreview] = useState(false);
 
+  const handleSaveCustomTest = (newPanel) => {
+    const updated = [...customTests, newPanel];
+    setCustomTests(updated);
+    localStorage.setItem("customTests", JSON.stringify(updated));
+    setSelectedTest(newPanel.panel_id);
+  };
+
+  const handleDeleteCustomTest = (panelId) => {
+    const updated = customTests.filter((t) => t.panel_id !== panelId);
+    setCustomTests(updated);
+    localStorage.setItem("customTests", JSON.stringify(updated));
+    // If deleted panel was selected, fall back to first panel
+    if (selectedTest === panelId) {
+      setSelectedTest(testTemplates[0].panel_id);
+    }
+  };
+
   return (
     <>
       <div className="flex min-h-screen bg-gray-50 font-sans print:hidden">
@@ -25,6 +59,8 @@ function App() {
           selectedTest={selectedTest}
           setSelectedTest={setSelectedTest}
           testTemplates={testTemplates}
+          onCreateCustom={() => setShowCustomModal(true)}
+          onDeleteCustom={handleDeleteCustomTest}
         />
 
         <main className="flex-1 p-10 overflow-y-auto w-full relative">
@@ -68,7 +104,7 @@ function App() {
                   strokeLinejoin="round"
                   strokeWidth="2"
                   d="M14 5l7 7m0 0l-7 7m7-7H3"
-                ></path>
+                />
               </svg>
             </button>
           </div>
@@ -83,6 +119,13 @@ function App() {
         testData={testData}
         testTemplates={testTemplates}
       />
+
+      {showCustomModal && (
+        <CustomTestModal
+          onSave={handleSaveCustomTest}
+          onClose={() => setShowCustomModal(false)}
+        />
+      )}
     </>
   );
 }

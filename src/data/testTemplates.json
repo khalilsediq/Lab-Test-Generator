@@ -1,640 +1,1304 @@
 [
   {
-    "panel_id": "CBC",
-    "panel_name": "Complete Blood Count",
-    "description": "Evaluates the cellular components of blood including red cells, white cells, and platelets.",
+    "panel_id": "HEMATOLOGY",
+    "panel_name": "Hematology (Complete Blood Picture)",
+    "description": "Full blood count evaluating red cells, white cells, platelets, and related indices.",
     "parameters": [
       {
-        "id": "CBC_001",
-        "name": "Hemoglobin",
-        "abbreviation": "Hgb",
+        "id": "HEM_Hb_M",
+        "name": "Haemoglobin",
+        "abbreviation": "Hb",
         "unit": "g/dL",
         "gender": "male",
-        "reference_range": {
-          "min": 13.5,
-          "max": 17.5
-        }
+        "reference_range": { "min": 13.5, "max": 17.5 }
       },
       {
-        "id": "CBC_002",
-        "name": "Hemoglobin",
-        "abbreviation": "Hgb",
+        "id": "HEM_Hb_F",
+        "name": "Haemoglobin",
+        "abbreviation": "Hb",
         "unit": "g/dL",
         "gender": "female",
-        "reference_range": {
-          "min": 12.0,
-          "max": 15.5
-        }
+        "reference_range": { "min": 11.5, "max": 15.5 }
       },
       {
-        "id": "CBC_003",
-        "name": "Hematocrit",
-        "abbreviation": "Hct",
-        "unit": "%",
-        "gender": "male",
-        "reference_range": {
-          "min": 41.0,
-          "max": 53.0
-        }
-      },
-      {
-        "id": "CBC_004",
-        "name": "Hematocrit",
-        "abbreviation": "Hct",
-        "unit": "%",
-        "gender": "female",
-        "reference_range": {
-          "min": 36.0,
-          "max": 46.0
-        }
-      },
-      {
-        "id": "CBC_005",
+        "id": "HEM_RBC_M",
         "name": "Red Blood Cell Count",
         "abbreviation": "RBC",
-        "unit": "x10⁶/µL",
+        "unit": "×10⁶/µL",
         "gender": "male",
-        "reference_range": {
-          "min": 4.5,
-          "max": 5.9
-        }
+        "reference_range": { "min": 4.5, "max": 5.9 }
       },
       {
-        "id": "CBC_006",
+        "id": "HEM_RBC_F",
         "name": "Red Blood Cell Count",
         "abbreviation": "RBC",
-        "unit": "x10⁶/µL",
+        "unit": "×10⁶/µL",
         "gender": "female",
-        "reference_range": {
-          "min": 4.0,
-          "max": 5.2
-        }
+        "reference_range": { "min": 3.8, "max": 5.2 }
       },
       {
-        "id": "CBC_007",
-        "name": "White Blood Cell Count",
-        "abbreviation": "WBC",
-        "unit": "x10³/µL",
-        "gender": "all",
-        "reference_range": {
-          "min": 4.5,
-          "max": 11.0
-        }
+        "id": "HEM_PCV_M",
+        "name": "Packed Cell Volume / Haematocrit",
+        "abbreviation": "PCV/HCT",
+        "unit": "%",
+        "gender": "male",
+        "reference_range": { "min": 41.0, "max": 53.0 }
       },
       {
-        "id": "CBC_008",
-        "name": "Platelet Count",
-        "abbreviation": "PLT",
-        "unit": "x10³/µL",
-        "gender": "all",
-        "reference_range": {
-          "min": 150.0,
-          "max": 400.0
-        }
+        "id": "HEM_PCV_F",
+        "name": "Packed Cell Volume / Haematocrit",
+        "abbreviation": "PCV/HCT",
+        "unit": "%",
+        "gender": "female",
+        "reference_range": { "min": 36.0, "max": 46.0 }
       },
       {
-        "id": "CBC_009",
+        "id": "HEM_MCV",
         "name": "Mean Corpuscular Volume",
         "abbreviation": "MCV",
         "unit": "fL",
         "gender": "all",
-        "reference_range": {
-          "min": 80.0,
-          "max": 100.0
-        }
+        "reference_range": { "min": 80.0, "max": 100.0 }
       },
       {
-        "id": "CBC_010",
-        "name": "Mean Corpuscular Hemoglobin",
+        "id": "HEM_MCH",
+        "name": "Mean Corpuscular Haemoglobin",
         "abbreviation": "MCH",
         "unit": "pg",
         "gender": "all",
-        "reference_range": {
-          "min": 27.0,
-          "max": 33.0
-        }
+        "reference_range": { "min": 27.0, "max": 33.0 }
       },
       {
-        "id": "CBC_011",
-        "name": "Mean Corpuscular Hemoglobin Concentration",
+        "id": "HEM_MCHC",
+        "name": "Mean Corpuscular Haemoglobin Concentration",
         "abbreviation": "MCHC",
         "unit": "g/dL",
         "gender": "all",
-        "reference_range": {
-          "min": 32.0,
-          "max": 36.0
-        }
+        "reference_range": { "min": 32.0, "max": 36.0 }
       },
       {
-        "id": "CBC_012",
-        "name": "Red Cell Distribution Width",
-        "abbreviation": "RDW",
+        "id": "HEM_TLC",
+        "name": "Total Leucocyte Count",
+        "abbreviation": "TLC/WBC",
+        "unit": "×10³/µL",
+        "gender": "all",
+        "reference_range": { "min": 4.0, "max": 11.0 }
+      },
+      {
+        "id": "HEM_PLT",
+        "name": "Platelet Count",
+        "abbreviation": "PLT",
+        "unit": "×10³/µL",
+        "gender": "all",
+        "reference_range": { "min": 150.0, "max": 400.0 }
+      },
+      {
+        "id": "HEM_ESR_M",
+        "name": "Erythrocyte Sedimentation Rate",
+        "abbreviation": "ESR",
+        "unit": "mm/hr",
+        "gender": "male",
+        "reference_range": { "min": 0.0, "max": 15.0 }
+      },
+      {
+        "id": "HEM_ESR_F",
+        "name": "Erythrocyte Sedimentation Rate",
+        "abbreviation": "ESR",
+        "unit": "mm/hr",
+        "gender": "female",
+        "reference_range": { "min": 0.0, "max": 20.0 }
+      },
+      {
+        "id": "HEM_RETIC",
+        "name": "Reticulocyte Count",
+        "abbreviation": "RETIC",
         "unit": "%",
         "gender": "all",
-        "reference_range": {
-          "min": 11.5,
-          "max": 14.5
-        }
+        "reference_range": { "min": 0.5, "max": 2.5 }
       },
       {
-        "id": "CBC_013",
+        "id": "HEM_NEUT",
         "name": "Neutrophils",
         "abbreviation": "NEUT",
         "unit": "%",
         "gender": "all",
-        "reference_range": {
-          "min": 50.0,
-          "max": 70.0
-        }
+        "reference_range": { "min": 40.0, "max": 75.0 }
       },
       {
-        "id": "CBC_014",
+        "id": "HEM_LYMPH",
         "name": "Lymphocytes",
         "abbreviation": "LYMPH",
         "unit": "%",
         "gender": "all",
-        "reference_range": {
-          "min": 20.0,
-          "max": 40.0
-        }
+        "reference_range": { "min": 20.0, "max": 45.0 }
       },
       {
-        "id": "CBC_015",
+        "id": "HEM_MONO",
         "name": "Monocytes",
         "abbreviation": "MONO",
         "unit": "%",
         "gender": "all",
-        "reference_range": {
-          "min": 2.0,
-          "max": 8.0
-        }
+        "reference_range": { "min": 2.0, "max": 10.0 }
       },
       {
-        "id": "CBC_016",
+        "id": "HEM_EOS",
         "name": "Eosinophils",
         "abbreviation": "EOS",
         "unit": "%",
         "gender": "all",
-        "reference_range": {
-          "min": 1.0,
-          "max": 4.0
-        }
+        "reference_range": { "min": 1.0, "max": 6.0 }
       },
       {
-        "id": "CBC_017",
+        "id": "HEM_BASO",
         "name": "Basophils",
         "abbreviation": "BASO",
         "unit": "%",
         "gender": "all",
-        "reference_range": {
-          "min": 0.0,
-          "max": 1.0
-        }
+        "reference_range": { "min": 0.0, "max": 1.0 }
       }
     ]
   },
   {
-    "panel_id": "LFT",
-    "panel_name": "Liver Function Test",
-    "description": "Assesses liver health by measuring enzymes, proteins, and substances produced or processed by the liver.",
+    "panel_id": "HB_ELECTRO",
+    "panel_name": "Haemoglobin Electrophoresis",
+    "description": "Identifies haemoglobin variants including HbA, HbA2, HbF, HbS and screens for thalassaemia and HbA1c.",
     "parameters": [
       {
-        "id": "LFT_001",
-        "name": "Total Bilirubin",
-        "abbreviation": "T.Bil",
-        "unit": "mg/dL",
+        "id": "HBE_HbA",
+        "name": "Haemoglobin A",
+        "abbreviation": "HbA",
+        "unit": "%",
         "gender": "all",
-        "reference_range": {
-          "min": 0.2,
-          "max": 1.2
-        }
+        "reference_range": { "min": 97.0, "max": 99.0 }
       },
       {
-        "id": "LFT_002",
-        "name": "Direct Bilirubin",
-        "abbreviation": "D.Bil",
-        "unit": "mg/dL",
+        "id": "HBE_HbA2",
+        "name": "Haemoglobin A2",
+        "abbreviation": "HbA2",
+        "unit": "%",
         "gender": "all",
-        "reference_range": {
-          "min": 0.0,
-          "max": 0.3
-        }
+        "reference_range": { "min": 2.0, "max": 3.5 }
       },
       {
-        "id": "LFT_003",
-        "name": "Indirect Bilirubin",
-        "abbreviation": "I.Bil",
-        "unit": "mg/dL",
+        "id": "HBE_HbF",
+        "name": "Haemoglobin F (Fetal)",
+        "abbreviation": "HbF",
+        "unit": "%",
         "gender": "all",
-        "reference_range": {
-          "min": 0.1,
-          "max": 0.9
-        }
+        "reference_range": { "min": 0.0, "max": 1.0 }
       },
       {
-        "id": "LFT_004",
-        "name": "Alanine Aminotransferase",
-        "abbreviation": "ALT",
-        "unit": "U/L",
-        "gender": "male",
-        "reference_range": {
-          "min": 7.0,
-          "max": 56.0
-        }
-      },
-      {
-        "id": "LFT_005",
-        "name": "Alanine Aminotransferase",
-        "abbreviation": "ALT",
-        "unit": "U/L",
-        "gender": "female",
-        "reference_range": {
-          "min": 7.0,
-          "max": 45.0
-        }
-      },
-      {
-        "id": "LFT_006",
-        "name": "Aspartate Aminotransferase",
-        "abbreviation": "AST",
-        "unit": "U/L",
-        "gender": "male",
-        "reference_range": {
-          "min": 10.0,
-          "max": 40.0
-        }
-      },
-      {
-        "id": "LFT_007",
-        "name": "Aspartate Aminotransferase",
-        "abbreviation": "AST",
-        "unit": "U/L",
-        "gender": "female",
-        "reference_range": {
-          "min": 10.0,
-          "max": 35.0
-        }
-      },
-      {
-        "id": "LFT_008",
-        "name": "Alkaline Phosphatase",
-        "abbreviation": "ALP",
-        "unit": "U/L",
+        "id": "HBE_HbS",
+        "name": "Haemoglobin S (Sickle)",
+        "abbreviation": "HbS",
+        "unit": "%",
         "gender": "all",
-        "reference_range": {
-          "min": 44.0,
-          "max": 147.0
-        }
+        "reference_range": { "min": 0.0, "max": 0.0 }
       },
       {
-        "id": "LFT_009",
-        "name": "Gamma-Glutamyl Transferase",
-        "abbreviation": "GGT",
-        "unit": "U/L",
-        "gender": "male",
-        "reference_range": {
-          "min": 8.0,
-          "max": 61.0
-        }
-      },
-      {
-        "id": "LFT_010",
-        "name": "Gamma-Glutamyl Transferase",
-        "abbreviation": "GGT",
-        "unit": "U/L",
-        "gender": "female",
-        "reference_range": {
-          "min": 5.0,
-          "max": 36.0
-        }
-      },
-      {
-        "id": "LFT_011",
-        "name": "Total Protein",
-        "abbreviation": "TP",
-        "unit": "g/dL",
+        "id": "HBE_HbA1c",
+        "name": "Glycated Haemoglobin",
+        "abbreviation": "HbA1c",
+        "unit": "%",
         "gender": "all",
-        "reference_range": {
-          "min": 6.0,
-          "max": 8.3
-        }
-      },
+        "reference_range": { "min": 4.0, "max": 5.6 }
+      }
+    ]
+  },
+  {
+    "panel_id": "COAG",
+    "panel_name": "Coagulation Profile",
+    "description": "Assesses blood clotting pathways including PT, APTT, INR, bleeding time and clotting time.",
+    "parameters": [
       {
-        "id": "LFT_012",
-        "name": "Albumin",
-        "abbreviation": "ALB",
-        "unit": "g/dL",
-        "gender": "all",
-        "reference_range": {
-          "min": 3.5,
-          "max": 5.0
-        }
-      },
-      {
-        "id": "LFT_013",
-        "name": "Globulin",
-        "abbreviation": "GLOB",
-        "unit": "g/dL",
-        "gender": "all",
-        "reference_range": {
-          "min": 2.0,
-          "max": 3.5
-        }
-      },
-      {
-        "id": "LFT_014",
-        "name": "Albumin/Globulin Ratio",
-        "abbreviation": "A/G Ratio",
-        "unit": "ratio",
-        "gender": "all",
-        "reference_range": {
-          "min": 1.2,
-          "max": 2.2
-        }
-      },
-      {
-        "id": "LFT_015",
+        "id": "COAG_PT",
         "name": "Prothrombin Time",
         "abbreviation": "PT",
         "unit": "seconds",
         "gender": "all",
-        "reference_range": {
-          "min": 11.0,
-          "max": 13.5
-        }
+        "reference_range": { "min": 11.0, "max": 13.5 }
+      },
+      {
+        "id": "COAG_APTT",
+        "name": "Activated Partial Thromboplastin Time",
+        "abbreviation": "APTT",
+        "unit": "seconds",
+        "gender": "all",
+        "reference_range": { "min": 25.0, "max": 35.0 }
+      },
+      {
+        "id": "COAG_INR",
+        "name": "International Normalised Ratio",
+        "abbreviation": "INR",
+        "unit": "ratio",
+        "gender": "all",
+        "reference_range": { "min": 0.8, "max": 1.2 }
+      },
+      {
+        "id": "COAG_BT",
+        "name": "Bleeding Time",
+        "abbreviation": "BT",
+        "unit": "minutes",
+        "gender": "all",
+        "reference_range": { "min": 2.0, "max": 7.0 }
+      },
+      {
+        "id": "COAG_CT",
+        "name": "Clotting Time",
+        "abbreviation": "CT",
+        "unit": "minutes",
+        "gender": "all",
+        "reference_range": { "min": 8.0, "max": 15.0 }
+      }
+    ]
+  },
+  {
+    "panel_id": "GLUCOSE",
+    "panel_name": "Glucose / Diabetes Profile",
+    "description": "Measures fasting, random, and post-prandial blood glucose as well as OGTT values.",
+    "parameters": [
+      {
+        "id": "GLU_FBS",
+        "name": "Glucose Fasting",
+        "abbreviation": "FBS",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 80.0, "max": 150.0 }
+      },
+      {
+        "id": "GLU_RBS",
+        "name": "Glucose Random",
+        "abbreviation": "RBS",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 70.0, "max": 140.0 }
+      },
+      {
+        "id": "GLU_PP",
+        "name": "Glucose 2-Hour Post-Prandial",
+        "abbreviation": "2hPP",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 70.0, "max": 140.0 }
+      },
+      {
+        "id": "GLU_OGTT0",
+        "name": "OGTT Fasting",
+        "abbreviation": "OGTT-0",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 70.0, "max": 100.0 }
+      },
+      {
+        "id": "GLU_OGTT2",
+        "name": "OGTT 2-Hour",
+        "abbreviation": "OGTT-2h",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 70.0, "max": 140.0 }
       }
     ]
   },
   {
     "panel_id": "RFT",
     "panel_name": "Renal Function Test",
-    "description": "Evaluates kidney performance by measuring waste products, electrolytes, and filtration capacity.",
+    "description": "Evaluates kidney performance by measuring urea, creatinine, uric acid, and electrolytes.",
     "parameters": [
       {
-        "id": "RFT_001",
+        "id": "RFT_UREA",
+        "name": "Urea",
+        "abbreviation": "UREA",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 15.0, "max": 45.0 }
+      },
+      {
+        "id": "RFT_BUN",
         "name": "Blood Urea Nitrogen",
         "abbreviation": "BUN",
         "unit": "mg/dL",
         "gender": "all",
-        "reference_range": {
-          "min": 7.0,
-          "max": 20.0
-        }
+        "reference_range": { "min": 7.0, "max": 20.0 }
       },
       {
-        "id": "RFT_002",
-        "name": "Serum Creatinine",
-        "abbreviation": "Cr",
+        "id": "RFT_CREAT",
+        "name": "Creatinine",
+        "abbreviation": "CREAT",
         "unit": "mg/dL",
-        "gender": "male",
-        "reference_range": {
-          "min": 0.74,
-          "max": 1.35
-        }
-      },
-      {
-        "id": "RFT_003",
-        "name": "Serum Creatinine",
-        "abbreviation": "Cr",
-        "unit": "mg/dL",
-        "gender": "female",
-        "reference_range": {
-          "min": 0.59,
-          "max": 1.04
-        }
-      },
-      {
-        "id": "RFT_004",
-        "name": "Estimated Glomerular Filtration Rate",
-        "abbreviation": "eGFR",
-        "unit": "mL/min/1.73m²",
         "gender": "all",
-        "reference_range": {
-          "min": 60.0,
-          "max": 120.0
-        }
+        "reference_range": { "min": 0.6, "max": 1.1 }
       },
       {
-        "id": "RFT_005",
-        "name": "BUN/Creatinine Ratio",
-        "abbreviation": "BUN/Cr",
+        "id": "RFT_CrCl_M",
+        "name": "Creatinine Clearance",
+        "abbreviation": "CrCl",
+        "unit": "mL/min",
+        "gender": "male",
+        "reference_range": { "min": 97.0, "max": 137.0 }
+      },
+      {
+        "id": "RFT_CrCl_F",
+        "name": "Creatinine Clearance",
+        "abbreviation": "CrCl",
+        "unit": "mL/min",
+        "gender": "female",
+        "reference_range": { "min": 88.0, "max": 128.0 }
+      },
+      {
+        "id": "RFT_UA",
+        "name": "Uric Acid",
+        "abbreviation": "UA",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 3.4, "max": 7.0 }
+      },
+      {
+        "id": "RFT_24hUPr",
+        "name": "24-Hour Urine Protein",
+        "abbreviation": "24hUPr",
+        "unit": "mg/24hr",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 150.0 }
+      }
+    ]
+  },
+  {
+    "panel_id": "ELECTROLYTES",
+    "panel_name": "Serum Electrolytes",
+    "description": "Measures sodium, potassium, chloride, bicarbonate, calcium, phosphorus, and magnesium.",
+    "parameters": [
+      {
+        "id": "ELEC_Na",
+        "name": "Sodium",
+        "abbreviation": "Na",
+        "unit": "mEq/L",
+        "gender": "all",
+        "reference_range": { "min": 135.0, "max": 145.0 }
+      },
+      {
+        "id": "ELEC_K",
+        "name": "Potassium",
+        "abbreviation": "K",
+        "unit": "mEq/L",
+        "gender": "all",
+        "reference_range": { "min": 3.3, "max": 5.1 }
+      },
+      {
+        "id": "ELEC_Cl",
+        "name": "Chloride",
+        "abbreviation": "Cl",
+        "unit": "mEq/L",
+        "gender": "all",
+        "reference_range": { "min": 98.0, "max": 106.0 }
+      },
+      {
+        "id": "ELEC_HCO3",
+        "name": "Bicarbonate",
+        "abbreviation": "HCO3",
+        "unit": "mEq/L",
+        "gender": "all",
+        "reference_range": { "min": 22.0, "max": 29.0 }
+      },
+      {
+        "id": "ELEC_Ca",
+        "name": "Calcium",
+        "abbreviation": "Ca",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 8.1, "max": 10.4 }
+      },
+      {
+        "id": "ELEC_PO4",
+        "name": "Phosphorus",
+        "abbreviation": "PO4",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 2.7, "max": 4.5 }
+      },
+      {
+        "id": "ELEC_Mg",
+        "name": "Magnesium",
+        "abbreviation": "Mg",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 1.7, "max": 2.4 }
+      }
+    ]
+  },
+  {
+    "panel_id": "LFT",
+    "panel_name": "Liver Function Test",
+    "description": "Assesses liver health by measuring bilirubin, enzymes, protein, albumin, and related markers.",
+    "parameters": [
+      {
+        "id": "LFT_TBili",
+        "name": "Bilirubin Total",
+        "abbreviation": "T-Bili",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 1.1 }
+      },
+      {
+        "id": "LFT_DBili",
+        "name": "Bilirubin Direct (Conjugated)",
+        "abbreviation": "D-Bili",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 0.25 }
+      },
+      {
+        "id": "LFT_IBili",
+        "name": "Bilirubin Indirect (Unconjugated)",
+        "abbreviation": "I-Bili",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 0.1, "max": 1.0 }
+      },
+      {
+        "id": "LFT_ALT",
+        "name": "Alanine Aminotransferase (SGPT)",
+        "abbreviation": "ALT",
+        "unit": "U/L",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 42.0 }
+      },
+      {
+        "id": "LFT_AST",
+        "name": "Aspartate Aminotransferase (SGOT)",
+        "abbreviation": "AST",
+        "unit": "U/L",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 42.0 }
+      },
+      {
+        "id": "LFT_ALP",
+        "name": "Alkaline Phosphatase",
+        "abbreviation": "ALP",
+        "unit": "U/L",
+        "gender": "all",
+        "reference_range": { "min": 10.0, "max": 50.0 }
+      },
+      {
+        "id": "LFT_GGT_M",
+        "name": "Gamma-Glutamyl Transferase",
+        "abbreviation": "GGT",
+        "unit": "U/L",
+        "gender": "male",
+        "reference_range": { "min": 8.0, "max": 61.0 }
+      },
+      {
+        "id": "LFT_GGT_F",
+        "name": "Gamma-Glutamyl Transferase",
+        "abbreviation": "GGT",
+        "unit": "U/L",
+        "gender": "female",
+        "reference_range": { "min": 5.0, "max": 36.0 }
+      },
+      {
+        "id": "LFT_AMY",
+        "name": "Amylase",
+        "abbreviation": "AMY",
+        "unit": "U/L",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 220.0 }
+      },
+      {
+        "id": "LFT_TP",
+        "name": "Total Protein",
+        "abbreviation": "TP",
+        "unit": "g/dL",
+        "gender": "all",
+        "reference_range": { "min": 6.4, "max": 8.3 }
+      },
+      {
+        "id": "LFT_ALB",
+        "name": "Albumin",
+        "abbreviation": "ALB",
+        "unit": "g/dL",
+        "gender": "all",
+        "reference_range": { "min": 3.5, "max": 5.0 }
+      },
+      {
+        "id": "LFT_GLOB",
+        "name": "Globulin",
+        "abbreviation": "GLOB",
+        "unit": "g/dL",
+        "gender": "all",
+        "reference_range": { "min": 2.0, "max": 3.5 }
+      },
+      {
+        "id": "LFT_AG",
+        "name": "Albumin/Globulin Ratio",
+        "abbreviation": "A/G",
         "unit": "ratio",
         "gender": "all",
-        "reference_range": {
-          "min": 10.0,
-          "max": 20.0
-        }
-      },
-      {
-        "id": "RFT_006",
-        "name": "Serum Uric Acid",
-        "abbreviation": "UA",
-        "unit": "mg/dL",
-        "gender": "male",
-        "reference_range": {
-          "min": 3.4,
-          "max": 7.0
-        }
-      },
-      {
-        "id": "RFT_007",
-        "name": "Serum Uric Acid",
-        "abbreviation": "UA",
-        "unit": "mg/dL",
-        "gender": "female",
-        "reference_range": {
-          "min": 2.4,
-          "max": 6.0
-        }
-      },
-      {
-        "id": "RFT_008",
-        "name": "Sodium",
-        "abbreviation": "Na⁺",
-        "unit": "mEq/L",
-        "gender": "all",
-        "reference_range": {
-          "min": 136.0,
-          "max": 145.0
-        }
-      },
-      {
-        "id": "RFT_009",
-        "name": "Potassium",
-        "abbreviation": "K⁺",
-        "unit": "mEq/L",
-        "gender": "all",
-        "reference_range": {
-          "min": 3.5,
-          "max": 5.1
-        }
-      },
-      {
-        "id": "RFT_010",
-        "name": "Chloride",
-        "abbreviation": "Cl⁻",
-        "unit": "mEq/L",
-        "gender": "all",
-        "reference_range": {
-          "min": 98.0,
-          "max": 107.0
-        }
-      },
-      {
-        "id": "RFT_011",
-        "name": "Bicarbonate",
-        "abbreviation": "HCO₃⁻",
-        "unit": "mEq/L",
-        "gender": "all",
-        "reference_range": {
-          "min": 22.0,
-          "max": 29.0
-        }
-      },
-      {
-        "id": "RFT_012",
-        "name": "Calcium",
-        "abbreviation": "Ca²⁺",
-        "unit": "mg/dL",
-        "gender": "all",
-        "reference_range": {
-          "min": 8.5,
-          "max": 10.5
-        }
-      },
-      {
-        "id": "RFT_013",
-        "name": "Phosphorus",
-        "abbreviation": "PO₄",
-        "unit": "mg/dL",
-        "gender": "all",
-        "reference_range": {
-          "min": 2.5,
-          "max": 4.5
-        }
+        "reference_range": { "min": 1.1, "max": 2.5 }
       }
     ]
   },
   {
     "panel_id": "LIPID",
     "panel_name": "Lipid Profile",
-    "description": "Measures fats and fatty substances in the blood to assess cardiovascular risk.",
+    "description": "Measures total cholesterol, LDL, HDL, VLDL, triglycerides, and total lipids to assess cardiovascular risk.",
     "parameters": [
       {
-        "id": "LIPID_001",
+        "id": "LIP_CHOL",
         "name": "Total Cholesterol",
-        "abbreviation": "TC",
+        "abbreviation": "CHOL",
         "unit": "mg/dL",
         "gender": "all",
-        "reference_range": {
-          "min": 0.0,
-          "max": 200.0
-        },
-        "interpretation": {
-          "desirable": { "min": 0.0, "max": 200.0 },
-          "borderline_high": { "min": 200.0, "max": 239.0 },
-          "high": { "min": 240.0, "max": null }
-        }
+        "reference_range": { "min": 0.0, "max": 190.0 }
       },
       {
-        "id": "LIPID_002",
-        "name": "Low-Density Lipoprotein Cholesterol",
-        "abbreviation": "LDL-C",
-        "unit": "mg/dL",
-        "gender": "all",
-        "reference_range": {
-          "min": 0.0,
-          "max": 100.0
-        },
-        "interpretation": {
-          "optimal": { "min": 0.0, "max": 100.0 },
-          "near_optimal": { "min": 100.0, "max": 129.0 },
-          "borderline_high": { "min": 130.0, "max": 159.0 },
-          "high": { "min": 160.0, "max": 189.0 },
-          "very_high": { "min": 190.0, "max": null }
-        }
-      },
-      {
-        "id": "LIPID_003",
-        "name": "High-Density Lipoprotein Cholesterol",
-        "abbreviation": "HDL-C",
-        "unit": "mg/dL",
-        "gender": "male",
-        "reference_range": {
-          "min": 40.0,
-          "max": 60.0
-        },
-        "interpretation": {
-          "low_risk": { "min": 60.0, "max": null },
-          "acceptable": { "min": 40.0, "max": 59.0 },
-          "high_risk": { "min": 0.0, "max": 40.0 }
-        }
-      },
-      {
-        "id": "LIPID_004",
-        "name": "High-Density Lipoprotein Cholesterol",
-        "abbreviation": "HDL-C",
-        "unit": "mg/dL",
-        "gender": "female",
-        "reference_range": {
-          "min": 50.0,
-          "max": 60.0
-        },
-        "interpretation": {
-          "low_risk": { "min": 60.0, "max": null },
-          "acceptable": { "min": 50.0, "max": 59.0 },
-          "high_risk": { "min": 0.0, "max": 50.0 }
-        }
-      },
-      {
-        "id": "LIPID_005",
+        "id": "LIP_TG",
         "name": "Triglycerides",
         "abbreviation": "TG",
         "unit": "mg/dL",
         "gender": "all",
-        "reference_range": {
-          "min": 0.0,
-          "max": 150.0
-        },
-        "interpretation": {
-          "normal": { "min": 0.0, "max": 150.0 },
-          "borderline_high": { "min": 150.0, "max": 199.0 },
-          "high": { "min": 200.0, "max": 499.0 },
-          "very_high": { "min": 500.0, "max": null }
-        }
+        "reference_range": { "min": 0.0, "max": 200.0 }
       },
       {
-        "id": "LIPID_006",
-        "name": "Very Low-Density Lipoprotein Cholesterol",
-        "abbreviation": "VLDL-C",
+        "id": "LIP_HDL_M",
+        "name": "HDL Cholesterol",
+        "abbreviation": "HDL",
+        "unit": "mg/dL",
+        "gender": "male",
+        "reference_range": { "min": 40.0, "max": null }
+      },
+      {
+        "id": "LIP_HDL_F",
+        "name": "HDL Cholesterol",
+        "abbreviation": "HDL",
+        "unit": "mg/dL",
+        "gender": "female",
+        "reference_range": { "min": 50.0, "max": null }
+      },
+      {
+        "id": "LIP_LDL",
+        "name": "LDL Cholesterol",
+        "abbreviation": "LDL",
         "unit": "mg/dL",
         "gender": "all",
-        "reference_range": {
-          "min": 2.0,
-          "max": 30.0
-        }
+        "reference_range": { "min": 0.0, "max": 100.0 }
       },
       {
-        "id": "LIPID_007",
-        "name": "Total Cholesterol / HDL Ratio",
-        "abbreviation": "TC/HDL",
-        "unit": "ratio",
+        "id": "LIP_VLDL",
+        "name": "VLDL Cholesterol",
+        "abbreviation": "VLDL",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 2.0, "max": 30.0 }
+      },
+      {
+        "id": "LIP_TL",
+        "name": "Total Lipids",
+        "abbreviation": "TL",
+        "unit": "mg/dL",
+        "gender": "all",
+        "reference_range": { "min": 400.0, "max": 800.0 }
+      }
+    ]
+  },
+  {
+    "panel_id": "CARDIAC",
+    "panel_name": "Cardiac Markers",
+    "description": "Evaluates heart muscle damage via LDH, CPK, CK-MB, and troponins.",
+    "parameters": [
+      {
+        "id": "CAR_LDH",
+        "name": "Lactate Dehydrogenase",
+        "abbreviation": "LDH",
+        "unit": "U/L",
+        "gender": "all",
+        "reference_range": { "min": 230.0, "max": 460.0 }
+      },
+      {
+        "id": "CAR_CPK_M",
+        "name": "Creatine Phosphokinase Total",
+        "abbreviation": "CPK/CK",
+        "unit": "U/L",
         "gender": "male",
-        "reference_range": {
-          "min": 0.0,
-          "max": 5.0
-        }
+        "reference_range": { "min": 39.0, "max": 308.0 }
       },
       {
-        "id": "LIPID_008",
-        "name": "Total Cholesterol / HDL Ratio",
-        "abbreviation": "TC/HDL",
-        "unit": "ratio",
+        "id": "CAR_CPK_F",
+        "name": "Creatine Phosphokinase Total",
+        "abbreviation": "CPK/CK",
+        "unit": "U/L",
         "gender": "female",
-        "reference_range": {
-          "min": 0.0,
-          "max": 4.5
-        }
+        "reference_range": { "min": 26.0, "max": 192.0 }
+      },
+      {
+        "id": "CAR_CKMB",
+        "name": "Creatine Kinase-MB",
+        "abbreviation": "CK-MB",
+        "unit": "U/L",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 24.0 }
+      },
+      {
+        "id": "CAR_CKNAK",
+        "name": "Creatine Kinase Total (CK-Nak)",
+        "abbreviation": "CK-NAK",
+        "unit": "U/L",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 190.0 }
+      },
+      {
+        "id": "CAR_TnI",
+        "name": "Troponin I",
+        "abbreviation": "TnI",
+        "unit": "ng/mL",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 0.04 }
+      },
+      {
+        "id": "CAR_TnT",
+        "name": "Troponin T",
+        "abbreviation": "TnT",
+        "unit": "ng/mL",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 0.01 }
+      }
+    ]
+  },
+  {
+    "panel_id": "THYROID",
+    "panel_name": "Thyroid Function Test",
+    "description": "Evaluates thyroid gland and endocrine hormones including TSH, T3, T4, FT3, FT4, cortisol, and sex hormones.",
+    "parameters": [
+      {
+        "id": "THY_TSH",
+        "name": "Thyroid Stimulating Hormone",
+        "abbreviation": "TSH",
+        "unit": "mIU/L",
+        "gender": "all",
+        "reference_range": { "min": 0.27, "max": 4.2 }
+      },
+      {
+        "id": "THY_T3",
+        "name": "Triiodothyronine Total",
+        "abbreviation": "T3",
+        "unit": "ng/dL",
+        "gender": "all",
+        "reference_range": { "min": 80.0, "max": 200.0 }
+      },
+      {
+        "id": "THY_T4",
+        "name": "Thyroxine Total",
+        "abbreviation": "T4",
+        "unit": "µg/dL",
+        "gender": "all",
+        "reference_range": { "min": 5.0, "max": 12.0 }
+      },
+      {
+        "id": "THY_FT3",
+        "name": "Free Triiodothyronine",
+        "abbreviation": "FT3",
+        "unit": "pg/mL",
+        "gender": "all",
+        "reference_range": { "min": 2.0, "max": 4.4 }
+      },
+      {
+        "id": "THY_FT4",
+        "name": "Free Thyroxine",
+        "abbreviation": "FT4",
+        "unit": "ng/dL",
+        "gender": "all",
+        "reference_range": { "min": 0.93, "max": 1.7 }
+      },
+      {
+        "id": "THY_PRL_M",
+        "name": "Serum Prolactin",
+        "abbreviation": "PRL",
+        "unit": "ng/mL",
+        "gender": "male",
+        "reference_range": { "min": 4.04, "max": 15.2 }
+      },
+      {
+        "id": "THY_PRL_F",
+        "name": "Serum Prolactin",
+        "abbreviation": "PRL",
+        "unit": "ng/mL",
+        "gender": "female",
+        "reference_range": { "min": 4.79, "max": 23.3 }
+      },
+      {
+        "id": "THY_FSH_M",
+        "name": "Follicle Stimulating Hormone",
+        "abbreviation": "FSH",
+        "unit": "mIU/mL",
+        "gender": "male",
+        "reference_range": { "min": 1.5, "max": 12.4 }
+      },
+      {
+        "id": "THY_FSH_F",
+        "name": "Follicle Stimulating Hormone",
+        "abbreviation": "FSH",
+        "unit": "mIU/mL",
+        "gender": "female",
+        "reference_range": { "min": 3.5, "max": 12.5 }
+      },
+      {
+        "id": "THY_LH_M",
+        "name": "Luteinising Hormone",
+        "abbreviation": "LH",
+        "unit": "mIU/mL",
+        "gender": "male",
+        "reference_range": { "min": 1.7, "max": 8.6 }
+      },
+      {
+        "id": "THY_LH_F",
+        "name": "Luteinising Hormone",
+        "abbreviation": "LH",
+        "unit": "mIU/mL",
+        "gender": "female",
+        "reference_range": { "min": 2.0, "max": 15.0 }
+      },
+      {
+        "id": "THY_CORT",
+        "name": "Cortisol (Morning)",
+        "abbreviation": "CORT",
+        "unit": "µg/dL",
+        "gender": "all",
+        "reference_range": { "min": 6.2, "max": 19.4 }
+      },
+      {
+        "id": "THY_TEST_M",
+        "name": "Testosterone Total",
+        "abbreviation": "TEST",
+        "unit": "ng/dL",
+        "gender": "male",
+        "reference_range": { "min": 270.0, "max": 1070.0 }
+      },
+      {
+        "id": "THY_TEST_F",
+        "name": "Testosterone Total",
+        "abbreviation": "TEST",
+        "unit": "ng/dL",
+        "gender": "female",
+        "reference_range": { "min": 15.0, "max": 70.0 }
+      }
+    ]
+  },
+  {
+    "panel_id": "IRON",
+    "panel_name": "Iron Studies",
+    "description": "Evaluates iron stores, transport capacity, and saturation via serum iron, TIBC, ferritin, and transferrin.",
+    "parameters": [
+      {
+        "id": "IRN_Fe_M",
+        "name": "Serum Iron",
+        "abbreviation": "Fe",
+        "unit": "µg/dL",
+        "gender": "male",
+        "reference_range": { "min": 65.0, "max": 175.0 }
+      },
+      {
+        "id": "IRN_Fe_F",
+        "name": "Serum Iron",
+        "abbreviation": "Fe",
+        "unit": "µg/dL",
+        "gender": "female",
+        "reference_range": { "min": 50.0, "max": 170.0 }
+      },
+      {
+        "id": "IRN_TIBC",
+        "name": "Total Iron Binding Capacity",
+        "abbreviation": "TIBC",
+        "unit": "µg/dL",
+        "gender": "all",
+        "reference_range": { "min": 250.0, "max": 370.0 }
+      },
+      {
+        "id": "IRN_FERR_M",
+        "name": "Serum Ferritin",
+        "abbreviation": "FERR",
+        "unit": "ng/mL",
+        "gender": "male",
+        "reference_range": { "min": 12.0, "max": 300.0 }
+      },
+      {
+        "id": "IRN_FERR_F",
+        "name": "Serum Ferritin",
+        "abbreviation": "FERR",
+        "unit": "ng/mL",
+        "gender": "female",
+        "reference_range": { "min": 12.0, "max": 150.0 }
+      },
+      {
+        "id": "IRN_TSAT",
+        "name": "Transferrin Saturation",
+        "abbreviation": "TSAT",
+        "unit": "%",
+        "gender": "all",
+        "reference_range": { "min": 20.0, "max": 50.0 }
+      }
+    ]
+  },
+  {
+    "panel_id": "SEROLOGY",
+    "panel_name": "Serology & Infection Screen",
+    "description": "Rapid immunoassays for CRP, hepatitis, HIV, malaria, dengue, Widal, brucella, and autoimmune markers.",
+    "parameters": [
+      {
+        "id": "SER_CRP",
+        "name": "C-Reactive Protein",
+        "abbreviation": "CRP",
+        "unit": "mg/L",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 6.0 }
+      },
+      {
+        "id": "SER_hsCRP",
+        "name": "High-Sensitivity CRP",
+        "abbreviation": "hs-CRP",
+        "unit": "mg/L",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 1.0 }
+      },
+      {
+        "id": "SER_ASOT",
+        "name": "Anti-Streptolysin O Titre",
+        "abbreviation": "ASOT",
+        "unit": "IU/mL",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 200.0 }
+      },
+      {
+        "id": "SER_RF",
+        "name": "Rheumatoid Factor",
+        "abbreviation": "RF",
+        "unit": "IU/mL",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 20.0 }
+      },
+      {
+        "id": "SER_HBsAg",
+        "name": "Hepatitis B Surface Antigen",
+        "abbreviation": "HBsAg",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_HBsAb",
+        "name": "Hepatitis B Surface Antibody",
+        "abbreviation": "HBsAb",
+        "unit": "mIU/mL",
+        "gender": "all",
+        "reference_range": { "min": 10.0, "max": null }
+      },
+      {
+        "id": "SER_HBeAg",
+        "name": "Hepatitis B e-Antigen",
+        "abbreviation": "HBeAg",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_HBcAb",
+        "name": "Hepatitis B Core Antibody",
+        "abbreviation": "HBcAb",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_HCV",
+        "name": "Hepatitis C Virus Antibody",
+        "abbreviation": "Anti-HCV",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_HIV",
+        "name": "HIV 1 & 2 Antibody",
+        "abbreviation": "HIV 1&2",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_VDRL",
+        "name": "Venereal Disease Research Laboratory",
+        "abbreviation": "VDRL",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_HP",
+        "name": "Helicobacter Pylori Antibody",
+        "abbreviation": "H.Pylori Ab",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_WIDAL_TO",
+        "name": "Widal Test – S. Typhi O",
+        "abbreviation": "Widal-TO",
+        "unit": "titre",
+        "gender": "all",
+        "reference_range": { "min": null, "max": 80.0 }
+      },
+      {
+        "id": "SER_WIDAL_TH",
+        "name": "Widal Test – S. Typhi H",
+        "abbreviation": "Widal-TH",
+        "unit": "titre",
+        "gender": "all",
+        "reference_range": { "min": null, "max": 80.0 }
+      },
+      {
+        "id": "SER_WIDAL_AO",
+        "name": "Widal Test – A. Paratyphi AO/AH",
+        "abbreviation": "Widal-AO/AH",
+        "unit": "titre",
+        "gender": "all",
+        "reference_range": { "min": null, "max": 80.0 }
+      },
+      {
+        "id": "SER_TYPHIDOT_M",
+        "name": "Typhidot Rapid Test IgM",
+        "abbreviation": "Typhidot-IgM",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_TYPHIDOT_G",
+        "name": "Typhidot Rapid Test IgG",
+        "abbreviation": "Typhidot-IgG",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_BRU_AB",
+        "name": "Brucella Abortus Antibody",
+        "abbreviation": "Brucella-Ab",
+        "unit": "titre",
+        "gender": "all",
+        "reference_range": { "min": null, "max": 80.0 }
+      },
+      {
+        "id": "SER_BRU_MEL",
+        "name": "Brucella Melitensis Antibody",
+        "abbreviation": "Brucella-Mel",
+        "unit": "titre",
+        "gender": "all",
+        "reference_range": { "min": null, "max": 80.0 }
+      },
+      {
+        "id": "SER_MP",
+        "name": "Malarial Parasite Rapid Test",
+        "abbreviation": "MP-ICT",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_DENG_NS1",
+        "name": "Dengue NS1 Antigen",
+        "abbreviation": "Dengue-NS1",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_DENG_IgM",
+        "name": "Dengue IgM",
+        "abbreviation": "Dengue-IgM",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_DENG_IgG",
+        "name": "Dengue IgG",
+        "abbreviation": "Dengue-IgG",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_ANA",
+        "name": "Anti-Nuclear Antibody",
+        "abbreviation": "ANA",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_dsDNA",
+        "name": "Anti-dsDNA Antibody",
+        "abbreviation": "Anti-dsDNA",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_DCT",
+        "name": "Direct Coombs Test",
+        "abbreviation": "DCT/DAT",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_ICT",
+        "name": "Indirect Coombs Test",
+        "abbreviation": "ICT/IAT",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "SER_hCG",
+        "name": "Pregnancy Test (hCG Qualitative)",
+        "abbreviation": "UCG/hCG",
+        "unit": "qualitative",
+        "gender": "female",
+        "reference_range": { "min": null, "max": null }
+      }
+    ]
+  },
+  {
+    "panel_id": "URINE_RE",
+    "panel_name": "Urine Routine Examination",
+    "description": "Routine urine analysis covering specific gravity, pH, albumin, glucose, pus cells, and red blood cells.",
+    "parameters": [
+      {
+        "id": "URE_SG",
+        "name": "Urine Specific Gravity",
+        "abbreviation": "USG",
+        "unit": "dimensionless",
+        "gender": "all",
+        "reference_range": { "min": 1.005, "max": 1.03 }
+      },
+      {
+        "id": "URE_pH",
+        "name": "Urine pH",
+        "abbreviation": "U-pH",
+        "unit": "pH",
+        "gender": "all",
+        "reference_range": { "min": 4.5, "max": 8.5 }
+      },
+      {
+        "id": "URE_WBC",
+        "name": "Urine Pus Cells (Leucocytes)",
+        "abbreviation": "U-WBC",
+        "unit": "cells/HPF",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 5.0 }
+      },
+      {
+        "id": "URE_RBC",
+        "name": "Urine Red Blood Cells",
+        "abbreviation": "U-RBC",
+        "unit": "cells/HPF",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 2.0 }
+      }
+    ]
+  },
+  {
+    "panel_id": "SFA",
+    "panel_name": "Semen / Seminal Fluid Analysis",
+    "description": "Evaluates male fertility parameters per WHO 2021 criteria including volume, motility, morphology and pH.",
+    "parameters": [
+      {
+        "id": "SFA_VOL",
+        "name": "Semen Volume",
+        "abbreviation": "SFA-VOL",
+        "unit": "mL",
+        "gender": "male",
+        "reference_range": { "min": 1.4, "max": null }
+      },
+      {
+        "id": "SFA_CONC",
+        "name": "Sperm Concentration",
+        "abbreviation": "SFA-CONC",
+        "unit": "million/mL",
+        "gender": "male",
+        "reference_range": { "min": 16.0, "max": null }
+      },
+      {
+        "id": "SFA_PR",
+        "name": "Progressive Sperm Motility",
+        "abbreviation": "SFA-PR",
+        "unit": "%",
+        "gender": "male",
+        "reference_range": { "min": 30.0, "max": null }
+      },
+      {
+        "id": "SFA_TM",
+        "name": "Total Sperm Motility (PR+NP)",
+        "abbreviation": "SFA-TM",
+        "unit": "%",
+        "gender": "male",
+        "reference_range": { "min": 42.0, "max": null }
+      },
+      {
+        "id": "SFA_MORPH",
+        "name": "Normal Sperm Morphology",
+        "abbreviation": "SFA-MORPH",
+        "unit": "%",
+        "gender": "male",
+        "reference_range": { "min": 4.0, "max": null }
+      },
+      {
+        "id": "SFA_pH",
+        "name": "Semen pH",
+        "abbreviation": "SFA-pH",
+        "unit": "pH",
+        "gender": "male",
+        "reference_range": { "min": 7.2, "max": 8.0 }
+      },
+      {
+        "id": "SFA_LIQ",
+        "name": "Semen Liquefaction Time",
+        "abbreviation": "SFA-LIQ",
+        "unit": "minutes",
+        "gender": "male",
+        "reference_range": { "min": 0.0, "max": 60.0 }
+      }
+    ]
+  },
+  {
+    "panel_id": "MICRO",
+    "panel_name": "Microbiology",
+    "description": "Culture, sensitivity, microscopy, and rapid tests for TB (AFB/Mantoux), fungi, leishmania, and C&S.",
+    "parameters": [
+      {
+        "id": "MIC_AFB",
+        "name": "Sputum Acid-Fast Bacilli (ZN Stain)",
+        "abbreviation": "AFB",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "MIC_TST",
+        "name": "Tuberculin Test (Mantoux)",
+        "abbreviation": "TST",
+        "unit": "mm induration",
+        "gender": "all",
+        "reference_range": { "min": null, "max": 10.0 }
+      },
+      {
+        "id": "MIC_CS",
+        "name": "Culture & Sensitivity",
+        "abbreviation": "C&S",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "MIC_MYCO",
+        "name": "Mycelia Examination (KOH Wet Prep)",
+        "abbreviation": "MYCO",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      },
+      {
+        "id": "MIC_LT",
+        "name": "L.T. Bodies (Leishman Stain)",
+        "abbreviation": "LT-Bodies",
+        "unit": "qualitative",
+        "gender": "all",
+        "reference_range": { "min": null, "max": null }
+      }
+    ]
+  },
+  {
+    "panel_id": "VITAMINS",
+    "panel_name": "Vitamins & Minerals",
+    "description": "Assessment of vitamin D, B12, and folate levels.",
+    "parameters": [
+      {
+        "id": "VIT_D",
+        "name": "Vitamin D (25-OH)",
+        "abbreviation": "Vit-D",
+        "unit": "ng/mL",
+        "gender": "all",
+        "reference_range": { "min": 30.0, "max": 100.0 }
+      },
+      {
+        "id": "VIT_B12",
+        "name": "Vitamin B12 (Cobalamin)",
+        "abbreviation": "Vit-B12",
+        "unit": "pg/mL",
+        "gender": "all",
+        "reference_range": { "min": 200.0, "max": 900.0 }
+      },
+      {
+        "id": "VIT_FOLATE",
+        "name": "Folic Acid (Folate)",
+        "abbreviation": "FOLATE",
+        "unit": "ng/mL",
+        "gender": "all",
+        "reference_range": { "min": 3.0, "max": 17.0 }
+      }
+    ]
+  },
+  {
+    "panel_id": "TUMOUR",
+    "panel_name": "Tumour Markers",
+    "description": "Screens for common tumour antigens including PSA, AFP, CEA, CA-125, CA19-9, and acid phosphatase.",
+    "parameters": [
+      {
+        "id": "TUM_PSA",
+        "name": "Prostate Specific Antigen",
+        "abbreviation": "PSA",
+        "unit": "ng/mL",
+        "gender": "male",
+        "reference_range": { "min": 0.0, "max": 4.0 }
+      },
+      {
+        "id": "TUM_AFP",
+        "name": "Alpha Fetoprotein",
+        "abbreviation": "AFP",
+        "unit": "ng/mL",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 10.0 }
+      },
+      {
+        "id": "TUM_CEA",
+        "name": "Carcinoembryonic Antigen",
+        "abbreviation": "CEA",
+        "unit": "ng/mL",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 3.0 }
+      },
+      {
+        "id": "TUM_CA125",
+        "name": "Cancer Antigen 125",
+        "abbreviation": "CA-125",
+        "unit": "U/mL",
+        "gender": "female",
+        "reference_range": { "min": 0.0, "max": 35.0 }
+      },
+      {
+        "id": "TUM_CA199",
+        "name": "Cancer Antigen 19-9",
+        "abbreviation": "CA19-9",
+        "unit": "U/mL",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 37.0 }
+      },
+      {
+        "id": "TUM_ACP",
+        "name": "Acid Phosphatase",
+        "abbreviation": "ACP",
+        "unit": "U/L",
+        "gender": "all",
+        "reference_range": { "min": 0.0, "max": 5.5 }
       }
     ]
   }
