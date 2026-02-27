@@ -114,9 +114,9 @@ function App() {
         {/* Sidebar */}
         <div
           className={`
-          fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out
-          md:relative md:translate-x-0 md:z-auto md:shrink-0
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          fixed inset-y-0 left-0 z-40 transition-all duration-300 ease-in-out
+          md:relative md:z-auto md:shrink-0
+          ${sidebarOpen ? "translate-x-0 w-72 opacity-100" : "-translate-x-full md:translate-x-0 md:w-0 md:opacity-0 md:pointer-events-none"}
         `}
         >
           <Sidebar
@@ -261,7 +261,7 @@ function App() {
       {/* Toast notifications */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-[200] flex items-center space-x-2 px-4 py-3 rounded-xl shadow-xl text-white text-sm font-semibold transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
+          className={`fixed bottom-6 right-6 z-200 flex items-center space-x-2 px-4 py-3 rounded-xl shadow-xl text-white text-sm font-semibold transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
             toast.type === "error" ? "bg-gray-800" : "bg-gray-900"
           }`}
         >

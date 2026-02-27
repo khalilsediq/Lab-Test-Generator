@@ -314,7 +314,7 @@ export default function TestFields({
               onDragOver={(e) => onDragOver(e, idx)}
               onDrop={() => onDrop(idx)}
               onDragEnd={onDragEnd}
-              className={`grid grid-cols-[24px_1fr_180px_180px_32px] gap-2 items-center px-3 py-2.5 rounded-xl border transition-all ${
+              className={`grid grid-cols-[24px_1fr_32px] sm:grid-cols-[24px_1fr_180px_180px_32px] gap-2 items-center px-3 py-2.5 rounded-xl border transition-all ${
                 isDragTarget
                   ? "border-red-400 bg-red-50 scale-[1.01]"
                   : isDragging
@@ -333,74 +333,77 @@ export default function TestFields({
                 </svg>
               </div>
 
-              {/* Name */}
-              <div className="min-w-0">
-                <span className="text-sm font-semibold text-gray-700">
-                  {field.name}
-                </span>
-                {field.abbreviation && (
-                  <span className="ml-1.5 text-[11px] text-gray-400 font-mono">
-                    ({field.abbreviation})
+              {/* Name + Input + Range (Responsive Layout) */}
+              <div className="flex flex-col sm:contents min-w-0">
+                {/* Name */}
+                <div className="min-w-0 mb-1 sm:mb-0">
+                  <span className="text-sm font-semibold text-gray-700">
+                    {field.name}
                   </span>
-                )}
-              </div>
+                  {field.abbreviation && (
+                    <span className="ml-1.5 text-[11px] text-gray-400 font-mono">
+                      ({field.abbreviation})
+                    </span>
+                  )}
+                </div>
 
-              {/* Input */}
-              <div className="flex items-center space-x-2">
-                {qual ? (
-                  <input
-                    type="text"
-                    value={testData[field.id] || ""}
-                    onChange={(e) => handleChange(field.id, e.target.value)}
-                    placeholder="e.g. Negative"
-                    className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all outline-none"
-                  />
-                ) : (
-                  <>
+                {/* Input */}
+                <div className="flex items-center space-x-2 mb-1 sm:mb-0">
+                  {qual ? (
                     <input
-                      type="number"
-                      step="any"
+                      type="text"
                       value={testData[field.id] || ""}
                       onChange={(e) => handleChange(field.id, e.target.value)}
-                      className={`w-24 px-3 py-2 text-center rounded-lg bg-white border transition-all outline-none font-mono font-medium text-sm ${
-                        abn
-                          ? "border-red-400 text-red-700 bg-red-50 focus:ring-red-500/20"
-                          : "border-gray-300 focus:border-red-500 focus:ring-red-500/10"
-                      } focus:ring-4`}
+                      placeholder="e.g. Negative"
+                      className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all outline-none"
                     />
-                    <span className="text-[11px] text-gray-500 leading-tight">
-                      {field.unit}
-                    </span>
-                  </>
-                )}
-              </div>
+                  ) : (
+                    <>
+                      <input
+                        type="number"
+                        step="any"
+                        value={testData[field.id] || ""}
+                        onChange={(e) => handleChange(field.id, e.target.value)}
+                        className={`w-full sm:w-24 px-3 py-2 text-center rounded-lg bg-white border transition-all outline-none font-mono font-medium text-sm ${
+                          abn
+                            ? "border-red-400 text-red-700 bg-red-50 focus:ring-red-500/20"
+                            : "border-gray-300 focus:border-red-500 focus:ring-red-500/10"
+                        } focus:ring-4`}
+                      />
+                      <span className="text-[11px] text-gray-500 leading-tight shrink-0">
+                        {field.unit}
+                      </span>
+                    </>
+                  )}
+                </div>
 
-              {/* Range */}
-              <div className="text-right">
-                <div
-                  className={`text-[10px] font-bold ${gender === "Male" ? "text-blue-500" : "text-pink-500"}`}
-                >
-                  {gender === "Male" ? "♂" : "♀"} Normal
-                </div>
-                <div
-                  className={`text-xs font-mono ${abn ? "text-red-600 font-bold" : "text-gray-500"}`}
-                >
-                  {qual
-                    ? rr.general || "—"
-                    : `${formatRange(rr, gender)}${field.unit ? ` ${field.unit}` : ""}`}
-                </div>
-                {abn && (
-                  <div className="text-[10px] text-red-500 font-bold">
-                    ⚠ Abnormal
+                {/* Range */}
+                <div className="text-left sm:text-right">
+                  <div
+                    className={`text-[10px] font-bold ${gender === "Male" ? "text-blue-500" : "text-pink-500"}`}
+                  >
+                    {gender === "Male" ? "♂" : "♀"} Normal
                   </div>
-                )}
+                  <div
+                    className={`text-xs font-mono ${abn ? "text-red-600 font-bold" : "text-gray-500"}`}
+                  >
+                    {qual
+                      ? rr.general || "—"
+                      : `${formatRange(rr, gender)}${field.unit ? ` ${field.unit}` : ""}`}
+                  </div>
+                  {abn && (
+                    <div className="text-[10px] text-red-500 font-bold">
+                      ⚠ Abnormal
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Edit button */}
               <button
                 onClick={() => setEditingId(field.id)}
                 title="Edit reference range"
-                className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all shrink-0"
               >
                 <svg
                   className="w-3.5 h-3.5"

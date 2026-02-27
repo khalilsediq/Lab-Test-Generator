@@ -140,7 +140,7 @@ export default function ReportTemplate({
         </div>
       </div>
 
-      <hr className="border-t-[4px] border-red-600 mb-6" />
+      <hr className="border-t-4 border-red-600 mb-6" />
 
       {/* ── Patient Info ── */}
       <div className="grid grid-cols-2 gap-x-12 gap-y-2 mb-6 text-sm font-semibold">
