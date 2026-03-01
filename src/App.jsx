@@ -22,6 +22,9 @@ function App() {
   const [editedRanges, setEditedRanges] = useState(() =>
     load("editedRanges", {}),
   );
+  const [editedParams, setEditedParams] = useState(() =>
+    load("editedParams", {}),
+  );
   const [paramOrders, setParamOrders] = useState(() => load("paramOrders", {}));
   const [showCustomModal, setShowCustomModal] = useState(false);
   // Sidebar: open by default on desktop, closed on mobile
@@ -86,6 +89,26 @@ function App() {
     };
     persist("editedRanges", updated, setEditedRanges);
     showToast("Reference range saved");
+  };
+
+  const handleSaveParam = (panelId, paramId, updatedFields) => {
+    const updated = {
+      ...editedParams,
+      [panelId]: {
+        ...(editedParams[panelId] || {}),
+        [paramId]: updatedFields,
+      },
+    };
+    persist("editedParams", updated, setEditedParams);
+    showToast("Parameter saved");
+  };
+
+  const handleResetParam = (panelId, paramId) => {
+    const panelOverrides = { ...(editedParams[panelId] || {}) };
+    delete panelOverrides[paramId];
+    const updated = { ...editedParams, [panelId]: panelOverrides };
+    persist("editedParams", updated, setEditedParams);
+    showToast("Parameter reset to default");
   };
 
   const handleSaveOrder = (panelId, orderedIds) => {
@@ -210,8 +233,11 @@ function App() {
               patientDetails={patientDetails}
               testTemplates={testTemplates}
               editedRanges={editedRanges}
+              editedParams={editedParams}
               paramOrders={paramOrders}
               onSaveRange={handleSaveRange}
+              onSaveParam={handleSaveParam}
+              onResetParam={handleResetParam}
               onSaveOrder={handleSaveOrder}
             />
 

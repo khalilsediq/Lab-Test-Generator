@@ -2,16 +2,22 @@ import { useState, useMemo } from "react";
 import logo from "../assets/images/Logo.png";
 
 const CATEGORY_ORDER = [
+  "Blood Grouping & Cross Matching",
   "Hematology",
+  "Hematology – CBC Advanced",
   "Coagulation",
   "Biochemistry",
+  "Biochemistry – Electrolytes",
+  "Biochemistry – Blood Gas",
   "Liver Function",
   "Lipids & Cardiac",
   "Endocrinology",
   "Iron Studies",
   "Serology & Infection",
   "Urine & Fluid",
+  "Urine Analysis",
   "Microbiology",
+  "Seminal Fluid Analysis",
   "Vitamins & Minerals",
   "Tumour Markers",
   "Custom",
@@ -37,10 +43,13 @@ export default function Sidebar({
     return testTemplates.filter((panel) => {
       if (panel.panel_name.toLowerCase().includes(q)) return true;
       if (panel.panel_id.toLowerCase().includes(q)) return true;
+      if ((panel.category || "").toLowerCase().includes(q)) return true;
+      if ((panel.description || "").toLowerCase().includes(q)) return true;
       return panel.parameters.some(
         (p) =>
           p.name.toLowerCase().includes(q) ||
-          (p.abbreviation || "").toLowerCase().includes(q),
+          (p.abbreviation || "").toLowerCase().includes(q) ||
+          (p.unit || "").toLowerCase().includes(q),
       );
     });
   }, [testTemplates, q]);

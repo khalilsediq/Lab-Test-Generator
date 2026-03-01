@@ -2010,5 +2010,699 @@
         }
       }
     ]
+  },
+  {
+    "panel_id": "BLOOD_GROUP",
+    "panel_name": "Blood Grouping & Cross Matching",
+    "category": "Blood Grouping & Cross Matching",
+    "description": "ABO/Rh blood group determination, donor-recipient cross matching, and pre-transfusion infectious disease screening.",
+    "parameters": [
+      {
+        "id": "BLOOD_GROUP_ABO",
+        "name": "ABO Blood Group",
+        "abbreviation": "ABO-BG",
+        "unit": "qualitative",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "A / B / AB / O (patient-specific; no abnormal value)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "BLOOD_GROUP_Rh",
+        "name": "Rh Factor",
+        "abbreviation": "Rh",
+        "unit": "qualitative",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Positive or Negative (patient-specific; neither is abnormal)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "BLOOD_GROUP_XMatch",
+        "name": "Cross Matching",
+        "abbreviation": "X-Match",
+        "unit": "qualitative",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Compatible (OK) — No Agglutination",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "BLOOD_GROUP_HBsAg",
+        "name": "Hepatitis B Surface Antigen (ICT)",
+        "abbreviation": "HBsAg-ICT",
+        "unit": "qualitative",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Negative (ON ICT)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "BLOOD_GROUP_HCV",
+        "name": "HCV Antibodies (ICT)",
+        "abbreviation": "HCV-ICT",
+        "unit": "qualitative",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Negative (ON ICT)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "BLOOD_GROUP_HIV",
+        "name": "HIV Antibodies (ICT)",
+        "abbreviation": "HIV-ICT",
+        "unit": "qualitative",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Negative (ON ICT)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      }
+    ]
+  },
+  {
+    "panel_id": "CBC_ADVANCED",
+    "panel_name": "CBC Advanced Analyzer Parameters",
+    "category": "Hematology – CBC Advanced",
+    "description": "Extended hematology parameters reported by automated CBC analyzers (e.g., Erba) including differential absolute counts, platelet indices, and RDW values.",
+    "parameters": [
+      {
+        "id": "CBC_ADVANCED_Gran%",
+        "name": "Granulocyte Percentage",
+        "abbreviation": "Gran%",
+        "unit": "%",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "40–75",
+          "male_min": 40.0,
+          "male_max": 75.0,
+          "female_min": 40.0,
+          "female_max": 75.0
+        }
+      },
+      {
+        "id": "CBC_ADVANCED_Mid%",
+        "name": "Mid-range Cell Percentage",
+        "abbreviation": "Mid%",
+        "unit": "%",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "2–12",
+          "male_min": 2.0,
+          "male_max": 12.0,
+          "female_min": 2.0,
+          "female_max": 12.0
+        }
+      },
+      {
+        "id": "CBC_ADVANCED_Lym#",
+        "name": "Absolute Lymphocyte Count",
+        "abbreviation": "Lym#",
+        "unit": "10^3/µL",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "1.0–4.8",
+          "male_min": 1.0,
+          "male_max": 4.8,
+          "female_min": 1.0,
+          "female_max": 4.8
+        }
+      },
+      {
+        "id": "CBC_ADVANCED_Gran#",
+        "name": "Absolute Granulocyte Count",
+        "abbreviation": "Gran#",
+        "unit": "10^3/µL",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "1.8–7.5",
+          "male_min": 1.8,
+          "male_max": 7.5,
+          "female_min": 1.8,
+          "female_max": 7.5
+        }
+      },
+      {
+        "id": "CBC_ADVANCED_Mid#",
+        "name": "Absolute Mid-range Cell Count",
+        "abbreviation": "Mid#",
+        "unit": "10^3/µL",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "0.1–1.2",
+          "male_min": 0.1,
+          "male_max": 1.2,
+          "female_min": 0.1,
+          "female_max": 1.2
+        }
+      },
+      {
+        "id": "CBC_ADVANCED_RDWCV",
+        "name": "Red Cell Distribution Width – CV",
+        "abbreviation": "RDW-CV",
+        "unit": "%",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "11.5–14.5",
+          "male_min": 11.5,
+          "male_max": 14.5,
+          "female_min": 11.5,
+          "female_max": 14.5
+        }
+      },
+      {
+        "id": "CBC_ADVANCED_RDWSD",
+        "name": "Red Cell Distribution Width – SD",
+        "abbreviation": "RDW-SD",
+        "unit": "fL",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "35–56",
+          "male_min": 35.0,
+          "male_max": 56.0,
+          "female_min": 35.0,
+          "female_max": 56.0
+        }
+      },
+      {
+        "id": "CBC_ADVANCED_MPV",
+        "name": "Mean Platelet Volume",
+        "abbreviation": "MPV",
+        "unit": "fL",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "7.5–12.5",
+          "male_min": 7.5,
+          "male_max": 12.5,
+          "female_min": 7.5,
+          "female_max": 12.5
+        }
+      },
+      {
+        "id": "CBC_ADVANCED_PDWSD",
+        "name": "Platelet Distribution Width – SD",
+        "abbreviation": "PDW-SD",
+        "unit": "fL",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "9.0–17.0",
+          "male_min": 9.0,
+          "male_max": 17.0,
+          "female_min": 9.0,
+          "female_max": 17.0
+        }
+      },
+      {
+        "id": "CBC_ADVANCED_PDWCV",
+        "name": "Platelet Distribution Width – CV",
+        "abbreviation": "PDW-CV",
+        "unit": "%",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "10.0–18.0",
+          "male_min": 10.0,
+          "male_max": 18.0,
+          "female_min": 10.0,
+          "female_max": 18.0
+        }
+      },
+      {
+        "id": "CBC_ADVANCED_PCT",
+        "name": "Plateletcrit",
+        "abbreviation": "PCT",
+        "unit": "%",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "0.108–0.282",
+          "male_min": 0.108,
+          "male_max": 0.282,
+          "female_min": 0.108,
+          "female_max": 0.282
+        }
+      },
+      {
+        "id": "CBC_ADVANCED_PLCR",
+        "name": "Platelet Large Cell Ratio",
+        "abbreviation": "P-LCR",
+        "unit": "%",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "13–43",
+          "male_min": 13.0,
+          "male_max": 43.0,
+          "female_min": 13.0,
+          "female_max": 43.0
+        }
+      },
+      {
+        "id": "CBC_ADVANCED_PLCC",
+        "name": "Platelet Large Cell Count",
+        "abbreviation": "P-LCC",
+        "unit": "10^3/µL",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "30–90",
+          "male_min": 30.0,
+          "male_max": 90.0,
+          "female_min": 30.0,
+          "female_max": 90.0
+        }
+      }
+    ]
+  },
+  {
+    "panel_id": "SEROLOGY_ELISA",
+    "panel_name": "Hepatitis & HIV ELISA (Quantitative)",
+    "category": "Serology & Infection",
+    "description": "Quantitative ELISA-based screening for Hepatitis B surface antigen, Hepatitis C antibodies, and HIV antibodies with numerical S/CO cut-off values.",
+    "parameters": [
+      {
+        "id": "SEROLOGY_ELISA_HBsAg",
+        "name": "HBs Ag ELISA",
+        "abbreviation": "HBsAg-ELISA",
+        "unit": "ratio (S/CO)",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Non-Reactive: <1.00 | Reactive: ≥1.00",
+          "male_min": null,
+          "male_max": 1.0,
+          "female_min": null,
+          "female_max": 1.0
+        }
+      },
+      {
+        "id": "SEROLOGY_ELISA_HCV",
+        "name": "HCV Antibodies ELISA",
+        "abbreviation": "Anti-HCV-ELISA",
+        "unit": "ratio (S/CO)",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Non-Reactive: <1.00 | Reactive: ≥1.00",
+          "male_min": null,
+          "male_max": 1.0,
+          "female_min": null,
+          "female_max": 1.0
+        }
+      },
+      {
+        "id": "SEROLOGY_ELISA_HIV",
+        "name": "HIV Antibodies ELISA",
+        "abbreviation": "Anti-HIV-ELISA",
+        "unit": "ratio (S/CO)",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Non-Reactive: <1.00 | Reactive: ≥1.00",
+          "male_min": null,
+          "male_max": 1.0,
+          "female_min": null,
+          "female_max": 1.0
+        }
+      }
+    ]
+  },
+  {
+    "panel_id": "WIDAL_EXT",
+    "panel_name": "Widal Test – Paratyphi B Extended",
+    "category": "Serology & Infection",
+    "description": "Widal agglutination titres for Salmonella Paratyphi B somatic (BO) and flagellar (BH) antigens — complements the existing S. Typhi and Paratyphi A panel.",
+    "parameters": [
+      {
+        "id": "WIDAL_EXT_BO",
+        "name": "Widal Test – S. Paratyphi BO",
+        "abbreviation": "Widal-BO",
+        "unit": "titre",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Negative (<1:80)",
+          "male_min": null,
+          "male_max": 80.0,
+          "female_min": null,
+          "female_max": 80.0
+        }
+      },
+      {
+        "id": "WIDAL_EXT_BH",
+        "name": "Widal Test – S. Paratyphi BH",
+        "abbreviation": "Widal-BH",
+        "unit": "titre",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Negative (<1:80)",
+          "male_min": null,
+          "male_max": 80.0,
+          "female_min": null,
+          "female_max": 80.0
+        }
+      }
+    ]
+  },
+  {
+    "panel_id": "URINE_EXT",
+    "panel_name": "Urine Analysis – Extended Parameters",
+    "category": "Urine Analysis",
+    "description": "Extended urine dipstick and microscopy parameters including haemoglobin, ketones, urobilinogen, bilirubin, nitrite, epithelial cells, bacteria, casts, crystals, and 24-hour urine calcium.",
+    "parameters": [
+      {
+        "id": "URINE_EXT_UHb",
+        "name": "Urine Haemoglobin (Dipstick)",
+        "abbreviation": "U-Hb",
+        "unit": "semiquantitative",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Negative (Nil)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "URINE_EXT_UKET",
+        "name": "Urine Ketones",
+        "abbreviation": "U-KET",
+        "unit": "semiquantitative",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Negative (Nil)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "URINE_EXT_UURO",
+        "name": "Urine Urobilinogen",
+        "abbreviation": "U-URO",
+        "unit": "µmol/L",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Normal (up to 3.2 µmol/L)",
+          "male_min": 0.0,
+          "male_max": 3.2,
+          "female_min": 0.0,
+          "female_max": 3.2
+        }
+      },
+      {
+        "id": "URINE_EXT_UBIL",
+        "name": "Urine Bilirubin (Dipstick)",
+        "abbreviation": "U-BIL",
+        "unit": "semiquantitative",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Negative (Nil)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "URINE_EXT_UNIT",
+        "name": "Urine Nitrite",
+        "abbreviation": "U-NIT",
+        "unit": "qualitative",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Negative (Nil)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "URINE_EXT_UEPI",
+        "name": "Urine Epithelial Cells",
+        "abbreviation": "U-EPI",
+        "unit": "cells/HPF",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "0–2 (Squamous: few acceptable)",
+          "male_min": 0.0,
+          "male_max": 2.0,
+          "female_min": 0.0,
+          "female_max": 5.0
+        }
+      },
+      {
+        "id": "URINE_EXT_UBACT",
+        "name": "Urine Bacteria",
+        "abbreviation": "U-BACT",
+        "unit": "qualitative",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Nil / None Seen",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "URINE_EXT_UCAST",
+        "name": "Urine Casts (Granular / Hyaline)",
+        "abbreviation": "U-CAST",
+        "unit": "qualitative/HPF",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Nil / Absent",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "URINE_EXT_UCRYST",
+        "name": "Urine Crystals",
+        "abbreviation": "U-CRYST",
+        "unit": "qualitative",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "Nil (usually absent or clinically insignificant)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "URINE_EXT_24hUCa",
+        "name": "24-Hour Urine Calcium",
+        "abbreviation": "24hUCa",
+        "unit": "mg/24hr",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "100–300",
+          "male_min": 100.0,
+          "male_max": 300.0,
+          "female_min": 100.0,
+          "female_max": 300.0
+        }
+      }
+    ]
+  },
+  {
+    "panel_id": "BIO_ELEC_EXT",
+    "panel_name": "Biochemistry – Electrolytes Extended",
+    "category": "Biochemistry – Electrolytes",
+    "description": "Extended electrolyte panel including ionized calcium measured via blood gas or ISE analyzer.",
+    "parameters": [
+      {
+        "id": "BIO_ELEC_EXT_ICa",
+        "name": "Ionized Calcium",
+        "abbreviation": "I-Ca",
+        "unit": "mmol/L",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "1.12–1.32",
+          "male_min": 1.12,
+          "male_max": 1.32,
+          "female_min": 1.12,
+          "female_max": 1.32
+        }
+      }
+    ]
+  },
+  {
+    "panel_id": "BIO_ABG",
+    "panel_name": "Arterial Blood Gas",
+    "category": "Biochemistry – Blood Gas",
+    "description": "Arterial blood gas analysis for assessment of acid-base balance and oxygenation status.",
+    "parameters": [
+      {
+        "id": "BIO_ABG_pH",
+        "name": "Blood pH (Arterial)",
+        "abbreviation": "pH-ART",
+        "unit": "pH",
+        "gender_applicable": "all",
+        "reference_range": {
+          "general": "7.35–7.45",
+          "male_min": 7.35,
+          "male_max": 7.45,
+          "female_min": 7.35,
+          "female_max": 7.45
+        }
+      }
+    ]
+  },
+  {
+    "panel_id": "SFA_EXT",
+    "panel_name": "Seminal Fluid Analysis – Extended",
+    "category": "Seminal Fluid Analysis",
+    "description": "Extended semen analysis parameters including macroscopic properties (colour, transparency, viscosity, fructose), total sperm count per ejaculate, and detailed motility grading (Grade A/B/C/immotile).",
+    "parameters": [
+      {
+        "id": "SFA_EXT_COL",
+        "name": "Semen Colour",
+        "abbreviation": "SFA-COL",
+        "unit": "qualitative",
+        "gender_applicable": "male",
+        "reference_range": {
+          "general": "Greyish White / Opalescent",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "SFA_EXT_TRANS",
+        "name": "Semen Transparency",
+        "abbreviation": "SFA-TRANS",
+        "unit": "qualitative",
+        "gender_applicable": "male",
+        "reference_range": {
+          "general": "Opaque",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "SFA_EXT_VISC",
+        "name": "Semen Viscosity",
+        "abbreviation": "SFA-VISC",
+        "unit": "qualitative",
+        "gender_applicable": "male",
+        "reference_range": {
+          "general": "Viscid (normal thread formation ≤2 cm)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "SFA_EXT_FRUC",
+        "name": "Semen Fructose",
+        "abbreviation": "SFA-FRUC",
+        "unit": "qualitative",
+        "gender_applicable": "male",
+        "reference_range": {
+          "general": "Positive (≥13 µmol per ejaculate, WHO 2021)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "SFA_EXT_TOTAL",
+        "name": "Total Sperm Count per Ejaculation",
+        "abbreviation": "SFA-TOTAL",
+        "unit": "millions/ejaculate",
+        "gender_applicable": "male",
+        "reference_range": {
+          "general": "≥39 million per ejaculate (WHO 2021)",
+          "male_min": 39.0,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "SFA_EXT_RLP",
+        "name": "Rapid Linear Progression Motility (Grade A)",
+        "abbreviation": "SFA-RLP",
+        "unit": "%",
+        "gender_applicable": "male",
+        "reference_range": {
+          "general": "Progressive motility (PR) ≥30% (WHO 2021)",
+          "male_min": 25.0,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "SFA_EXT_SNLP",
+        "name": "Slow / Non-Linear Progression Motility (Grade B)",
+        "abbreviation": "SFA-SNLP",
+        "unit": "%",
+        "gender_applicable": "male",
+        "reference_range": {
+          "general": "Reported; contributes to total progressive motility",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "SFA_EXT_NP",
+        "name": "Non-Progressive Motility (Grade C)",
+        "abbreviation": "SFA-NP",
+        "unit": "%",
+        "gender_applicable": "male",
+        "reference_range": {
+          "general": "Reported (contributes to total motility count)",
+          "male_min": null,
+          "male_max": null,
+          "female_min": null,
+          "female_max": null
+        }
+      },
+      {
+        "id": "SFA_EXT_IMM",
+        "name": "Immotile Sperm Percentage",
+        "abbreviation": "SFA-IMM",
+        "unit": "%",
+        "gender_applicable": "male",
+        "reference_range": {
+          "general": "<58% (WHO 2021 — total motility ≥42%)",
+          "male_min": null,
+          "male_max": 58.0,
+          "female_min": null,
+          "female_max": null
+        }
+      }
+    ]
   }
 ]
