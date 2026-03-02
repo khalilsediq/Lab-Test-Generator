@@ -35,7 +35,7 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
           </p>
         </div>
       </div>
-
+<hr />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Patient Name */}
         <div className="space-y-1.5">
@@ -56,7 +56,7 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
         {/* Father/Husband Name */}
         <div className="space-y-1.5">
           <label className="text-sm font-semibold text-gray-600">
-            Father/Husband Name
+            S/O D/O W/O
           </label>
           <input
             type="text"
@@ -240,8 +240,12 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
               />
             </div>
           </div>
+          
         ) : null;
+        <hr />
+        
       })()}
     </div>
   );
 }
+

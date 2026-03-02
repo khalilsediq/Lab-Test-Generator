@@ -98,7 +98,7 @@ export default function ReportPreview({
             {/* Scale report to fit screen */}
             <div className="w-full flex justify-center">
               <div className="origin-top transform scale-[0.45] xs:scale-[0.55] sm:scale-75 md:scale-90 lg:scale-100 transition-transform w-[210mm] shrink-0 shadow-[0_0_10px_rgba(0,0,0,0.1)]">
-                 <ReportTemplate
+                <ReportTemplate
                   patientDetails={patientDetails}
                   selectedTest={selectedTest}
                   testData={testData}
@@ -120,7 +120,10 @@ export default function ReportPreview({
       </div>
 
       {/* ── Print target (100% of page, shown only when printing or generating PDF) ── */}
-      <div id="report-print-target" className="hidden print:block print:absolute print:top-0 print:left-0 print:w-full print:bg-white print:z-9999">
+      <div
+        id="report-print-target"
+        className="hidden print:block print:absolute print:top-0 print:left-0 print:w-full print:bg-white print:z-9999"
+      >
         <ReportTemplate
           patientDetails={patientDetails}
           selectedTest={selectedTest}
