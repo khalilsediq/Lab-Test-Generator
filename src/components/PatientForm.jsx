@@ -36,7 +36,7 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Patient Name */}
         <div className="space-y-1.5">
           <label className="text-sm font-semibold text-gray-600">
@@ -48,6 +48,22 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
             value={patientDetails.name}
             onChange={handleChange}
             placeholder="e.g. John Doe"
+            autoComplete="off"
+            className={inp}
+          />
+        </div>
+
+        {/* Father/Husband Name */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-600">
+            Father/Husband Name
+          </label>
+          <input
+            type="text"
+            name="fatherHusbandName"
+            value={patientDetails.fatherHusbandName}
+            onChange={handleChange}
+            placeholder="e.g. Richard Doe"
             autoComplete="off"
             className={inp}
           />
@@ -130,6 +146,70 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
             value={patientDetails.consultant}
             onChange={handleChange}
             placeholder="e.g. Dr. Jane Smith"
+            autoComplete="off"
+            className={inp}
+          />
+        </div>
+
+        {/* Contact No */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-600">
+            Contact No
+          </label>
+          <input
+            type="tel"
+            name="contactNo"
+            value={patientDetails.contactNo}
+            onChange={handleChange}
+            placeholder="e.g. 0300-1234567"
+            autoComplete="off"
+            className={inp}
+          />
+        </div>
+
+        {/* Address */}
+        <div className="space-y-1.5 lg:col-span-2">
+          <label className="text-sm font-semibold text-gray-600">
+            Address
+          </label>
+          <input
+            type="text"
+            name="address"
+            value={patientDetails.address}
+            onChange={handleChange}
+            placeholder="e.g. 123 Main Street"
+            autoComplete="off"
+            className={inp}
+          />
+        </div>
+
+        {/* Reference */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-600">
+            Reference
+          </label>
+          <input
+            type="text"
+            name="reference"
+            value={patientDetails.reference}
+            onChange={handleChange}
+            placeholder="N/A"
+            autoComplete="off"
+            className={inp}
+          />
+        </div>
+
+        {/* Sample Location */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-600">
+            Sample Location
+          </label>
+          <input
+            type="text"
+            name="sampleLocation"
+            value={patientDetails.sampleLocation}
+            onChange={handleChange}
+            placeholder="Collected In Lab"
             autoComplete="off"
             className={inp}
           />

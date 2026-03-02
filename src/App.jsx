@@ -39,8 +39,18 @@ function App() {
     gender: "Male",
     mrNo: "",
     consultant: "",
+    fatherHusbandName: "",
+    contactNo: "",
+    address: "",
+    reference: "",
+    sampleLocation: "Collected In Lab",
+    registrationDate: new Date().toLocaleString("en-GB", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: true,
+    }).replace(",", ""),
   });
   const [testData, setTestData] = useState({});
+  const [additionalPanels, setAdditionalPanels] = useState([]); // [{panelId, testData}]
   const [showPreview, setShowPreview] = useState(false);
   const [toast, setToast] = useState(null); // { msg, type }
 
@@ -235,6 +245,8 @@ function App() {
               editedRanges={editedRanges}
               editedParams={editedParams}
               paramOrders={paramOrders}
+              additionalPanels={additionalPanels}
+              setAdditionalPanels={setAdditionalPanels}
               onSaveRange={handleSaveRange}
               onSaveParam={handleSaveParam}
               onResetParam={handleResetParam}
@@ -274,7 +286,9 @@ function App() {
         testData={testData}
         testTemplates={testTemplates}
         editedRanges={editedRanges}
+        editedParams={editedParams}
         paramOrders={paramOrders}
+        additionalPanels={additionalPanels}
       />
 
       {showCustomModal && (

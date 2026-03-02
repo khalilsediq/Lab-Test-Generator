@@ -13,6 +13,7 @@ const CATEGORIES = [
   "Microbiology",
   "Vitamins & Minerals",
   "Tumour Markers",
+  "🩸 Blood Bank",
   "Custom",
 ];
 
@@ -21,6 +22,8 @@ const emptyParam = () => ({
   name: "",
   abbreviation: "",
   unit: "",
+  type: "numeric", // numeric | qualitative_select | text | subheading
+  options: "", // comma separated options for qualitative_select
   gender_applicable: "all",
   reference_range: {
     general: "",
@@ -56,38 +59,59 @@ export default function CustomTestModal({ onSave, onClose }) {
     setParams((p) => (p.length > 1 ? p.filter((x) => x._key !== key) : p));
 
   const handleSave = () => {
-    if (!panelName.trim()) {
-      setError("Panel name is required.");
-      return;
-    }
-    if (params.some((p) => !p.name.trim())) {
-      setError("Every parameter needs a name.");
+    let errs = [];
+    if (!panelName.trim()) errs.push("Panel name is required.");
+
+    params.forEach((p) => {
+      if (!p.name.trim()) errs.push("All parameters must have a name.");
+    });
+
+    if (errs.length > 0) {
+      setError(errs[0]);
       return;
     }
 
+    const panelId = "CUSTOM_" + Math.random().toString(36).slice(2, 10).toUpperCase();
     const toNum = (v) => (v === "" || v == null ? null : parseFloat(v));
 
+    const finalParams = params.map((p, idx) => {
+      const pId = panelId + "_PARAM_" + idx;
+      
+      let unitValue = p.unit;
+      if (p.type === "qualitative_select") unitValue = "qualitative_select";
+      if (p.type === "text") unitValue = "text_remark";
+      if (p.type === "subheading") unitValue = "subheading";
+
+      const rr = { ...p.reference_range };
+      if (p.type === "qualitative_select") {
+        rr.general = p.options?.trim() || "A Positive, B Positive, AB Positive, O Positive, A Negative, B Negative, AB Negative, O Negative";
+      }
+
+      return {
+        id: pId,
+        name: p.name.trim(),
+        abbreviation: p.abbreviation.trim(),
+        unit: unitValue,
+        gender_applicable: p.gender_applicable,
+        reference_range: {
+          general: rr.general || null,
+          male_min: toNum(rr.male_min),
+          male_max: toNum(rr.male_max),
+          female_min: toNum(rr.female_min),
+          female_max: toNum(rr.female_max),
+        },
+      };
+    });
+
     onSave({
-      panel_id: `CUSTOM_${Date.now()}`,
+      panel_id: panelId,
       panel_name: panelName.trim(),
       category: category.trim() || "Custom",
       description: "Custom test created in-app.",
       isCustom: true,
-      parameters: params.map((p) => ({
-        id: `CUST_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-        name: p.name.trim(),
-        abbreviation: p.abbreviation.trim(),
-        unit: p.unit.trim(),
-        gender_applicable: p.gender_applicable,
-        reference_range: {
-          general: p.reference_range.general || null,
-          male_min: toNum(p.reference_range.male_min),
-          male_max: toNum(p.reference_range.male_max),
-          female_min: toNum(p.reference_range.female_min),
-          female_max: toNum(p.reference_range.female_max),
-        },
-      })),
+      parameters: finalParams,
     });
+    
     onClose();
   };
 
@@ -239,184 +263,163 @@ export default function CustomTestModal({ onSave, onClose }) {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-1 space-y-1">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold text-gray-500 uppercase">
+                        Param Type
+                      </label>
+                      <select
+                        value={param.type || "numeric"}
+                        onChange={(e) => updateParam(param._key, "type", e.target.value)}
+                        className={inp + " text-gray-700"}
+                      >
+                        <option value="numeric">Numerical Range</option>
+                        <option value="qualitative_select">Dropdown (Blood Bank)</option>
+                        <option value="text">Free Text / Remarks</option>
+                        <option value="subheading">Section Subheading</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
                       <label className="text-[10px] font-semibold text-gray-500 uppercase">
                         Name *
                       </label>
                       <input
                         type="text"
                         value={param.name}
-                        onChange={(e) =>
-                          updateParam(param._key, "name", e.target.value)
-                        }
-                        placeholder="e.g. Haemoglobin"
+                        onChange={(e) => updateParam(param._key, "name", e.target.value)}
+                        placeholder={param.type === "subheading" ? "e.g. INFECTIOUS DISEASE SCREENING" : "e.g. Haemoglobin"}
                         className={inp}
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-gray-500 uppercase">
-                        Abbreviation
-                      </label>
-                      <input
-                        type="text"
-                        value={param.abbreviation}
-                        onChange={(e) =>
-                          updateParam(
-                            param._key,
-                            "abbreviation",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="e.g. Hb"
-                        className={inp}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-gray-500 uppercase">
-                        Unit
-                      </label>
-                      <input
-                        type="text"
-                        value={param.unit}
-                        onChange={(e) =>
-                          updateParam(param._key, "unit", e.target.value)
-                        }
-                        placeholder="e.g. g/dL"
-                        className={inp}
-                      />
-                    </div>
+                    
+                    {param.type !== "subheading" && (
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold text-gray-500 uppercase">
+                          Abbrev
+                        </label>
+                        <input
+                          type="text"
+                          value={param.abbreviation}
+                          onChange={(e) => updateParam(param._key, "abbreviation", e.target.value)}
+                          placeholder="e.g. Hb"
+                          className={inp}
+                        />
+                      </div>
+                    )}
+
+                    {param.type === "numeric" && (
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold text-gray-500 uppercase">
+                          Unit
+                        </label>
+                        <input
+                          type="text"
+                          value={param.unit}
+                          onChange={(e) => updateParam(param._key, "unit", e.target.value)}
+                          placeholder="e.g. g/dL"
+                          className={inp}
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
+                  {param.type === "qualitative_select" && (
+                    <div className="space-y-1 mt-3">
                       <label className="text-[10px] font-semibold text-gray-500 uppercase">
-                        Applies To
-                      </label>
-                      <select
-                        value={param.gender_applicable}
-                        onChange={(e) =>
-                          updateParam(
-                            param._key,
-                            "gender_applicable",
-                            e.target.value,
-                          )
-                        }
-                        className={inp + " text-gray-700"}
-                      >
-                        <option value="all">All genders</option>
-                        <option value="male">Male only</option>
-                        <option value="female">Female only</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-gray-500 uppercase">
-                        General Reference Note
+                        Dropdown Options (comma separated)
                       </label>
                       <input
                         type="text"
-                        value={param.reference_range.general}
-                        onChange={(e) =>
-                          updateParam(param._key, "rr_general", e.target.value)
-                        }
-                        placeholder="e.g. Negative / <5.7"
+                        value={param.options || ""}
+                        onChange={(e) => updateParam(param._key, "options", e.target.value)}
+                        placeholder="e.g. A Positive, B Positive, AB Positive"
                         className={inp}
                       />
                     </div>
-                  </div>
+                  )}
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-[10px] font-bold text-blue-600 mb-2">
-                        ♂ Male Range
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
+                  {param.type === "numeric" && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3 mt-3">
                         <div className="space-y-1">
-                          <label className="text-[10px] text-gray-500">
-                            Min
+                          <label className="text-[10px] font-semibold text-gray-500 uppercase">
+                            Applies To
                           </label>
-                          <input
-                            type="number"
-                            step="any"
-                            value={param.reference_range.male_min}
-                            onChange={(e) =>
-                              updateParam(
-                                param._key,
-                                "rr_male_min",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="—"
-                            className={numInp}
-                          />
+                          <select
+                            value={param.gender_applicable}
+                            onChange={(e) => updateParam(param._key, "gender_applicable", e.target.value)}
+                            className={inp + " text-gray-700"}
+                          >
+                            <option value="all">All genders</option>
+                            <option value="male">Male only</option>
+                            <option value="female">Female only</option>
+                          </select>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] text-gray-500">
-                            Max
+                          <label className="text-[10px] font-semibold text-gray-500 uppercase">
+                            General Reference Note
                           </label>
                           <input
-                            type="number"
-                            step="any"
-                            value={param.reference_range.male_max}
-                            onChange={(e) =>
-                              updateParam(
-                                param._key,
-                                "rr_male_max",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="—"
-                            className={numInp}
+                            type="text"
+                            value={param.reference_range.general}
+                            onChange={(e) => updateParam(param._key, "rr_general", e.target.value)}
+                            placeholder="e.g. Negative / <5.7"
+                            className={inp}
                           />
                         </div>
                       </div>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-pink-600 mb-2">
-                        ♀ Female Range
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <label className="text-[10px] text-gray-500">
-                            Min
-                          </label>
-                          <input
-                            type="number"
-                            step="any"
-                            value={param.reference_range.female_min}
-                            onChange={(e) =>
-                              updateParam(
-                                param._key,
-                                "rr_female_min",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="—"
-                            className={numInp}
-                          />
+
+                      <div className="grid grid-cols-2 gap-4 mt-3">
+                        <div>
+                          <p className="text-[10px] font-bold text-blue-600 mb-2">♂ Male Range</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-gray-500">Min</label>
+                              <input
+                                type="number" step="any"
+                                value={param.reference_range.male_min}
+                                onChange={(e) => updateParam(param._key, "rr_male_min", e.target.value)}
+                                placeholder="—" className={numInp}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-gray-500">Max</label>
+                              <input
+                                type="number" step="any"
+                                value={param.reference_range.male_max}
+                                onChange={(e) => updateParam(param._key, "rr_male_max", e.target.value)}
+                                placeholder="—" className={numInp}
+                              />
+                            </div>
+                          </div>
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] text-gray-500">
-                            Max
-                          </label>
-                          <input
-                            type="number"
-                            step="any"
-                            value={param.reference_range.female_max}
-                            onChange={(e) =>
-                              updateParam(
-                                param._key,
-                                "rr_female_max",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="—"
-                            className={numInp}
-                          />
+                        <div>
+                          <p className="text-[10px] font-bold text-pink-600 mb-2">♀ Female Range</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-gray-500">Min</label>
+                              <input
+                                type="number" step="any"
+                                value={param.reference_range.female_min}
+                                onChange={(e) => updateParam(param._key, "rr_female_min", e.target.value)}
+                                placeholder="—" className={numInp}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-gray-500">Max</label>
+                              <input
+                                type="number" step="any"
+                                value={param.reference_range.female_max}
+                                onChange={(e) => updateParam(param._key, "rr_female_max", e.target.value)}
+                                placeholder="—" className={numInp}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>

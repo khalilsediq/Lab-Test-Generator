@@ -275,10 +275,12 @@ function EditParamRow({ param, editedParams, panelId, onSave, onReset, onCancel 
   );
 }
 
-// ── TestFields ───────────────────────────────────────────────────────────────
+// ── PanelFieldsGroup ─────────────────────────────────────────────────────────
 
-export default function TestFields({
-  selectedTest,
+import BloodBankFields from "./BloodBankFields";
+
+function PanelFieldsGroup({
+  panelId,
   testData,
   setTestData,
   patientDetails,
@@ -290,9 +292,12 @@ export default function TestFields({
   onSaveParam,
   onResetParam,
   onSaveOrder,
+  isRemovable,
+  onRemove,
 }) {
-  const gender = patientDetails.gender;
-  const panel = testTemplates.find((t) => t.panel_id === selectedTest);
+  const gender = patientDetails?.gender || "Male";
+  const panel = testTemplates.find((t) => t.panel_id === panelId);
+  const isBloodBank = panel?.category?.toLowerCase()?.includes("blood");
 
   const rawFields =
     panel?.parameters.filter(
@@ -302,7 +307,7 @@ export default function TestFields({
     ) || [];
 
   // Apply saved order
-  const savedOrder = paramOrders?.[selectedTest];
+  const savedOrder = paramOrders?.[panelId];
   const [fields, setFields] = useState(() => applyOrder(rawFields, savedOrder));
 
   // "editingId" tracks which row is open and which editor (range|param)
@@ -323,20 +328,21 @@ export default function TestFields({
   }
 
   useEffect(() => {
-    setTestData({});
+    // Only reset testData if this is the primary panel and it changes, 
+    // but handled in the parent now to avoid clearing data when adding panels.
     setEditingId(null);
     setEditingMode(null);
-  }, [selectedTest, setTestData]);
+  }, [panelId]);
 
   useEffect(() => {
-    setFields(applyOrder(rawFields, paramOrders?.[selectedTest]));
-  }, [selectedTest, gender]);
+    setFields(applyOrder(rawFields, paramOrders?.[panelId]));
+  }, [panelId, gender]);
 
   const handleChange = (key, val) =>
     setTestData((prev) => ({ ...prev, [key]: val }));
 
   const openEditor = (id, mode) => {
-    if (editingId === id && editingMode === mode) {
+    if (editingId === id && mode === editingMode) {
       setEditingId(null);
       setEditingMode(null);
     } else {
@@ -363,7 +369,7 @@ export default function TestFields({
     next.splice(i, 0, moved);
     setFields(next);
     onSaveOrder(
-      selectedTest,
+      panelId,
       next.map((f) => f.id),
     );
     setDragFrom(null);
@@ -378,55 +384,77 @@ export default function TestFields({
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-4xl transition-all duration-300 hover:shadow-md">
       {/* Header */}
       <div className="flex flex-col space-y-1 mb-6">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-            <svg
-              className="w-4 h-4 text-red-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-              />
-            </svg>
+        <div className="flex items-center justify-between border-b pb-3 mb-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-red-50 text-red-600 rounded-xl">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-gray-800">Test Entry</h2>
           </div>
-          <h2 className="text-xl font-bold text-gray-800">Test Entry</h2>
         </div>
-        <div className="ml-11 flex items-center space-x-3">
-          <p className="text-sm font-medium text-red-600">
-            {panel?.panel_name || selectedTest}
-          </p>
-          <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${gender === "Male" ? "bg-blue-100 text-blue-700" : "bg-pink-100 text-pink-700"}`}
-          >
-            {gender === "Male" ? "♂ Male" : "♀ Female"} ranges shown
-          </span>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <p className="text-xl font-black text-gray-800 tracking-tight leading-none mb-1">
+              {panel?.panel_name || panelId}
+            </p>
+            <span
+              className={`text-[10px] w-fit font-bold px-2 py-0.5 rounded-full ${gender === "Male" ? "bg-blue-100 text-blue-700" : "bg-pink-100 text-pink-700"}`}
+            >
+              {gender === "Male" ? "♂ Male" : "♀ Female"} ranges shown
+            </span>
+          </div>
+          {isRemovable && onRemove && (
+            <button
+              onClick={() => onRemove(panelId)}
+              className="px-3 py-1.5 text-xs font-bold rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+            >
+              ✕ Remove
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Column headers */}
-      <div className="grid grid-cols-[24px_1fr_180px_180px_64px] gap-2 px-3 pb-2 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-        <div />
-        <div>Parameter</div>
-        <div className="text-center">Result</div>
-        <div className="text-right">Ref. Range</div>
-        <div />
-      </div>
+      {isBloodBank ? (
+        <BloodBankFields
+          panel={panel}
+          testData={testData}
+          setTestData={setTestData}
+          editedParams={editedParams}
+          paramOrders={paramOrders}
+        />
+      ) : (
+        <>
+          {/* Column headers */}
+          <div className="grid grid-cols-[24px_1fr_180px_180px_64px] gap-2 px-3 pb-2 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-widest hidden sm:grid">
+            <div />
+            <div>Parameter</div>
+            <div className="text-center">Result</div>
+            <div className="text-right">Ref. Range</div>
+            <div />
+          </div>
 
-      <div className="space-y-1 mt-2">
+          <div className="space-y-1 mt-2">
         {fields.map((rawField, idx) => {
           // Apply param overrides for display
-          const field = effectiveParam(rawField, editedParams, selectedTest);
-          const rr = effectiveRange(rawField, editedRanges, selectedTest);
+          const field = effectiveParam(rawField, editedParams, panelId);
+          const rr = effectiveRange(rawField, editedRanges, panelId);
           const qual = isQual(rawField);
           const abn = isAbnormal(testData[rawField.id], rr, gender, qual);
           const isDragging = dragFrom === idx;
           const isDragTarget = dragOver === idx && dragFrom !== idx;
-          const hasParamOverride = !!(editedParams?.[selectedTest]?.[rawField.id]);
+          const hasParamOverride = !!(editedParams?.[panelId]?.[rawField.id]);
 
           if (editingId === rawField.id && editingMode === "range") {
             return (
@@ -434,9 +462,9 @@ export default function TestFields({
                 key={rawField.id}
                 param={rawField}
                 editedRanges={editedRanges}
-                panelId={selectedTest}
+                panelId={panelId}
                 onSave={(id, range) => {
-                  onSaveRange(selectedTest, id, range);
+                  onSaveRange(panelId, id, range);
                   closeEditor();
                 }}
                 onCancel={closeEditor}
@@ -450,13 +478,13 @@ export default function TestFields({
                 key={rawField.id}
                 param={field}
                 editedParams={editedParams}
-                panelId={selectedTest}
+                panelId={panelId}
                 onSave={(id, updatedFields) => {
-                  onSaveParam(selectedTest, id, updatedFields);
+                  onSaveParam(panelId, id, updatedFields);
                   closeEditor();
                 }}
                 onReset={(id) => {
-                  onResetParam(selectedTest, id);
+                  onResetParam(panelId, id);
                   closeEditor();
                 }}
                 onCancel={closeEditor}
@@ -624,6 +652,126 @@ export default function TestFields({
         {fields.length === 0 && (
           <div className="text-center py-10 text-gray-400 text-sm">
             No parameters found for this test and gender selection.
+          </div>
+        )}
+      </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Main Export (Multi-Test Composition) ─────────────────────────────────────
+
+export default function TestFields({
+  selectedTest,
+  testData,
+  setTestData,
+  patientDetails,
+  testTemplates,
+  editedRanges,
+  editedParams,
+  paramOrders,
+  additionalPanels = [],
+  setAdditionalPanels = () => {},
+  onSaveRange,
+  onSaveParam,
+  onResetParam,
+  onSaveOrder,
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerValue, setPickerValue] = useState("");
+
+  // Clear data when main selectedTest changes (but do not clear when adding secondary panels)
+  useEffect(() => {
+    setTestData({});
+    setAdditionalPanels([]);
+  }, [selectedTest, setTestData, setAdditionalPanels]);
+
+  const handleAddPanel = () => {
+    if (!pickerValue) return;
+    if (pickerValue === selectedTest) {
+      alert("This panel is already the primary test.");
+      return;
+    }
+    if (additionalPanels.includes(pickerValue)) {
+      alert("This panel is already added.");
+      return;
+    }
+    setAdditionalPanels([...additionalPanels, pickerValue]);
+    setPickerValue("");
+    setPickerOpen(false);
+  };
+
+  const handleRemovePanel = (idToRemove) => {
+    setAdditionalPanels(additionalPanels.filter((id) => id !== idToRemove));
+  };
+
+  const activePanels = [selectedTest, ...additionalPanels];
+
+  return (
+    <div className="space-y-6">
+      {activePanels.map((panelId, index) => (
+        <PanelFieldsGroup
+          key={panelId + index}
+          panelId={panelId}
+          testData={testData}
+          setTestData={setTestData}
+          patientDetails={patientDetails}
+          testTemplates={testTemplates}
+          editedRanges={editedRanges}
+          editedParams={editedParams}
+          paramOrders={paramOrders}
+          onSaveRange={onSaveRange}
+          onSaveParam={onSaveParam}
+          onResetParam={onResetParam}
+          onSaveOrder={onSaveOrder}
+          isRemovable={index > 0}
+          onRemove={handleRemovePanel}
+        />
+      ))}
+
+      {/* Add Another Test Section */}
+      <div className="max-w-4xl p-4 bg-gray-50 border border-gray-200 border-dashed rounded-2xl flex flex-col items-center justify-center transition-all">
+        {!pickerOpen ? (
+          <button
+            onClick={() => setPickerOpen(true)}
+            className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 hover:shadow-sm transition-all"
+          >
+            <span className="text-xl leading-none">+</span>
+            <span>Add Another Test</span>
+          </button>
+        ) : (
+          <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full max-w-md">
+            <select
+              value={pickerValue}
+              onChange={(e) => setPickerValue(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 bg-white font-medium text-sm focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all outline-none"
+            >
+              <option value="" disabled>Select a panel to add...</option>
+              {testTemplates.map((t) => (
+                <option key={t.panel_id} value={t.panel_id}>
+                  {t.panel_name}
+                </option>
+              ))}
+            </select>
+            <div className="flex space-x-2 w-full sm:w-auto">
+              <button
+                onClick={handleAddPanel}
+                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-gray-900 text-white font-bold hover:bg-gray-800 transition-all whitespace-nowrap"
+              >
+                Add
+              </button>
+              <button
+                onClick={() => {
+                  setPickerOpen(false);
+                  setPickerValue("");
+                }}
+                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-gray-200 text-gray-700 font-bold hover:bg-gray-300 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>
