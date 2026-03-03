@@ -35,7 +35,7 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
           </p>
         </div>
       </div>
-<hr />
+      <hr />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Patient Name */}
         <div className="space-y-1.5">
@@ -122,14 +122,42 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
         {/* MR Number */}
         <div className="space-y-1.5">
           <label className="text-sm font-semibold text-gray-600">
-            MR Number
+            Patient No / MR No
           </label>
           <input
             type="text"
             name="mrNo"
             value={patientDetails.mrNo}
             onChange={handleChange}
-            placeholder="e.g. MR-100234"
+            placeholder="e.g. 1281346"
+            autoComplete="off"
+            className={`${inp} font-mono tracking-wider`}
+          />
+        </div>
+
+        {/* T/R ID */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-600">T/R ID</label>
+          <input
+            type="text"
+            name="trId"
+            value={patientDetails.trId || ""}
+            onChange={handleChange}
+            placeholder="e.g. 1221869"
+            autoComplete="off"
+            className={`${inp} font-mono tracking-wider`}
+          />
+        </div>
+
+        {/* T/R No */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-600">T/R No</label>
+          <input
+            type="text"
+            name="trNo"
+            value={patientDetails.trNo || ""}
+            onChange={handleChange}
+            placeholder="e.g. TR241210-159-001-0"
             autoComplete="off"
             className={`${inp} font-mono tracking-wider`}
           />
@@ -169,9 +197,7 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
 
         {/* Address */}
         <div className="space-y-1.5 lg:col-span-2">
-          <label className="text-sm font-semibold text-gray-600">
-            Address
-          </label>
+          <label className="text-sm font-semibold text-gray-600">Address</label>
           <input
             type="text"
             name="address"
@@ -222,9 +248,11 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
           patientDetails.name,
           patientDetails.age,
           patientDetails.mrNo,
+          patientDetails.trId,
+          patientDetails.trNo,
           patientDetails.consultant,
         ].filter(Boolean).length;
-        const pct = Math.round((filled / 4) * 100);
+        const pct = Math.round((filled / 6) * 100);
         return pct < 100 ? (
           <div className="mt-5 pt-4 border-t border-gray-50">
             <div className="flex items-center justify-between mb-1.5">
@@ -240,12 +268,8 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
               />
             </div>
           </div>
-          
         ) : null;
-        <hr />
-        
       })()}
     </div>
   );
 }
-

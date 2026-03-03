@@ -31,7 +31,6 @@ export default function Sidebar({
   onCreateCustom,
   onDeleteCustom,
   onClose,
-  sidebarOpen,
 }) {
   const [query, setQuery] = useState("");
   const [collapsed, setCollapsed] = useState({});

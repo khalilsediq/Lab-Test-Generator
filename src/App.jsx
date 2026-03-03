@@ -38,16 +38,24 @@ function App() {
     age: "",
     gender: "Male",
     mrNo: "",
+    trId: "",
+    trNo: "",
     consultant: "",
     fatherHusbandName: "",
     contactNo: "",
     address: "",
     reference: "",
     sampleLocation: "Collected In Lab",
-    registrationDate: new Date().toLocaleString("en-GB", {
-      day: "2-digit", month: "short", year: "numeric",
-      hour: "2-digit", minute: "2-digit", hour12: true,
-    }).replace(",", ""),
+    registrationDate: new Date()
+      .toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .replace(",", ""),
   });
   const [testData, setTestData] = useState({});
   const [additionalPanels, setAdditionalPanels] = useState([]); // [{panelId, testData}]

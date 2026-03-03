@@ -1,6 +1,7 @@
 export default function BloodBankReportSection({
   panel,
   testData,
+  // eslint-disable-next-line no-unused-vars
   gender,
   editedParams,
   paramOrders,

@@ -169,8 +169,15 @@ function EditRow({ param, editedRanges, panelId, onSave, onCancel }) {
 
 // ── EditParamRow (parameter field editor) ─────────────────────────────────────
 
-function EditParamRow({ param, editedParams, panelId, onSave, onReset, onCancel }) {
-  const hasOverride = !!(editedParams?.[panelId]?.[param.id]);
+function EditParamRow({
+  param,
+  editedParams,
+  panelId,
+  onSave,
+  onReset,
+  onCancel,
+}) {
+  const hasOverride = !!editedParams?.[panelId]?.[param.id];
   const [vals, setVals] = useState({
     name: param.name,
     abbreviation: param.abbreviation || "",
@@ -268,7 +275,8 @@ function EditParamRow({ param, editedParams, panelId, onSave, onReset, onCancel 
 
       {hasOverride && (
         <p className="mt-3 text-[10px] text-violet-500 font-medium">
-          ⚙ This parameter has been customised. Click &ldquo;Reset Default&rdquo; to restore original template values.
+          ⚙ This parameter has been customised. Click &ldquo;Reset
+          Default&rdquo; to restore original template values.
         </p>
       )}
     </div>
@@ -307,15 +315,6 @@ function PanelFieldsGroup({
     ) || [];
 
   // Apply saved order
-  const savedOrder = paramOrders?.[panelId];
-  const [fields, setFields] = useState(() => applyOrder(rawFields, savedOrder));
-
-  // "editingId" tracks which row is open and which editor (range|param)
-  const [editingId, setEditingId] = useState(null);     // param id
-  const [editingMode, setEditingMode] = useState(null); // "range" | "param"
-  const [dragFrom, setDragFrom] = useState(null);
-  const [dragOver, setDragOver] = useState(null);
-
   function applyOrder(src, order) {
     if (!order) return src;
     return [...src].sort((a, b) => {
@@ -327,15 +326,28 @@ function PanelFieldsGroup({
     });
   }
 
+  const savedOrder = paramOrders?.[panelId];
+  const [fields, setFields] = useState(() => applyOrder(rawFields, savedOrder));
+
+  // "editingId" tracks which row is open and which editor (range|param)
+  const [editingId, setEditingId] = useState(null);     // param id
+  const [editingMode, setEditingMode] = useState(null); // "range" | "param"
+  const [dragFrom, setDragFrom] = useState(null);
+  const [dragOver, setDragOver] = useState(null);
+
   useEffect(() => {
-    // Only reset testData if this is the primary panel and it changes, 
-    // but handled in the parent now to avoid clearing data when adding panels.
+    // Reset editor state when panel changes
+     
     setEditingId(null);
+     
     setEditingMode(null);
   }, [panelId]);
 
+   
   useEffect(() => {
+     
     setFields(applyOrder(rawFields, paramOrders?.[panelId]));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panelId, gender]);
 
   const handleChange = (key, val) =>
@@ -437,7 +449,7 @@ function PanelFieldsGroup({
       ) : (
         <>
           {/* Column headers */}
-          <div className="grid grid-cols-[24px_1fr_180px_180px_64px] gap-2 px-3 pb-2 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-widest hidden sm:grid">
+          <div className="hidden sm:grid grid-cols-[24px_1fr_180px_180px_64px] gap-2 px-3 pb-2 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
             <div />
             <div>Parameter</div>
             <div className="text-center">Result</div>
@@ -446,215 +458,219 @@ function PanelFieldsGroup({
           </div>
 
           <div className="space-y-1 mt-2">
-        {fields.map((rawField, idx) => {
-          // Apply param overrides for display
-          const field = effectiveParam(rawField, editedParams, panelId);
-          const rr = effectiveRange(rawField, editedRanges, panelId);
-          const qual = isQual(rawField);
-          const abn = isAbnormal(testData[rawField.id], rr, gender, qual);
-          const isDragging = dragFrom === idx;
-          const isDragTarget = dragOver === idx && dragFrom !== idx;
-          const hasParamOverride = !!(editedParams?.[panelId]?.[rawField.id]);
+            {fields.map((rawField, idx) => {
+              // Apply param overrides for display
+              const field = effectiveParam(rawField, editedParams, panelId);
+              const rr = effectiveRange(rawField, editedRanges, panelId);
+              const qual = isQual(rawField);
+              const abn = isAbnormal(testData[rawField.id], rr, gender, qual);
+              const isDragging = dragFrom === idx;
+              const isDragTarget = dragOver === idx && dragFrom !== idx;
+              const hasParamOverride = !!editedParams?.[panelId]?.[rawField.id];
 
-          if (editingId === rawField.id && editingMode === "range") {
-            return (
-              <EditRow
-                key={rawField.id}
-                param={rawField}
-                editedRanges={editedRanges}
-                panelId={panelId}
-                onSave={(id, range) => {
-                  onSaveRange(panelId, id, range);
-                  closeEditor();
-                }}
-                onCancel={closeEditor}
-              />
-            );
-          }
+              if (editingId === rawField.id && editingMode === "range") {
+                return (
+                  <EditRow
+                    key={rawField.id}
+                    param={rawField}
+                    editedRanges={editedRanges}
+                    panelId={panelId}
+                    onSave={(id, range) => {
+                      onSaveRange(panelId, id, range);
+                      closeEditor();
+                    }}
+                    onCancel={closeEditor}
+                  />
+                );
+              }
 
-          if (editingId === rawField.id && editingMode === "param") {
-            return (
-              <EditParamRow
-                key={rawField.id}
-                param={field}
-                editedParams={editedParams}
-                panelId={panelId}
-                onSave={(id, updatedFields) => {
-                  onSaveParam(panelId, id, updatedFields);
-                  closeEditor();
-                }}
-                onReset={(id) => {
-                  onResetParam(panelId, id);
-                  closeEditor();
-                }}
-                onCancel={closeEditor}
-              />
-            );
-          }
+              if (editingId === rawField.id && editingMode === "param") {
+                return (
+                  <EditParamRow
+                    key={rawField.id}
+                    param={field}
+                    editedParams={editedParams}
+                    panelId={panelId}
+                    onSave={(id, updatedFields) => {
+                      onSaveParam(panelId, id, updatedFields);
+                      closeEditor();
+                    }}
+                    onReset={(id) => {
+                      onResetParam(panelId, id);
+                      closeEditor();
+                    }}
+                    onCancel={closeEditor}
+                  />
+                );
+              }
 
-          return (
-            <div
-              key={rawField.id}
-              draggable
-              onDragStart={() => onDragStart(idx)}
-              onDragOver={(e) => onDragOver(e, idx)}
-              onDrop={() => onDrop(idx)}
-              onDragEnd={onDragEnd}
-              className={`grid grid-cols-[24px_1fr_64px] sm:grid-cols-[24px_1fr_180px_180px_64px] gap-2 items-center px-3 py-2.5 rounded-xl border transition-all ${
-                isDragTarget
-                  ? "border-red-400 bg-red-50 scale-[1.01]"
-                  : isDragging
-                    ? "border-gray-200 bg-gray-50 opacity-40"
-                    : "border-transparent hover:border-gray-100 hover:bg-gray-50"
-              }`}
-            >
-              {/* Drag handle */}
-              <div className="cursor-grab text-gray-300 hover:text-gray-500 transition-colors active:cursor-grabbing">
-                <svg
-                  className="w-4 h-4"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
+              return (
+                <div
+                  key={rawField.id}
+                  draggable
+                  onDragStart={() => onDragStart(idx)}
+                  onDragOver={(e) => onDragOver(e, idx)}
+                  onDrop={() => onDrop(idx)}
+                  onDragEnd={onDragEnd}
+                  className={`grid grid-cols-[24px_1fr_64px] sm:grid-cols-[24px_1fr_180px_180px_64px] gap-2 items-center px-3 py-2.5 rounded-xl border transition-all ${
+                    isDragTarget
+                      ? "border-red-400 bg-red-50 scale-[1.01]"
+                      : isDragging
+                        ? "border-gray-200 bg-gray-50 opacity-40"
+                        : "border-transparent hover:border-gray-100 hover:bg-gray-50"
+                  }`}
                 >
-                  <path d="M9 4a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM9 10.5a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM9 17a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
-                </svg>
-              </div>
+                  {/* Drag handle */}
+                  <div className="cursor-grab text-gray-300 hover:text-gray-500 transition-colors active:cursor-grabbing">
+                    <svg
+                      className="w-4 h-4"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M9 4a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM9 10.5a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3zM9 17a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
+                    </svg>
+                  </div>
 
-              {/* Name + Input + Range (Responsive Layout) */}
-              <div className="flex flex-col sm:contents min-w-0">
-                {/* Name */}
-                <div className="min-w-0 mb-1 sm:mb-0">
-                  <span className="text-sm font-semibold text-gray-700">
-                    {field.name}
-                  </span>
-                  {field.abbreviation && (
-                    <span className="ml-1.5 text-[11px] text-gray-400 font-mono">
-                      ({field.abbreviation})
-                    </span>
-                  )}
-                  {hasParamOverride && (
-                    <span className="ml-1.5 text-[9px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full font-bold align-middle">
-                      edited
-                    </span>
-                  )}
-                </div>
-
-                {/* Input */}
-                <div className="flex items-center space-x-2 mb-1 sm:mb-0">
-                  {qual ? (
-                    <input
-                      type="text"
-                      value={testData[rawField.id] || ""}
-                      onChange={(e) => handleChange(rawField.id, e.target.value)}
-                      placeholder="e.g. Negative"
-                      className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all outline-none"
-                    />
-                  ) : (
-                    <>
-                      <input
-                        type="number"
-                        step="any"
-                        value={testData[rawField.id] || ""}
-                        onChange={(e) => handleChange(rawField.id, e.target.value)}
-                        className={`w-full sm:w-24 px-3 py-2 text-center rounded-lg bg-white border transition-all outline-none font-mono font-medium text-sm ${
-                          abn
-                            ? "border-red-400 text-red-700 bg-red-50 focus:ring-red-500/20"
-                            : "border-gray-300 focus:border-red-500 focus:ring-red-500/10"
-                        } focus:ring-4`}
-                      />
-                      <span className="text-[11px] text-gray-500 leading-tight shrink-0">
-                        {field.unit}
+                  {/* Name + Input + Range (Responsive Layout) */}
+                  <div className="flex flex-col sm:contents min-w-0">
+                    {/* Name */}
+                    <div className="min-w-0 mb-1 sm:mb-0">
+                      <span className="text-sm font-semibold text-gray-700">
+                        {field.name}
                       </span>
-                    </>
-                  )}
-                </div>
-
-                {/* Range */}
-                <div className="text-left sm:text-right">
-                  <div
-                    className={`text-[10px] font-bold ${gender === "Male" ? "text-blue-500" : "text-pink-500"}`}
-                  >
-                    {gender === "Male" ? "♂" : "♀"} Normal
-                  </div>
-                  <div
-                    className={`text-xs font-mono ${abn ? "text-red-600 font-bold" : "text-gray-500"}`}
-                  >
-                    {qual
-                      ? rr.general || "—"
-                      : `${formatRange(rr, gender)}${field.unit ? ` ${field.unit}` : ""}`}
-                  </div>
-                  {abn && (
-                    <div className="text-[10px] text-red-500 font-bold">
-                      ⚠ Abnormal
+                      {field.abbreviation && (
+                        <span className="ml-1.5 text-[11px] text-gray-400 font-mono">
+                          ({field.abbreviation})
+                        </span>
+                      )}
+                      {hasParamOverride && (
+                        <span className="ml-1.5 text-[9px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded-full font-bold align-middle">
+                          edited
+                        </span>
+                      )}
                     </div>
-                  )}
+
+                    {/* Input */}
+                    <div className="flex items-center space-x-2 mb-1 sm:mb-0">
+                      {qual ? (
+                        <input
+                          type="text"
+                          value={testData[rawField.id] || ""}
+                          onChange={(e) =>
+                            handleChange(rawField.id, e.target.value)
+                          }
+                          placeholder="e.g. Negative"
+                          className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-gray-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all outline-none"
+                        />
+                      ) : (
+                        <>
+                          <input
+                            type="number"
+                            step="any"
+                            value={testData[rawField.id] || ""}
+                            onChange={(e) =>
+                              handleChange(rawField.id, e.target.value)
+                            }
+                            className={`w-full sm:w-24 px-3 py-2 text-center rounded-lg bg-white border transition-all outline-none font-mono font-medium text-sm ${
+                              abn
+                                ? "border-red-400 text-red-700 bg-red-50 focus:ring-red-500/20"
+                                : "border-gray-300 focus:border-red-500 focus:ring-red-500/10"
+                            } focus:ring-4`}
+                          />
+                          <span className="text-[11px] text-gray-500 leading-tight shrink-0">
+                            {field.unit}
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Range */}
+                    <div className="text-left sm:text-right">
+                      <div
+                        className={`text-[10px] font-bold ${gender === "Male" ? "text-blue-500" : "text-pink-500"}`}
+                      >
+                        {gender === "Male" ? "♂" : "♀"} Normal
+                      </div>
+                      <div
+                        className={`text-xs font-mono ${abn ? "text-red-600 font-bold" : "text-gray-500"}`}
+                      >
+                        {qual
+                          ? rr.general || "—"
+                          : `${formatRange(rr, gender)}${field.unit ? ` ${field.unit}` : ""}`}
+                      </div>
+                      {abn && (
+                        <div className="text-[10px] text-red-500 font-bold">
+                          ⚠ Abnormal
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action buttons: param edit + range edit */}
+                  <div className="flex items-center justify-end space-x-1 shrink-0">
+                    {/* Edit Parameter Fields */}
+                    <button
+                      onClick={() => openEditor(rawField.id, "param")}
+                      title="Edit parameter name / abbreviation / unit"
+                      className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                        editingId === rawField.id && editingMode === "param"
+                          ? "text-violet-600 bg-violet-100"
+                          : hasParamOverride
+                            ? "text-violet-400 hover:text-violet-600 hover:bg-violet-50"
+                            : "text-gray-300 hover:text-violet-500 hover:bg-violet-50"
+                      }`}
+                    >
+                      {/* Tag/label icon */}
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"
+                        />
+                      </svg>
+                    </button>
+
+                    {/* Edit Reference Range */}
+                    <button
+                      onClick={() => openEditor(rawField.id, "range")}
+                      title="Edit reference range"
+                      className={`p-1.5 rounded-lg transition-all shrink-0 ${
+                        editingId === rawField.id && editingMode === "range"
+                          ? "text-red-600 bg-red-100"
+                          : "text-gray-300 hover:text-red-500 hover:bg-red-50"
+                      }`}
+                    >
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
+              );
+            })}
+
+            {fields.length === 0 && (
+              <div className="text-center py-10 text-gray-400 text-sm">
+                No parameters found for this test and gender selection.
               </div>
-
-              {/* Action buttons: param edit + range edit */}
-              <div className="flex items-center justify-end space-x-1 shrink-0">
-                {/* Edit Parameter Fields */}
-                <button
-                  onClick={() => openEditor(rawField.id, "param")}
-                  title="Edit parameter name / abbreviation / unit"
-                  className={`p-1.5 rounded-lg transition-all shrink-0 ${
-                    editingId === rawField.id && editingMode === "param"
-                      ? "text-violet-600 bg-violet-100"
-                      : hasParamOverride
-                        ? "text-violet-400 hover:text-violet-600 hover:bg-violet-50"
-                        : "text-gray-300 hover:text-violet-500 hover:bg-violet-50"
-                  }`}
-                >
-                  {/* Tag/label icon */}
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"
-                    />
-                  </svg>
-                </button>
-
-                {/* Edit Reference Range */}
-                <button
-                  onClick={() => openEditor(rawField.id, "range")}
-                  title="Edit reference range"
-                  className={`p-1.5 rounded-lg transition-all shrink-0 ${
-                    editingId === rawField.id && editingMode === "range"
-                      ? "text-red-600 bg-red-100"
-                      : "text-gray-300 hover:text-red-500 hover:bg-red-50"
-                  }`}
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          );
-        })}
-
-        {fields.length === 0 && (
-          <div className="text-center py-10 text-gray-400 text-sm">
-            No parameters found for this test and gender selection.
+            )}
           </div>
-        )}
-      </div>
         </>
       )}
     </div>
@@ -748,7 +764,9 @@ export default function TestFields({
               onChange={(e) => setPickerValue(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-300 bg-white font-medium text-sm focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all outline-none"
             >
-              <option value="" disabled>Select a panel to add...</option>
+              <option value="" disabled>
+                Select a panel to add...
+              </option>
               {testTemplates.map((t) => (
                 <option key={t.panel_id} value={t.panel_id}>
                   {t.panel_name}

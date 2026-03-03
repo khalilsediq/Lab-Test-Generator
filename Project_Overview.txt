@@ -23,6 +23,14 @@
 - Integrated native Tailwind containment (`overflow-hidden` on the overlay shield, `overflow-y-auto overscroll-contain` on the interior viewing block).
 - Tied `e.stopPropagation()` strictly onto the inner preview container's `onWheel` and `onTouchMove` to prevent cascade DOM events.
 
+### Bug 4: Patient Info Layout Discrepancy (Not Matching Client Design)
+**Files Modified: `src/components/ReportTemplate.jsx`, `src/components/PatientForm.jsx`, `src/App.jsx`**
+*The original grid layout did not match the client's reference design, which required a distinct barcode strip (Zone A) and a borderless detailed grid (Zone B) with specific fields.*
+- **State Tracking:** Added `trId` (T/R ID) and `trNo` (T/R No) to the `patientDetails` state in `App.jsx` and created inputs for them in `PatientForm.jsx`.
+- **Barcode Generation:** Installed `react-barcode` and implemented it in Zone A to dynamically render CODE128 visual barcodes for the Patient No and T/R ID fields.
+- **Structural Overhaul:** Restructured the `ReportTemplate.jsx` patient info block into two explicit HTML zones. Zone A contains the top-bordered strip with three equidistant values. Zone B contains the borderless column layout exactly matching the requested labels (e.g., mapping "Father/Husband Name" to "S/O D/O W/O").
+- **Typography Alignment:** Applied `font-normal`, `font-semibold`, and `font-bold` classes strategically to exactly match the bolded values and regular-weight labels from the reference image.
+
 ---
 
 ## Future Project Tracking

@@ -1,5 +1,6 @@
 import logo from "../assets/images/Logo.png";
 import BloodBankReportSection from "./BloodBankReportSection";
+import Barcode from "react-barcode";
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -157,74 +158,129 @@ export default function ReportTemplate({
       <hr className="border-t-2 border-red-600 mb-2 print:mb-1" />
 
       {/* ── Patient Info Box ── */}
-      <div className="grid grid-cols-[1fr_1fr_90px] gap-x-4 mb-4 print:mb-2 text-[10pt] print:text-[9pt] leading-tight shrink-0">
-        {/* Left Column */}
-        <div className="grid grid-cols-[130px_1fr] gap-x-2 gap-y-[4px]">
-          <div className="font-medium text-gray-900">M.R. No :</div>
-          <div className="font-normal uppercase">
-            {patientDetails.mrNo || "—"}
-          </div>
-          <div className="font-medium text-gray-900">Patient Name :</div>
-          <div className="font-semibold uppercase">
-            {patientDetails.title} {patientDetails.name || "—"}
-          </div>
-          <div className="font-medium text-gray-900">Father/Husband Name:</div>
-          <div className="font-normal uppercase">
-            {patientDetails.fatherHusbandName || "—"}
-          </div>
-          <div className="font-medium text-gray-900">Age / Sex :</div>
-          <div className="font-normal">
-            {patientDetails.age ? `${patientDetails.age}(Y)` : "—"} / {gender}
-          </div>
-          <div className="font-medium text-gray-900">Contact No :</div>
-          <div className="font-normal uppercase">
-            {patientDetails.contactNo || "—"}
-          </div>
-          <div className="font-medium text-gray-900">Sample Location :</div>
-          <div className="font-normal uppercase">
-            {patientDetails.sampleLocation || "Collected In Lab"}
-          </div>
-          <div className="font-medium text-gray-900">Consultant :</div>
-          <div className="font-normal uppercase">
-            {patientDetails.consultant || "SELF"}
+      <div className="mb-4 print:mb-2 text-[10pt] print:text-[9pt] leading-tight shrink-0">
+        {/* ZONE A: Barcode Strip */}
+        <div className="border-t-[1.5px] border-b-[1.5px] border-black py-1 mb-2">
+          <div className="flex items-center justify-between px-1">
+            {/* Patient No */}
+            <div className="flex items-center gap-2">
+              <span className="font-normal text-black">Patient No:</span>
+              <span className="font-bold text-black text-[11pt] print:text-[10pt]">
+                {patientDetails.mrNo || "—"}
+              </span>
+              <div className="h-[20px] ml-1 overflow-hidden flex items-center">
+                {patientDetails.mrNo ? (
+                  <Barcode
+                    value={patientDetails.mrNo}
+                    format="CODE128"
+                    displayValue={false}
+                    height={20}
+                    margin={0}
+                    width={1.2}
+                  />
+                ) : (
+                  <div className="h-[20px] w-[80px] border border-dashed border-gray-400 flex items-center justify-center text-[8px] text-gray-400">
+                    [barcode]
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* T/R ID */}
+            <div className="flex items-center gap-2">
+              <span className="font-normal text-black">T/R ID:</span>
+              <span className="font-bold text-black text-[11pt] print:text-[10pt]">
+                {patientDetails.trId || "—"}
+              </span>
+              <div className="h-[20px] ml-1 overflow-hidden flex items-center">
+                {patientDetails.trId ? (
+                  <Barcode
+                    value={patientDetails.trId}
+                    format="CODE128"
+                    displayValue={false}
+                    height={20}
+                    margin={0}
+                    width={1.2}
+                  />
+                ) : (
+                  <div className="h-[20px] w-[80px] border border-dashed border-gray-400 flex items-center justify-center text-[8px] text-gray-400">
+                    [barcode]
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* T/R No */}
+            <div className="flex items-center gap-2">
+              <span className="font-normal text-black">T/R No:</span>
+              <span className="font-bold text-black text-[11pt] print:text-[10pt]">
+                {patientDetails.trNo || "—"}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Right Column (Dates + Location) */}
-        <div className="grid grid-cols-[130px_1fr] gap-x-2 gap-y-[4px]">
-          <div className="font-medium text-gray-900">Registration Date :</div>
-          <div className="font-normal">{regDateStr}</div>
-          <div className="font-medium text-gray-900">Received Date :</div>
-          <div className="font-normal">{regDateStr}</div>
-          <div className="font-medium text-gray-900">Reported Date :</div>
-          <div className="font-normal">{regDateStr}</div>
-          <div className="font-medium text-gray-900">Printing Date :</div>
-          <div className="font-normal">{printDateStr}</div>
-          <div className="font-medium text-gray-900">Address :</div>
-          <div className="font-normal uppercase">
-            {patientDetails.address || "—"}
-          </div>
-          <div className="font-medium text-gray-900">Registration At :</div>
-          <div className="font-normal uppercase">MAIN LAB</div>
-          <div className="font-medium text-gray-900">Reference :</div>
-          <div className="font-normal uppercase">
-            {patientDetails.reference || "N/A"}
-          </div>
-        </div>
+        {/* ZONE B: Patient Details Grid */}
+        <div className="grid grid-cols-[1fr_1fr_90px] gap-x-4">
+          {/* Left Column */}
+          <div className="grid grid-cols-[100px_1fr] gap-x-2 gap-y-[4px]">
+            <div className="font-normal text-black">Patient Name:</div>
+            <div className="font-semibold text-black">
+              {patientDetails.name || "—"}
+            </div>
 
-        {/* QR Code Placeholder */}
-        <div className="flex justify-end pt-1">
-          <div className="w-[80px] h-[80px] border border-gray-300 bg-gray-50 flex items-center justify-center text-center p-1">
-            <span className="text-[8px] text-gray-400">
-              QR Code
-              <br />
-              Placeholder
-            </span>
+            <div className="font-normal text-black">S/O D/O W/O:</div>
+            <div className="font-normal text-black">
+              {patientDetails.fatherHusbandName || "—"}
+            </div>
+
+            <div className="font-normal text-black">Age/Gender:</div>
+            <div className="font-bold text-black">
+              {patientDetails.age ? `${patientDetails.age}(Y)` : "—"} / {gender}
+            </div>
+
+            <div className="font-normal text-black">Contact No:</div>
+            <div className="font-bold text-black">
+              {patientDetails.contactNo || "—"}
+            </div>
+
+            <div className="font-normal text-black">Address:</div>
+            <div className="font-normal text-black">
+              {patientDetails.address || "—"}
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="grid grid-cols-[140px_1fr] gap-x-2 gap-y-[4px]">
+            <div className="font-normal text-black">Registration Location:</div>
+            <div className="font-bold text-black">Lab data_Main</div>
+
+            <div className="font-normal text-black">Registered Date:</div>
+            <div className="font-bold text-black">{regDateStr}</div>
+
+            <div className="font-normal text-black">Reporting Date:</div>
+            <div className="font-bold text-black">{regDateStr}</div>
+
+            <div className="font-normal text-black">Specimen Source:</div>
+            <div className="font-bold text-black">
+              {patientDetails.sampleLocation || "Self"}
+            </div>
+
+            <div className="font-normal text-black">Specimen:</div>
+            <div className="font-bold text-black">Taken in lab</div>
+          </div>
+
+          {/* Far Right: QR Code Placeholder */}
+          <div className="flex justify-end pr-1">
+            <div className="w-[80px] h-[80px] border border-black bg-white flex items-center justify-center text-center p-1 relative">
+              <div className="absolute inset-1 border-2 border-black border-dashed opacity-20"></div>
+              <span className="text-[10px] text-gray-500 font-bold z-10 leading-tight">
+                QR Code
+              </span>
+            </div>
           </div>
         </div>
       </div>
-
-      <hr className="border-t border-gray-400 mb-3" />
 
       {/* ── Stacked Reports ── */}
       {(() => {
