@@ -33,5 +33,34 @@
 
 ---
 
+### Session 3: PDF Engine Overhaul + Page Layout Selector + Sticky Header/Footer (2026-03-03)
+
+**Bug 5: Empty/Blank PDF Output (Complete Architecture Overhaul)**
+**Files Changed: `src/utils/generatePDF.js` [NEW], `src/components/ReportPreview.jsx`, `src/components/ReportTemplate.jsx`, `src/index.css`**
+*The `html2pdf.js` wrapper library has deeply embedded oklch color parsing bugs and treats off-screen clones inconsistently. Replaced the entire PDF pipeline.*
+
+- **New Utility `src/utils/generatePDF.js`:** Standalone async function using `html2canvas` + `jsPDF` directly, bypassing the buggy `html2pdf.js` wrapper entirely. Key strategy:
+  - Creates a `position:fixed; opacity:0; z-index:-9999` container so Tailwind styles resolve correctly without any visual side effect.
+  - Runs two `requestAnimationFrame` frames after DOM insertion to guarantee browser layout/paint.
+  - **Double-pass oklch resolver:** First strips oklch from all `<style>` tags in the document, then inlines all computed element colors as explicit `rgb()` strings. This is necessary because html2canvas reads CSS rules before `onclone` fires, so the fix must happen before html2canvas is called.
+  - Multi-page slicing: canvas is sliced into page-height strips, each written to its own PDF page. Page numbers are stamped at the bottom right of each page.
+  - Blob + `URL.createObjectURL` download strategy (reliable in both browser and Electron).
+
+- **Feature 1 — Page Layout Selector:** Added compact toolbar in the Print Preview modal header with:
+  - A4, A5, Letter, Legal, and Custom page size options.
+  - Portrait / Landscape orientation toggle.
+  - Custom size: two number inputs (Width mm × Height mm) appear when "Custom" is selected.
+  - Preview aspect ratio updates live as the selection changes.
+  - Print button dynamically injects a `<style id="dynamic-print-style">` tag with the correct `@page { size: ... }` rule before calling `window.print()`, then removes it.
+  - PDF download passes the full layout object to `generatePDF()` which constructs `jsPDF` with the correct format/orientation.
+
+- **Feature 2 — Sticky Header/Footer on Multi-Page Prints:** 
+  - Added `report-header` CSS class to the lab branding div in `ReportTemplate.jsx`.
+  - Added `report-footer` CSS class to the footer div.
+  - Updated `index.css` with the CSS table trick (`display:table` on the print target, `display:table-header-group` for `.report-header`, `display:table-footer-group` for `.report-footer`), which causes browsers to natively repeat header and footer on every physical printed page.
+
+---
+
 ## Future Project Tracking
 *This overview text file will serve as the continued ledger for all ongoing adjustments, fixes and feature implementations.*
+

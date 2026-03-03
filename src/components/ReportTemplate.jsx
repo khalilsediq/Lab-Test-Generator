@@ -75,6 +75,8 @@ export default function ReportTemplate({
   editedParams,
   paramOrders,
   additionalPanels = [],
+  showHeader = true,
+  showFooter = true,
 }) {
   const gender = patientDetails.gender;
 
@@ -98,64 +100,70 @@ export default function ReportTemplate({
   });
 
   return (
-    <div className="bg-white w-[210mm] min-h-[297mm] mx-auto p-[10mm] pb-[250px] text-black font-sans box-border relative print:m-0 print:p-[10mm] print:pb-[250px] print:shadow-none shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+    <div className="bg-white w-[210mm] min-h-[297mm] mx-auto p-[3mm] pb-[250px] text-black font-sans box-border relative print:m-0 print:p-[10mm] print:pb-[250px] print:shadow-none shadow-[0_0_10px_rgba(0,0,0,0.1)]">
       {/* ── Header ── */}
-      <div className="flex justify-between items-center mb-2 px-2 print:mb-1">
-        <div
-          className="flex flex-col text-red-600 font-serif font-bold italic leading-none shrink-0"
-          style={{ transform: "scaleY(1.1)", transformOrigin: "left center" }}
-        >
-          <h1 className="text-[38px] print:text-[32px] tracking-tighter mb-1">
-            BUKHARI LAB
-          </h1>
-          <h2 className="text-[24px] print:text-[20px] tracking-tight mb-1">
-            AL BASIT MEDICAL
-          </h2>
-          <h2 className="text-[24px] print:text-[20px] tracking-tight">
-            CENTER
-          </h2>
-        </div>
-
-        <div className="flex flex-col items-center justify-center shrink-0 -mt-2">
-          <img
-            src={logo}
-            alt="Bukhari Lab Logo"
-            className="w-[120px] h-[120px] print:w-[100px] print:h-[100px] object-contain"
-          />
+      {showHeader && (
+          <>
+        <div className="report-header flex justify-between items-center mb-2 px-2 print:mb-1">
           <div
-            className="text-red-600 font-bold text-xl print:text-lg mt-1"
-            style={{
-              fontFamily: "'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif",
-            }}
+            className="flex flex-col text-red-600 font-serif font-bold italic leading-none shrink-0"
+            style={{ transform: "scaleY(1.1)", transformOrigin: "left center" }}
           >
-            الباسط میڈیکل سینٹر شاہرگ
+            <h1 className="text-[38px] print:text-[32px] tracking-tighter mb-1">
+              BUKHARI LAB
+            </h1>
+            <h2 className="text-[24px] print:text-[20px] tracking-tight mb-1">
+              AL BASIT MEDICAL
+            </h2>
+            <h2 className="text-[24px] print:text-[20px] tracking-tight">
+              CENTER
+            </h2>
+          </div>
+
+          <div className="flex flex-col items-center justify-center shrink-0 -mt-2">
+            <img
+              src={logo}
+              alt="Bukhari Lab Logo"
+              className="w-[120px] h-[120px] print:w-[100px] print:h-[100px] object-contain"
+            />
+            <div
+              className="text-red-600 font-bold text-xl print:text-lg mt-1"
+              style={{
+                fontFamily: "'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif",
+              }}
+            >
+              الباسط میڈیکل سینٹر شاہرگ
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center text-red-600 font-serif font-bold italic leading-tight shrink-0">
+            <div
+              className="text-[48px] print:text-[40px] font-normal not-italic mb-1 leading-none"
+              style={{
+                fontFamily: "'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif",
+                transform: "scaleY(1.2)",
+                transformOrigin: "bottom center",
+              }}
+            >
+              بخاری لیب
+            </div>
+            <div className="text-[22px] print:text-[18px] tracking-wide mt-2">
+              LAB TECHNICIAN
+            </div>
+            <div className="text-[16px] print:text-[14px] tracking-wide">
+              SYED MOHEEB ULLAH
+            </div>
+            <div className="text-[16px] print:text-[14px] tracking-widest">
+              0332-3333800
+            </div>
           </div>
         </div>
+          <hr className="border-t-2 border-red-600 mb-2 print:mb-1" />
+          
+          </>
+      )}
+    
 
-        <div className="flex flex-col items-center text-red-600 font-serif font-bold italic leading-tight shrink-0">
-          <div
-            className="text-[48px] print:text-[40px] font-normal not-italic mb-1 leading-none"
-            style={{
-              fontFamily: "'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif",
-              transform: "scaleY(1.2)",
-              transformOrigin: "bottom center",
-            }}
-          >
-            بخاری لیب
-          </div>
-          <div className="text-[22px] print:text-[18px] tracking-wide mt-2">
-            LAB TECHNICIAN
-          </div>
-          <div className="text-[16px] print:text-[14px] tracking-wide">
-            SYED MOHEEB ULLAH
-          </div>
-          <div className="text-[16px] print:text-[14px] tracking-widest">
-            0332-3333800
-          </div>
-        </div>
-      </div>
-
-      <hr className="border-t-2 border-red-600 mb-2 print:mb-1" />
 
       {/* ── Patient Info Box ── */}
       <div className="mb-4 print:mb-2 text-[10pt] print:text-[9pt] leading-tight shrink-0">
@@ -280,6 +288,7 @@ export default function ReportTemplate({
             </div>
           </div>
         </div>
+         <hr/>
       </div>
 
       {/* ── Stacked Reports ── */}
@@ -389,39 +398,41 @@ export default function ReportTemplate({
       })()}
 
       {/* ── Footer ── */}
-      <div className="absolute bottom-10 left-[10mm] right-[10mm]">
-        <div className="text-right font-bold text-sm mb-2">
-          Approved By : Admin Admin
-        </div>
-        <div className="text-center font-bold text-xs uppercase mb-1">
-          Electronically verified report. No signatures necessary. Not Valid for
-          Legal Proceeding.
-        </div>
-        <hr />
-        <div className="flex justify-between text-xs font-semibold mb-2 mt-1">
-          <div>Offline: Print</div>
-          <div>Page 1 of 1</div>
-          <div>Print At : {printDateStr}</div>
-        </div>
-        <div className="flex justify-center space-x-6 text-xs text-black mb-1">
-          <div className="flex items-center space-x-1">
-            <span className="text-green-500">📱</span>
-            <span>0321 944 7113</span>
+      {showFooter && (
+        <div className="report-footer absolute bottom-10 left-[10mm] right-[10mm]">
+          <div className="text-right font-bold text-sm mb-2">
+            Approved By : Admin Admin
           </div>
-          <div className="flex items-center space-x-1">
-            <span className="text-blue-500">📞</span>
-            <span>0321 944 4002</span>
+          <div className="text-center font-bold text-xs uppercase mb-1">
+            Electronically verified report. No signatures necessary. Not Valid for
+            Legal Proceeding.
+          </div>
+          <hr />
+          <div className="flex justify-between text-xs font-semibold mb-2 mt-1">
+            <div>Offline: Print</div>
+            <div>Page 1 of 1</div>
+            <div>Print At : {printDateStr}</div>
+          </div>
+          <div className="flex justify-center space-x-6 text-xs text-black mb-1">
+            <div className="flex items-center space-x-1">
+              <span className="text-green-500">📱</span>
+              <span>0321 944 7113</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="text-blue-500">📞</span>
+              <span>0321 944 4002</span>
+            </div>
+          </div>
+          <div className="text-center text-xs text-black">
+            <span className="text-blue-700 font-bold">KS-Lab System</span> -
+            Powered by{" "}
+            <span className="text-green-600 font-bold">
+              Advanced Software Solutions
+            </span>{" "}
+            | Contact: +923708911924
           </div>
         </div>
-        <div className="text-center text-xs text-black">
-          <span className="text-blue-700 font-bold">KS-Lab System</span> -
-          Powered by{" "}
-          <span className="text-green-600 font-bold">
-            Advanced Software Solutions
-          </span>{" "}
-          | Contact: +923708911924
-        </div>
-      </div>
+      )}
     </div>
   );
 }

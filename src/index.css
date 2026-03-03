@@ -1,17 +1,58 @@
 @import "tailwindcss";
 
+/* ── Print styles ─────────────────────────────────────────────────────────── */
 @media print {
+  /*
+   * @page is the DEFAULT. The Print button dynamically injects its own
+   * <style id="dynamic-print-style"> tag that overrides this with the
+   * user-selected paper size & orientation.
+   */
   @page {
-    size: A4;
-    margin: 0;
+    size: A4 portrait;
+    margin: 10mm 8mm;
   }
+
   body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-    background-color: white !important;
+    background: white !important;
+  }
+
+  /* Hide everything except the print target */
+  body > *:not(#report-print-target) {
+    display: none !important;
+  }
+
+  /* Show the print target and reset any screen-only constraints */
+  #report-print-target {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* The report root div — let it flow naturally for multi-page */
+  #report-print-target > div {
+    width: 100% !important;
+    min-height: unset !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Avoid page breaks inside test result table rows */
+  tr {
+    page-break-inside: avoid;
+  }
+
+  /* Keep each test panel section together where possible */
+  .test-panel-section {
+    page-break-inside: avoid;
   }
 }
 
+/* Legacy PDF-capture class — kept for compatibility */
 .pdf-capture-safe * {
   --tw-prose-body: #111827 !important;
   --tw-prose-headings: #111827 !important;
