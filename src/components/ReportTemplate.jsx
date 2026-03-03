@@ -104,13 +104,19 @@ export default function ReportTemplate({
           className="flex flex-col text-red-600 font-serif font-bold italic leading-none shrink-0"
           style={{ transform: "scaleY(1.1)", transformOrigin: "left center" }}
         >
-          <h1 className="text-[38px] print:text-[32px] tracking-tighter mb-1">BUKHARI LAB</h1>
-          <h2 className="text-[24px] print:text-[20px] tracking-tight mb-1">AL BASIT MEDICAL</h2>
-          <h2 className="text-[24px] print:text-[20px] tracking-tight">CENTER</h2>
+          <h1 className="text-[38px] print:text-[32px] tracking-tighter mb-1">
+            BUKHARI LAB
+          </h1>
+          <h2 className="text-[24px] print:text-[20px] tracking-tight mb-1">
+            AL BASIT MEDICAL
+          </h2>
+          <h2 className="text-[24px] print:text-[20px] tracking-tight">
+            CENTER
+          </h2>
         </div>
 
         <div className="flex flex-col items-center justify-center shrink-0 -mt-2">
-           <img
+          <img
             src={logo}
             alt="Bukhari Lab Logo"
             className="w-[120px] h-[120px] print:w-[100px] print:h-[100px] object-contain"
@@ -136,32 +142,52 @@ export default function ReportTemplate({
           >
             بخاری لیب
           </div>
-          <div className="text-[22px] print:text-[18px] tracking-wide mt-2">LAB TECHNICIAN</div>
-          <div className="text-[16px] print:text-[14px] tracking-wide">SYED MOHEEB ULLAH</div>
-          <div className="text-[16px] print:text-[14px] tracking-widest">0332-3333800</div>
+          <div className="text-[22px] print:text-[18px] tracking-wide mt-2">
+            LAB TECHNICIAN
+          </div>
+          <div className="text-[16px] print:text-[14px] tracking-wide">
+            SYED MOHEEB ULLAH
+          </div>
+          <div className="text-[16px] print:text-[14px] tracking-widest">
+            0332-3333800
+          </div>
         </div>
       </div>
 
       <hr className="border-t-2 border-red-600 mb-2 print:mb-1" />
 
       {/* ── Patient Info Box ── */}
-      <div className="grid grid-cols-[1fr_1fr_90px] gap-x-4 mb-4 print:mb-2 text-[10pt] print:text-[9pt] leading-tight flex-shrink-0">
+      <div className="grid grid-cols-[1fr_1fr_90px] gap-x-4 mb-4 print:mb-2 text-[10pt] print:text-[9pt] leading-tight shrink-0">
         {/* Left Column */}
         <div className="grid grid-cols-[130px_1fr] gap-x-2 gap-y-[4px]">
           <div className="font-medium text-gray-900">M.R. No :</div>
-          <div className="font-normal uppercase">{patientDetails.mrNo || "—"}</div>
+          <div className="font-normal uppercase">
+            {patientDetails.mrNo || "—"}
+          </div>
           <div className="font-medium text-gray-900">Patient Name :</div>
-          <div className="font-semibold uppercase">{patientDetails.title} {patientDetails.name || "—"}</div>
+          <div className="font-semibold uppercase">
+            {patientDetails.title} {patientDetails.name || "—"}
+          </div>
           <div className="font-medium text-gray-900">Father/Husband Name:</div>
-          <div className="font-normal uppercase">{patientDetails.fatherHusbandName || "—"}</div>
+          <div className="font-normal uppercase">
+            {patientDetails.fatherHusbandName || "—"}
+          </div>
           <div className="font-medium text-gray-900">Age / Sex :</div>
-          <div className="font-normal">{patientDetails.age ? `${patientDetails.age}(Y)` : "—"} / {gender}</div>
+          <div className="font-normal">
+            {patientDetails.age ? `${patientDetails.age}(Y)` : "—"} / {gender}
+          </div>
           <div className="font-medium text-gray-900">Contact No :</div>
-          <div className="font-normal uppercase">{patientDetails.contactNo || "—"}</div>
+          <div className="font-normal uppercase">
+            {patientDetails.contactNo || "—"}
+          </div>
           <div className="font-medium text-gray-900">Sample Location :</div>
-          <div className="font-normal uppercase">{patientDetails.sampleLocation || "Collected In Lab"}</div>
+          <div className="font-normal uppercase">
+            {patientDetails.sampleLocation || "Collected In Lab"}
+          </div>
           <div className="font-medium text-gray-900">Consultant :</div>
-          <div className="font-normal uppercase">{patientDetails.consultant || "SELF"}</div>
+          <div className="font-normal uppercase">
+            {patientDetails.consultant || "SELF"}
+          </div>
         </div>
 
         {/* Right Column (Dates + Location) */}
@@ -175,27 +201,35 @@ export default function ReportTemplate({
           <div className="font-medium text-gray-900">Printing Date :</div>
           <div className="font-normal">{printDateStr}</div>
           <div className="font-medium text-gray-900">Address :</div>
-          <div className="font-normal uppercase">{patientDetails.address || "—"}</div>
+          <div className="font-normal uppercase">
+            {patientDetails.address || "—"}
+          </div>
           <div className="font-medium text-gray-900">Registration At :</div>
           <div className="font-normal uppercase">MAIN LAB</div>
           <div className="font-medium text-gray-900">Reference :</div>
-          <div className="font-normal uppercase">{patientDetails.reference || "N/A"}</div>
+          <div className="font-normal uppercase">
+            {patientDetails.reference || "N/A"}
+          </div>
         </div>
 
         {/* QR Code Placeholder */}
         <div className="flex justify-end pt-1">
           <div className="w-[80px] h-[80px] border border-gray-300 bg-gray-50 flex items-center justify-center text-center p-1">
-            <span className="text-[8px] text-gray-400">QR Code<br/>Placeholder</span>
+            <span className="text-[8px] text-gray-400">
+              QR Code
+              <br />
+              Placeholder
+            </span>
           </div>
         </div>
       </div>
-      
+
       <hr className="border-t border-gray-400 mb-3" />
 
       {/* ── Stacked Reports ── */}
       {(() => {
         const activePanels = [selectedTest, ...(additionalPanels || [])];
-        
+
         return activePanels.map((panelId, idx) => {
           const panel = testTemplates.find((t) => t.panel_id === panelId);
           const rawFields =
@@ -213,9 +247,10 @@ export default function ReportTemplate({
           return (
             <div key={panelId + idx} className="mb-4">
               {/* ── Report Title ── */}
-              <div className="bg-gray-200 py-[2px] print:py-[1px] flex items-center justify-center font-bold text-base print:text-sm tracking-widest uppercase mb-2 border-t border-b border-gray-400 print:break-after-avoid">
-                {panel?.panel_name?.replace(" Test", "").replace(" Profile", "") ||
-                  panelId}{" "}
+              <div className="bg-gray-200 py-[2px] print:py-px flex items-center justify-center font-bold text-base print:text-sm tracking-widest uppercase mb-2 border-t border-b border-gray-400 print:break-after-avoid">
+                {panel?.panel_name
+                  ?.replace(" Test", "")
+                  .replace(" Profile", "") || panelId}{" "}
                 REPORT
               </div>
 
@@ -231,10 +266,18 @@ export default function ReportTemplate({
                 <table className="w-full text-[10pt] print:text-[9pt] mt-1 mb-2">
                   <thead>
                     <tr className="border-b-2 border-gray-400">
-                      <th className="py-1 print:py-[2px] text-left font-bold uppercase w-2/5">TEST</th>
-                      <th className="py-1 print:py-[2px] text-left font-bold uppercase w-1/6">RESULT</th>
-                      <th className="py-1 print:py-[2px] text-left font-bold uppercase w-1/6">UNITS</th>
-                      <th className="py-1 print:py-[2px] text-left font-bold uppercase">REF. RANGE</th>
+                      <th className="py-1 print:py-[2px] text-left font-bold uppercase w-2/5">
+                        TEST
+                      </th>
+                      <th className="py-1 print:py-[2px] text-left font-bold uppercase w-1/6">
+                        RESULT
+                      </th>
+                      <th className="py-1 print:py-[2px] text-left font-bold uppercase w-1/6">
+                        UNITS
+                      </th>
+                      <th className="py-1 print:py-[2px] text-left font-bold uppercase">
+                        REF. RANGE
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="print:break-inside-avoid">
@@ -243,10 +286,17 @@ export default function ReportTemplate({
                       const qual = isQual(field);
                       const val = testData[field.id];
                       const abn = isAbnormal(val, rr, gender, qual);
-                      const overriddenParam = effectiveParam(field, editedParams, panelId);
+                      const overriddenParam = effectiveParam(
+                        field,
+                        editedParams,
+                        panelId,
+                      );
 
                       return (
-                        <tr key={field.id} className="border-b border-gray-100/50">
+                        <tr
+                          key={field.id}
+                          className="border-b border-gray-100/50"
+                        >
                           <td className="py-1 print:py-[3px] font-semibold">
                             {overriddenParam.name}
                             {overriddenParam.abbreviation && (
@@ -259,7 +309,9 @@ export default function ReportTemplate({
                             className={`py-1 print:py-[3px] font-mono ${abn ? "font-bold text-red-700" : ""}`}
                           >
                             {val || "—"}
-                            {abn && <span className="text-red-600 ml-0.5">*</span>}
+                            {abn && (
+                              <span className="text-red-600 ml-0.5">*</span>
+                            )}
                           </td>
                           <td className="py-1 print:py-[3px]">
                             {qual ? "Qualitative" : overriddenParam.unit}

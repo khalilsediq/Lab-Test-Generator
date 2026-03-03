@@ -1,0 +1,29 @@
+# Lab Test Generator - Bug Fixes & Project Overview
+
+## Active Bug Fixes Applied
+
+### Bug 1: PDF Generation Crashes (OKLCH Color Parsing Error)
+**Files Modified: `src/components/ReportPreview.jsx`, `src/index.css`**
+*The version of html2canvas bundled inside html2pdf.js cannot parse modern Tailwind OKLCH variables natively.*
+- **Layer 1 (Inline Resolver):** Mapped `window.getComputedStyle()` against all elements inside `ReportPreview.jsx` during PDF generation to force `color`, `backgroundColor` and `borderColor` into safe RGB equivalents.
+- **Layer 2 (CSS Fallback):** Generated a specific `.pdf-capture-safe` class in `index.css` forcing Tailwind prose settings into absolute hex/rgb variables locally for the cloned layout.
+- **Layer 3 (String Serialization Scrubber):** Bypassed the built-in React/DOM rendering engine bug by serializing the clone out as a raw HTML string `clone.outerHTML`, running a global regex substitution (`/oklch\([^)]+\)/g` -> `rgb(17, 24, 39)`), and rebuilding the element from scratch before appending it to the DOM for capturing.
+
+### Bug 2: Download PDF Freezing
+**Files Modified: `src/components/ReportPreview.jsx`**
+*The UI locks entirely because the JS thread gets bottlenecked by the heavy rendering canvas map.*
+- Wrapped the heavy `html2pdf().save()` call within `setTimeout(async () => {...}, 50)` yielding the JS Event Loop frame precisely long enough for React to render the "Generating..." spinner.
+- Implemented visual disabling `disabled={isGeneratingPDF}` and CSS blockouts (opacity, cursor) for both the Download and Print buttons to prevent parallel threading conflicts.
+- Appended a 30-second `Promise.race()` timeout guard to automatically reject and cleanup the `document.body` clone if the html2canvas renderer hangs internally.
+
+### Bug 3: Scroll Bleeds Through to Background
+**Files Modified: `src/components/ReportPreview.jsx`**
+*When scrolling the modal preview list, the actual page underneath also receives the wheel event and drifts.*
+- Bound `document.body.style.overflow = "hidden"` using a React `useEffect` firing strictly when the modal props flag `show` true. 
+- Integrated native Tailwind containment (`overflow-hidden` on the overlay shield, `overflow-y-auto overscroll-contain` on the interior viewing block).
+- Tied `e.stopPropagation()` strictly onto the inner preview container's `onWheel` and `onTouchMove` to prevent cascade DOM events.
+
+---
+
+## Future Project Tracking
+*This overview text file will serve as the continued ledger for all ongoing adjustments, fixes and feature implementations.*

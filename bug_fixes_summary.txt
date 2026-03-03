@@ -1,0 +1,23 @@
+SUMMARY OF FIXES
+
+Files Changed:
+1. `src/components/ReportPreview.jsx`
+2. `src/index.css`
+
+Fixes Applied:
+
+Bug 1 (PDF OKLCH Error)
+- Added `resolveStylesToInline` helper to resolve oklch colors locally before html2canvas processes it.
+- Applied `resolveStylesToInline` right after cloning the element.
+- Added an `onclone` callback inside `opt.html2canvas` to process the body.
+- Appended `pdf-capture-safe` class to the cloned wrapper and defined this class in `index.css` to override tailwind defaults with safe colors as a fallback layer.
+
+Bug 2 (PDF Freeze & Blocked UI)
+- Wrapped the PDF generation tasks (cloning, capturing) in a `setTimeout(async () => {}, 50)` block to allow the current React tick to finish and render the "Generating..." spinner.
+- Ensured both the "Download PDF" and "Print" buttons enter a disabled state visually while `isGeneratingPDF` is true.
+- Incorporated a safety net: `Promise.race([html2pdf(), timeoutPromise])` which rejects automatically after 30 seconds if `html2pdf` stalls, guaranteeing the UI unlocks gracefully.
+
+Bug 3 (Scroll Bleed-through)
+- Attached a `useEffect` on `show` to toggle `document.body.style.overflow = "hidden"` on open and release on unmount/close, guaranteeing absolute body containment.
+- Maintained the `overflow-hidden` rule on the outer screen backdrop.
+- Maintained the `overflow-y-auto overscroll-contain` styles across the inner scrollable preview window and enforced `e.stopPropagation()` hooks on `onWheel`/`onTouchMove` to trap scroll triggers entirely within the modal hierarchy.

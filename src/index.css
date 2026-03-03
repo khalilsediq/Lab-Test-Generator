@@ -11,3 +11,8 @@
     background-color: white !important;
   }
 }
+
+.pdf-capture-safe * {
+  --tw-prose-body: #111827 !important;
+  --tw-prose-headings: #111827 !important;
+}
