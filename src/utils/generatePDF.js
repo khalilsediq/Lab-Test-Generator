@@ -2,64 +2,46 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
 // ── oklch → rgb resolver ────────────────────────────────────────────────────
-// html2canvas (v1.4.x) cannot parse oklch/oklab color functions from Tailwind v4.
-//
-// HOW IT WORKS:
-//   The browser's 2D Canvas API CAN resolve oklch to actual RGB pixel values.
-//   We set fillStyle = oklch string, then read the pixel — that gives the real RGB.
-//   This is the only reliable deterministic approach (no regex guessing).
-//
+// html2canvas (v1.4.x) cannot parse oklch/oklab color functions (Tailwind v4).
+// The Canvas 2D API CAN resolve oklch to actual RGB pixels.
+// IMPORTANT: Only strip oklch from cloned documents (inside onclone),
+// NEVER from the live document.
+
 const _colorCache = new Map();
 const _resolverCanvas = document.createElement("canvas");
 _resolverCanvas.width = 1;
 _resolverCanvas.height = 1;
-const _resolverCtx = _resolverCanvas.getContext("2d", {
-  willReadFrequently: true,
-});
+const _resolverCtx = _resolverCanvas.getContext("2d", { willReadFrequently: true });
 
 function resolveColorToRgb(rawValue) {
-  if (
-    !rawValue ||
-    (!rawValue.includes("oklch") && !rawValue.includes("oklab"))
-  ) {
+  if (!rawValue || (!rawValue.includes("oklch") && !rawValue.includes("oklab"))) {
     return rawValue;
   }
   if (_colorCache.has(rawValue)) return _colorCache.get(rawValue);
-
   try {
     _resolverCtx.clearRect(0, 0, 1, 1);
-    _resolverCtx.fillStyle = rawValue; // browser resolves oklch internally
+    _resolverCtx.fillStyle = rawValue;
     _resolverCtx.fillRect(0, 0, 1, 1);
     const [r, g, b, a] = _resolverCtx.getImageData(0, 0, 1, 1).data;
-    const resolved =
-      a < 255
-        ? `rgba(${r},${g},${b},${(a / 255).toFixed(3)})`
-        : `rgb(${r},${g},${b})`;
+    const resolved = a < 255
+      ? `rgba(${r},${g},${b},${(a / 255).toFixed(3)})`
+      : `rgb(${r},${g},${b})`;
     _colorCache.set(rawValue, resolved);
     return resolved;
   } catch {
-    // If canvas fails (e.g. in a node env), fall back to transparent
     return "transparent";
   }
 }
 
 const COLOR_PROPS = [
-  "color",
-  "backgroundColor",
-  "borderTopColor",
-  "borderRightColor",
-  "borderBottomColor",
-  "borderLeftColor",
-  "outlineColor",
-  "textDecorationColor",
+  "color", "backgroundColor",
+  "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor",
+  "outlineColor", "textDecorationColor",
 ];
 
-function stripOklchFromStyleTags(doc) {
-  // We can't modify CSSStyleSheet rules directly (CORS), but we can rewrite
-  // the innerHTML of <style> elements we own (Tailwind injects these).
-  for (const style of doc.querySelectorAll("style")) {
+function stripOklchFromStyleTags(clonedDoc) {
+  for (const style of clonedDoc.querySelectorAll("style")) {
     if (style.innerHTML && /ok(?:lch|lab)/.test(style.innerHTML)) {
-      // Replace each oklch(...) token with a canvas-resolved equivalent
       style.innerHTML = style.innerHTML.replace(
         /ok(?:lch|lab)\([^)]+\)/g,
         (match) => resolveColorToRgb(match),
@@ -68,81 +50,63 @@ function stripOklchFromStyleTags(doc) {
   }
 }
 
-function inlineComputedColors(rootElement) {
-  // After style-tag stripping, inline every element's computed color props
-  // so html2canvas never has to parse oklch at all.
-  for (const el of rootElement.querySelectorAll("*")) {
-    const computed = window.getComputedStyle(el);
-    const patch = {};
+function inlineComputedColors(liveSource, clonedRoot) {
+  const liveEls  = liveSource.querySelectorAll("*");
+  const cloneEls = clonedRoot.querySelectorAll("*");
+  const count    = Math.min(liveEls.length, cloneEls.length);
+  for (let i = 0; i < count; i++) {
+    const computed = window.getComputedStyle(liveEls[i]);
     for (const prop of COLOR_PROPS) {
       const val = computed[prop];
       if (val && (val.includes("oklch") || val.includes("oklab"))) {
-        patch[prop] = resolveColorToRgb(val);
+        cloneEls[i].style[prop] = resolveColorToRgb(val);
       }
-    }
-    for (const [prop, val] of Object.entries(patch)) {
-      el.style[prop] = val;
     }
   }
 }
 
 // ── page size lookup ──────────────────────────────────────────────────────────
 export const PAGE_SIZES = {
-  a4: { width: 210, height: 297, label: "A4" },
-  a5: { width: 148, height: 210, label: "A5" },
+  a4:     { width: 210,   height: 297,   label: "A4" },
+  a5:     { width: 148,   height: 210,   label: "A5" },
   letter: { width: 215.9, height: 279.4, label: "Letter" },
-  legal: { width: 215.9, height: 355.6, label: "Legal" },
-  custom: { width: 210, height: 297, label: "Custom Size" },
+  legal:  { width: 215.9, height: 355.6, label: "Legal" },
+  custom: { width: 210,   height: 297,   label: "Custom Size" },
 };
 
-export function getPageSizeString({
-  format,
-  orientation,
-  customWidth,
-  customHeight,
-}) {
-  if (format === "custom")
-    return `${customWidth}mm ${customHeight}mm ${orientation}`;
+export function getPageSizeString({ format, orientation, customWidth, customHeight }) {
+  if (format === "custom") return `${customWidth}mm ${customHeight}mm ${orientation}`;
   return `${format} ${orientation}`;
 }
 
-// ── main export ───────────────────────────────────────────────────────────────
-/**
- * Captures sourceElement as a multi-page PDF with correct colors.
- *
- * @param {HTMLElement} sourceElement  Live DOM node (the actual visible rendered element)
- * @param {object}      options
- *   filename        string   default 'report.pdf'
- *   format          string   'a4'|'a5'|'letter'|'legal'|'custom'
- *   orientation     string   'portrait'|'landscape'
- *   customWidth     number   mm — used when format === 'custom'
- *   customHeight    number   mm — used when format === 'custom'
- *   margins         number[] [top, right, bottom, left] in mm
- */
-export async function generatePDF(sourceElement, options = {}) {
-  const {
-    filename = "report.pdf",
-    format = "a4",
-    orientation = "portrait",
-    customWidth = 210,
-    customHeight = 297,
-    margins = [10, 10, 10, 10],
-  } = options;
+const mmToPx = (mm) => (mm * 96) / 25.4;
 
-  // ── STEP A: Create an isolated fixed clone container ──────────────────────
-  // position:fixed keeps the element in normal layout flow so Tailwind resolves.
-  // opacity:0 + pointer-events:none makes it invisible & non-interactive.
-  // DO NOT use top:-9999px — Chromium stops painting elements outside the viewport.
-  const mmToPx = (mm) => (mm * 96) / 25.4;
-  const sizes = PAGE_SIZES[format] || PAGE_SIZES.a4;
-  const widthMm = format === "custom" ? customWidth : sizes.width;
-  const widthPx = Math.round(mmToPx(widthMm));
+// ── shared capture helper ─────────────────────────────────────────────────────
+async function captureToCanvas(liveEl, cloneEl, widthPx, heightPx) {
+  return html2canvas(cloneEl, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: "#ffffff",
+    logging: false,
+    width: widthPx,
+    height: heightPx,
+    windowWidth: widthPx,
+    windowHeight: heightPx,
+    scrollX: 0,
+    scrollY: 0,
+    onclone: (clonedDoc, clonedEl) => {
+      stripOklchFromStyleTags(clonedDoc);
+      inlineComputedColors(cloneEl, clonedEl);
+    },
+  });
+}
 
-  const container = document.createElement("div");
-  container.style.cssText = [
-    "position:fixed",
-    "top:0",
-    "left:0",
+// ── make an off-screen fixed container ────────────────────────────────────────
+function makeContainer(widthPx) {
+  const c = document.createElement("div");
+  c.style.cssText = [
+    "position:fixed", "top:0", "left:0",
     `width:${widthPx}px`,
     "min-height:10px",
     "z-index:-99999",
@@ -151,18 +115,118 @@ export async function generatePDF(sourceElement, options = {}) {
     "background:white",
     "overflow:visible",
   ].join(";");
+  return c;
+}
 
-  //  ── Clone the live report element ────────────────────────────────────────
-  //  We clone the INNER element (the actual A4 report div), not its scale-wrapper.
-  //  The scale-wrapper in ReportPreview has CSS transform:scale() which distorts
-  //  dimensions — we want the true natural-size report.
-  //
-  //  sourceElement is the wrapper div from reportRef. Its first (and only) child
-  //  is the ReportTemplate root div.
+// ── main export ─────────────────────────────────────────────────────────────
+/**
+ * @param {HTMLElement} sourceElement  reportWrapperRef.current
+ *   (its firstElementChild is the A4 ReportTemplate root div)
+ * @param {object} options
+ */
+export async function generatePDF(sourceElement, options = {}) {
+  const {
+    filename    = "report.pdf",
+    format      = "a4",
+    orientation = "portrait",
+    customWidth  = 210,
+    customHeight = 297,
+    margins      = [10, 10, 10, 10],
+  } = options;
+
+  const sizes   = PAGE_SIZES[format] || PAGE_SIZES.a4;
+  const widthMm = format === "custom" ? customWidth : sizes.width;
+  const widthPx = Math.round(mmToPx(widthMm));
+
+  // The A4 report root div (inside the wrapper)
   const innerEl = sourceElement.firstElementChild || sourceElement;
-  const clone = innerEl.cloneNode(true);
 
-  // Override any leftover transform/scale on the clone itself
+  // ── STEP A: Capture header ────────────────────────────────────────────────
+  // Find the header zone element.
+  const liveHeader = innerEl.querySelector("#report-header-zone");
+  let headerCanvas   = null;
+  let headerHeightMm = 0;
+  let headerHeightPx = 0;
+
+  if (liveHeader) {
+    const hContainer = makeContainer(widthPx);
+    const headerClone = liveHeader.cloneNode(true);
+    headerClone.style.cssText = [
+      `width:${widthPx}px`,
+      "transform:none", "zoom:1",
+      "background:white", "display:block", "visibility:visible",
+    ].join(";");
+    hContainer.appendChild(headerClone);
+    document.body.appendChild(hContainer);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    inlineComputedColors(liveHeader, headerClone);
+
+    const h = headerClone.scrollHeight || headerClone.offsetHeight || 10;
+    try {
+      headerCanvas = await captureToCanvas(liveHeader, headerClone, widthPx, h);
+    } finally {
+      hContainer.remove();
+    }
+    if (headerCanvas) {
+      // headerCanvas.height is at scale:2, so real px = height/2
+      headerHeightPx = headerCanvas.height / 2;
+      headerHeightMm = (headerHeightPx / widthPx) * widthMm;
+    }
+  }
+
+  // ── STEP B: Capture footer ────────────────────────────────────────────────
+  const liveFooter = innerEl.querySelector(".report-footer");
+  let footerCanvas   = null;
+  let footerHeightMm = 0;
+  let footerHeightPx = 0;
+
+  if (liveFooter) {
+    const fContainer = makeContainer(widthPx);
+    const footerClone = liveFooter.cloneNode(true);
+    footerClone.style.cssText = [
+      `width:${widthPx}px`,
+      "transform:none", "zoom:1",
+      "background:white", "display:block",
+      // Footer is now in-flow (not absolute), so no position override needed
+    ].join(";");
+    fContainer.appendChild(footerClone);
+    document.body.appendChild(fContainer);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    inlineComputedColors(liveFooter, footerClone);
+
+    const h = footerClone.scrollHeight || footerClone.offsetHeight || 10;
+    try {
+      footerCanvas = await captureToCanvas(liveFooter, footerClone, widthPx, h);
+    } finally {
+      fContainer.remove();
+    }
+    if (footerCanvas) {
+      footerHeightPx = footerCanvas.height / 2;
+      footerHeightMm = (footerHeightPx / widthPx) * widthMm;
+    }
+  }
+
+  // ── STEP C: Capture body-only canvas ─────────────────────────────────────
+  //
+  // BUG 2 + BUG 4 FIX: The body clone is the FULL report div, which naturally
+  // contains the header zone and footer inside it. If we capture it as-is and
+  // also stamp header/footer separately, they appear TWICE.
+  //
+  // Fix: before capturing the body clone, HIDE the header zone and footer
+  // elements inside the clone. This makes the body canvas contain ONLY
+  // the content between them (patient info + test tables).
+  //
+  // BUG 3 FIX (ghost page): The report div has `pb-[250px]` padding to create
+  // space for the absolute-positioned footer on screen. This extra ~66mm of
+  // empty space makes the canvas taller than the real content, which pushes
+  // the page count past 1 and creates a blank second page.
+  // Fix: after hiding header/footer in the clone, also remove pb padding and
+  // reset min-height, then measure the ACTUAL scroll height after layout.
+
+  const container = makeContainer(widthPx);
+  const clone     = innerEl.cloneNode(true);
+
+  // Reset only the structural sizing — keep all other Tailwind classes intact
   clone.style.cssText = [
     `width:${widthPx}px`,
     "transform:none",
@@ -170,33 +234,40 @@ export async function generatePDF(sourceElement, options = {}) {
     "background:white",
     "display:block",
     "margin:0",
-    "padding:10mm",
-    "box-sizing:border-box",
+    // Remove the pb-[250px] / min-height:[297mm] that would add ghost space
+    "padding-bottom:0",
+    "min-height:0",
   ].join(";");
   clone.classList.remove("hidden");
+
+  // BUG 2+4 FIX: Hide the header zone (which includes the hr separator) inside
+  // the clone so it doesn't appear in the body canvas (we stamp it separately).
+  const cloneHeaderZone = clone.querySelector("#report-header-zone");
+  if (cloneHeaderZone) {
+    cloneHeaderZone.style.display = "none";
+  }
+
+  // BUG 2+4 FIX: Also hide the footer inside the clone.
+  const cloneFooter = clone.querySelector(".report-footer");
+  if (cloneFooter) {
+    cloneFooter.style.display = "none";
+  }
 
   container.appendChild(clone);
   document.body.appendChild(container);
 
-  // ── STEP B: Wait for the browser to lay out and paint the clone ───────────
-  // Two rAF frames guarantee one full layout + paint cycle.
-  await new Promise((r) =>
-    requestAnimationFrame(() => requestAnimationFrame(r)),
-  );
+  // Two rAF frames → full layout + paint with hidden elements
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  inlineComputedColors(innerEl, clone);
 
-  // ── STEP C: Resolve oklch BEFORE html2canvas reads the DOM ────────────────
-  // html2canvas parses CSS from <style> tags first, then reads element styles.
-  // We must fix both BEFORE calling html2canvas.
-  stripOklchFromStyleTags(document); // live document's <style> tags
-  inlineComputedColors(clone); // elements inside our clone
+  // BUG 3 FIX: Use scrollHeight AFTER hiding header/footer and removing pb padding.
+  // This gives us the true height of the body content only.
+  const captureW = clone.offsetWidth  || widthPx;
+  const captureH = Math.max(clone.scrollHeight, clone.offsetHeight, 10);
 
-  // ── STEP D: Capture ───────────────────────────────────────────────────────
-  const captureW = clone.offsetWidth || widthPx;
-  const captureH = clone.scrollHeight || clone.offsetHeight || 1123;
-
-  let canvas;
+  let bodyCanvas;
   try {
-    canvas = await html2canvas(clone, {
+    bodyCanvas = await html2canvas(clone, {
       scale: 2,
       useCORS: true,
       allowTaint: true,
@@ -209,103 +280,112 @@ export async function generatePDF(sourceElement, options = {}) {
       scrollX: 0,
       scrollY: 0,
       onclone: (clonedDoc, clonedEl) => {
-        // Second-pass: fix any oklch that slipped through into the internal clone
         stripOklchFromStyleTags(clonedDoc);
-        inlineComputedColors(clonedEl);
+        inlineComputedColors(clone, clonedEl);
       },
     });
   } finally {
-    if (container.parentNode) container.parentNode.removeChild(container);
+    container.remove();
   }
 
-  // ── STEP E: Sanity check ──────────────────────────────────────────────────
-  if (canvas.width === 0 || canvas.height === 0) {
-    throw new Error(
-      `Canvas captured zero dimensions (${canvas.width}×${canvas.height}). ` +
-        "The report element may not have a measurable size.",
-    );
+  if (bodyCanvas.width === 0 || bodyCanvas.height === 0) {
+    throw new Error(`Canvas zero dimensions (${bodyCanvas.width}×${bodyCanvas.height}).`);
   }
 
-  // ── STEP F: Assemble PDF with per-page canvas slices ─────────────────────
+  // ── STEP D: Assemble PDF ──────────────────────────────────────────────────
   const pdfFormat = format === "custom" ? [customWidth, customHeight] : format;
   const pdf = new jsPDF({ orientation, unit: "mm", format: pdfFormat });
 
   const pdfW = pdf.internal.pageSize.getWidth();
   const pdfH = pdf.internal.pageSize.getHeight();
   const [mTop, mRight, mBottom, mLeft] = margins;
+
   const usableW = pdfW - mLeft - mRight;
-  const usableH = pdfH - mTop - mBottom;
+  // Usable height for body slices = page minus margins minus header/footer stamps
+  const usableH = pdfH - mTop - mBottom - headerHeightMm - footerHeightMm;
 
-  const imgAspect = canvas.height / canvas.width;
-  const renderedW = usableW;
-  const renderedH = renderedW * imgAspect; // total rendered mm height
-  const totalPages = Math.max(1, Math.ceil(renderedH / usableH));
+  // Body image total rendered height in mm
+  const bodyAspect = bodyCanvas.height / bodyCanvas.width;
+  const bodyW      = usableW;
+  const bodyH      = bodyW * bodyAspect;
 
-  let currentPage = 1;
-  let yRenderedSoFar = 0;
+  // BUG 3 FIX: Only create additional pages when there is genuine remaining
+  // content. We use a small epsilon (0.1mm) to avoid floating-point ghosts.
+  const EPSILON       = 0.1;
+  const totalPages    = Math.max(1, Math.ceil((bodyH - EPSILON) / usableH));
 
-  while (yRenderedSoFar < renderedH) {
-    const sliceH = Math.min(usableH, renderedH - yRenderedSoFar);
+  let currentPage  = 1;
+  let yBodySoFar   = 0;   // mm of body content rendered so far
 
-    // Slice the full canvas vertically for this page
-    const srcY = Math.round((yRenderedSoFar / renderedH) * canvas.height);
-    const srcH = Math.round((sliceH / renderedH) * canvas.height);
+  while (yBodySoFar < bodyH - EPSILON) {
+    const sliceH = Math.min(usableH, bodyH - yBodySoFar);
+    if (sliceH <= 0) break;
 
-    if (srcH > 0) {
-      const pg = document.createElement("canvas");
-      pg.width = canvas.width;
-      pg.height = srcH;
-      pg.getContext("2d").drawImage(
-        canvas,
-        0,
-        srcY,
-        canvas.width,
-        srcH,
-        0,
-        0,
-        canvas.width,
-        srcH,
-      );
-
+    // ── Stamp header ──────────────────────────────────────────────────────
+    if (headerCanvas && headerHeightMm > 0) {
       pdf.addImage(
-        pg.toDataURL("image/jpeg", 0.95),
+        headerCanvas.toDataURL("image/jpeg", 0.95),
         "JPEG",
-        mLeft,
-        mTop,
-        renderedW,
-        sliceH,
+        mLeft, mTop, usableW, headerHeightMm,
       );
     }
 
-    // Page number in footer area
-    pdf.setFontSize(8);
-    pdf.setTextColor(140);
+    // ── Stamp body slice ──────────────────────────────────────────────────
+    const bodyTopOnPage = mTop + headerHeightMm;
+    const srcY = Math.round((yBodySoFar / bodyH) * bodyCanvas.height);
+    const srcH = Math.round((sliceH    / bodyH) * bodyCanvas.height);
+
+    if (srcH > 0) {
+      const sliceCanvas = document.createElement("canvas");
+      sliceCanvas.width  = bodyCanvas.width;
+      sliceCanvas.height = srcH;
+      sliceCanvas.getContext("2d").drawImage(
+        bodyCanvas,
+        0, srcY, bodyCanvas.width, srcH,
+        0, 0,    bodyCanvas.width, srcH,
+      );
+      pdf.addImage(
+        sliceCanvas.toDataURL("image/jpeg", 0.95),
+        "JPEG",
+        mLeft, bodyTopOnPage, usableW, sliceH,
+      );
+    }
+
+    // ── Stamp footer ──────────────────────────────────────────────────────
+    if (footerCanvas && footerHeightMm > 0) {
+      const footerY = pdfH - mBottom - footerHeightMm;
+      pdf.addImage(
+        footerCanvas.toDataURL("image/jpeg", 0.95),
+        "JPEG",
+        mLeft, footerY, usableW, footerHeightMm,
+      );
+    }
+
+    // ── Page number ───────────────────────────────────────────────────────
+    pdf.setFontSize(7);
+    pdf.setTextColor(150);
     pdf.text(
       `Page ${currentPage} of ${totalPages}`,
-      pdfW - mRight - 2,
+      pdfW - mRight - 1,
       pdfH - mBottom / 2,
       { align: "right" },
     );
     pdf.setTextColor(0);
 
-    yRenderedSoFar += sliceH;
-    if (yRenderedSoFar < renderedH) {
+    yBodySoFar += sliceH;
+
+    // BUG 3 FIX: Only add a new page when there is genuine remaining content
+    if (yBodySoFar < bodyH - EPSILON) {
       pdf.addPage();
       currentPage++;
     }
   }
 
-  // ── STEP G: Download via blob URL (works in both browser and Electron) ────
+  // ── STEP E: Download ──────────────────────────────────────────────────────
   const blob = pdf.output("blob");
-  const url = URL.createObjectURL(blob);
-  const a = Object.assign(document.createElement("a"), {
-    href: url,
-    download: filename,
-  });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement("a"), { href: url, download: filename });
   document.body.appendChild(a);
   a.click();
-  setTimeout(() => {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 1500);
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
 }

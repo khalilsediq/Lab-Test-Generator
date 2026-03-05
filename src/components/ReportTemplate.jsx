@@ -64,6 +64,41 @@ const applyOrder = (fields, order) => {
   });
 };
 
+// ── Density configs ────────────────────────────────────────────────────────
+// Each level defines CSS classes/values for font size, row padding, section gap.
+// These are applied to the table rows and patient info section.
+export const DENSITY_LEVELS = ["comfortable", "compact", "condensed"];
+
+export const DENSITY_CONFIG = {
+  comfortable: {
+    label: "Comfortable",
+    tableTextClass: "text-[10pt]",
+    rowPaddingClass: "py-1",
+    sectionGapClass: "mb-4",
+    patientTextClass: "text-[10pt]",
+    titlePaddingClass: "py-[2px]",
+    titleTextClass: "text-base",
+  },
+  compact: {
+    label: "Compact",
+    tableTextClass: "text-[9pt]",
+    rowPaddingClass: "py-[2px]",
+    sectionGapClass: "mb-2",
+    patientTextClass: "text-[9pt]",
+    titlePaddingClass: "py-[1px]",
+    titleTextClass: "text-sm",
+  },
+  condensed: {
+    label: "Condensed",
+    tableTextClass: "text-[8pt]",
+    rowPaddingClass: "py-[1px]",
+    sectionGapClass: "mb-1",
+    patientTextClass: "text-[8pt]",
+    titlePaddingClass: "py-0",
+    titleTextClass: "text-xs",
+  },
+};
+
 // ── component ─────────────────────────────────────────────────────────────
 
 export default function ReportTemplate({
@@ -77,8 +112,10 @@ export default function ReportTemplate({
   additionalPanels = [],
   showHeader = true,
   showFooter = true,
+  density = "comfortable",
 }) {
   const gender = patientDetails.gender;
+  const dc = DENSITY_CONFIG[density] || DENSITY_CONFIG.comfortable;
 
   const parseDate = (dStr) => (dStr ? new Date(dStr) : new Date());
   const regDateObj = parseDate(patientDetails.registrationDate);
@@ -100,10 +137,19 @@ export default function ReportTemplate({
   });
 
   return (
-    <div className="bg-white w-[210mm] min-h-[297mm] mx-auto p-[3mm] pb-[250px] text-black font-sans box-border relative print:m-0 print:p-[10mm] print:pb-[250px] print:shadow-none shadow-[0_0_10px_rgba(0,0,0,0.1)]">
-      {/* ── Header ── */}
-      {showHeader && (
-          <>
+    <div className="bg-white w-[210mm] min-h-[297mm] mx-auto p-[3mm] text-black font-sans box-border flex flex-col print:m-0 print:p-[10mm] print:shadow-none shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+
+      {/*
+        ── Header ──
+        BUG 2 FIX: We keep the header in the DOM at ALL TIMES (even when hidden)
+        so the space it occupies is always reserved and content below never shifts.
+        visibility:hidden makes it invisible without removing it from flow.
+        (If showHeader is false, the hr separator is also hidden.)
+      */}
+      <div
+        id="report-header-zone"
+        style={{ visibility: showHeader ? "visible" : "hidden" }}
+      >
         <div className="report-header flex justify-between items-center mb-2 px-2 print:mb-1">
           <div
             className="flex flex-col text-red-600 font-serif font-bold italic leading-none shrink-0"
@@ -158,15 +204,11 @@ export default function ReportTemplate({
             </div>
           </div>
         </div>
-          <hr className="border-t-2 border-red-600 mb-2 print:mb-1" />
-          
-          </>
-      )}
-    
-
+        <hr className="border-t-2 border-red-600 mb-2 print:mb-1" />
+      </div>
 
       {/* ── Patient Info Box ── */}
-      <div className="mb-4 print:mb-2 text-[10pt] print:text-[9pt] leading-tight shrink-0">
+      <div className={`${dc.sectionGapClass} print:mb-2 ${dc.patientTextClass} print:text-[9pt] leading-tight shrink-0`}>
         {/* ZONE A: Barcode Strip */}
         <div className="border-t-[1.5px] border-b-[1.5px] border-black py-1 mb-2">
           <div className="flex items-center justify-between px-1">
@@ -288,7 +330,7 @@ export default function ReportTemplate({
             </div>
           </div>
         </div>
-         <hr/>
+        <hr />
       </div>
 
       {/* ── Stacked Reports ── */}
@@ -310,9 +352,9 @@ export default function ReportTemplate({
           const isBloodBank = panel?.category?.toLowerCase()?.includes("blood");
 
           return (
-            <div key={panelId + idx} className="mb-4">
+            <div key={panelId + idx} className={dc.sectionGapClass}>
               {/* ── Report Title ── */}
-              <div className="bg-gray-200 py-[2px] print:py-px flex items-center justify-center font-bold text-base print:text-sm tracking-widest uppercase mb-2 border-t border-b border-gray-400 print:break-after-avoid">
+              <div className={`bg-gray-200 ${dc.titlePaddingClass} print:py-px flex items-center justify-center font-bold ${dc.titleTextClass} print:text-sm tracking-widest uppercase mb-2 border-t border-b border-gray-400 print:break-after-avoid`}>
                 {panel?.panel_name
                   ?.replace(" Test", "")
                   .replace(" Profile", "") || panelId}{" "}
@@ -328,19 +370,19 @@ export default function ReportTemplate({
                   paramOrders={paramOrders}
                 />
               ) : (
-                <table className="w-full text-[10pt] print:text-[9pt] mt-1 mb-2">
+                <table className={`w-full ${dc.tableTextClass} print:text-[9pt] mt-1 mb-2`}>
                   <thead>
                     <tr className="border-b-2 border-gray-400">
-                      <th className="py-1 print:py-[2px] text-left font-bold uppercase w-2/5">
+                      <th className={`${dc.rowPaddingClass} print:py-[2px] text-left font-bold uppercase w-2/5`}>
                         TEST
                       </th>
-                      <th className="py-1 print:py-[2px] text-left font-bold uppercase w-1/6">
+                      <th className={`${dc.rowPaddingClass} print:py-[2px] text-left font-bold uppercase w-1/6`}>
                         RESULT
                       </th>
-                      <th className="py-1 print:py-[2px] text-left font-bold uppercase w-1/6">
+                      <th className={`${dc.rowPaddingClass} print:py-[2px] text-left font-bold uppercase w-1/6`}>
                         UNITS
                       </th>
-                      <th className="py-1 print:py-[2px] text-left font-bold uppercase">
+                      <th className={`${dc.rowPaddingClass} print:py-[2px] text-left font-bold uppercase`}>
                         REF. RANGE
                       </th>
                     </tr>
@@ -362,7 +404,7 @@ export default function ReportTemplate({
                           key={field.id}
                           className="border-b border-gray-100/50"
                         >
-                          <td className="py-1 print:py-[3px] font-semibold">
+                          <td className={`${dc.rowPaddingClass} print:py-[3px] font-semibold`}>
                             {overriddenParam.name}
                             {overriddenParam.abbreviation && (
                               <span className="text-gray-500 font-normal ml-1 text-[8pt]">
@@ -371,17 +413,17 @@ export default function ReportTemplate({
                             )}
                           </td>
                           <td
-                            className={`py-1 print:py-[3px] font-mono ${abn ? "font-bold text-red-700" : ""}`}
+                            className={`${dc.rowPaddingClass} print:py-[3px] font-mono ${abn ? "font-bold text-red-700" : ""}`}
                           >
                             {val || "—"}
                             {abn && (
                               <span className="text-red-600 ml-0.5">*</span>
                             )}
                           </td>
-                          <td className="py-1 print:py-[3px]">
+                          <td className={`${dc.rowPaddingClass} print:py-[3px]`}>
                             {qual ? "Qualitative" : overriddenParam.unit}
                           </td>
-                          <td className="py-1 print:py-[3px] font-mono">
+                          <td className={`${dc.rowPaddingClass} print:py-[3px] font-mono`}>
                             {qual
                               ? rr?.general || "See report"
                               : `${formatRange(rr, gender)}${overriddenParam.unit ? ` ${overriddenParam.unit}` : ""}`}
@@ -397,9 +439,12 @@ export default function ReportTemplate({
         });
       })()}
 
+      {/* ── Spacer: pushes footer to visual bottom of the A4 page ── */}
+      <div className="flex-1" />
+
       {/* ── Footer ── */}
       {showFooter && (
-        <div className="report-footer absolute bottom-10 left-[10mm] right-[10mm]">
+        <div className="report-footer mt-4 pt-2">
           <div className="text-right font-bold text-sm mb-2">
             Approved By : Admin Admin
           </div>
@@ -410,7 +455,6 @@ export default function ReportTemplate({
           <hr />
           <div className="flex justify-between text-xs font-semibold mb-2 mt-1">
             <div>Offline: Print</div>
-            <div>Page 1 of 1</div>
             <div>Print At : {printDateStr}</div>
           </div>
           <div className="flex justify-center space-x-6 text-xs text-black mb-1">

@@ -1,11 +1,19 @@
 @import "tailwindcss";
 
+/* ── Screen-only: hidden on screen, visible when printing ─────────────────── */
+/* Used for #report-print-target — must not use Tailwind `hidden` which         */
+/* generates display:none !important, defeating @media print overrides.         */
+@media screen {
+  .screen-only {
+    display: none !important;
+  }
+}
+
 /* ── Print styles ─────────────────────────────────────────────────────────── */
 @media print {
   /*
-   * @page is the DEFAULT. The Print button dynamically injects its own
-   * <style id="dynamic-print-style"> tag that overrides this with the
-   * user-selected paper size & orientation.
+   * @page defaults. The Print button injects <style id="dynamic-print-style">
+   * which overrides size/margin with the user-selected layout.
    */
   @page {
     size: A4 portrait;
@@ -18,12 +26,17 @@
     background: white !important;
   }
 
-  /* Hide everything except the print target */
+  /*
+   * BUG 1 FIX:
+   * #report-print-target is rendered via ReactDOM.createPortal directly onto
+   * document.body — it IS a direct child of body. So this selector correctly
+   * hides everything else (including #root which contains the React app and
+   * the modal overlay) and shows only the print target.
+   */
   body > *:not(#report-print-target) {
     display: none !important;
   }
 
-  /* Show the print target and reset any screen-only constraints */
   #report-print-target {
     display: block !important;
     position: static !important;
@@ -33,21 +46,18 @@
     padding: 0 !important;
   }
 
-  /* The report root div — let it flow naturally for multi-page */
+  /* The A4 report root div — remove screen-only constraints */
   #report-print-target > div {
-    width: 100% !important;
-    min-height: unset !important;
-    margin: 0 !important;
     box-shadow: none !important;
+    margin: 0 auto !important;
+    width: 210mm !important;
+    min-height: unset !important;
+    /* Remove the large bottom padding used for the absolute footer on screen */
+    padding-bottom: 30mm !important;
   }
 
-  /* Avoid page breaks inside test result table rows */
+  /* Avoid page breaks inside table rows */
   tr {
-    page-break-inside: avoid;
-  }
-
-  /* Keep each test panel section together where possible */
-  .test-panel-section {
     page-break-inside: avoid;
   }
 }
