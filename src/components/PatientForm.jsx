@@ -1,9 +1,59 @@
+import { useState, useRef, useEffect } from "react";
+
 export default function PatientForm({ patientDetails, setPatientDetails }) {
+  const [customGenders, setCustomGenders] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("customGenders") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const [isGenderOpen, setIsGenderOpen] = useState(false);
+  const [genderInput, setGenderInput] = useState("");
+  const genderRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (genderRef.current && !genderRef.current.contains(e.target)) {
+        setIsGenderOpen(false);
+        setGenderInput("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setPatientDetails((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleAddCustomGender = (e) => {
+    if (e.key === "Enter" && genderInput.trim()) {
+      e.preventDefault();
+      const newG = genderInput.trim();
+      const defaultG = ["Male", "Female", "Other"];
+      if (!defaultG.includes(newG) && !customGenders.includes(newG)) {
+        const updated = [...customGenders, newG];
+        setCustomGenders(updated);
+        localStorage.setItem("customGenders", JSON.stringify(updated));
+      }
+      setPatientDetails((prev) => ({ ...prev, gender: newG }));
+      setGenderInput("");
+      setIsGenderOpen(false);
+    }
+  };
+
+  const handleDeleteCustomGender = (e, g) => {
+    e.stopPropagation();
+    const updated = customGenders.filter((cg) => cg !== g);
+    setCustomGenders(updated);
+    localStorage.setItem("customGenders", JSON.stringify(updated));
+    if (patientDetails.gender === g) {
+      setPatientDetails((prev) => ({ ...prev, gender: "Other" }));
+    }
+  };
   const inp =
     "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-500/10 transition-all outline-none text-gray-800 placeholder-gray-400";
 
@@ -74,7 +124,7 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
           <label className="text-sm font-semibold text-gray-600">
             Age & Gender
           </label>
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 relative" ref={genderRef}>
             <input
               type="number"
               name="age"
@@ -85,18 +135,75 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
               max="150"
               className={`w-24 text-center ${inp}`}
             />
-            <select
-              name="gender"
-              value={patientDetails.gender}
-              onChange={handleChange}
-              className={`flex-1 ${inp} cursor-pointer`}
-            >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          {/* Gender indicator */}
+            
+            {/* Custom Gender ComboBox */}
+            <div className={`flex-1 relative ${inp} cursor-pointer flex items-center justify-between p-0`}
+                 onClick={() => setIsGenderOpen(!isGenderOpen)}>
+              <div className="px-4 py-3 w-full h-full flex items-center select-none text-gray-800">
+                {patientDetails.gender || "Select Gender"}
+              </div>
+              <div className="px-3 text-gray-400">
+                <svg className={`w-4 h-4 transition-transform ${isGenderOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+
+              {isGenderOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 shadow-xl rounded-xl z-50 overflow-hidden flex flex-col max-h-[250px] animate-in fade-in zoom-in-95 duration-100">
+                  <div className="p-2 border-b border-gray-100 shrink-0">
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                      placeholder="Type custom & press Enter..."
+                      value={genderInput}
+                      onChange={(e) => setGenderInput(e.target.value)}
+                      onKeyDown={handleAddCustomGender}
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                    />
+                  </div>
+                  <div className="overflow-y-auto flex-1 p-1">
+                    {["Male", "Female", "Other"].map((g) => (
+                      <div
+                        key={g}
+                        onClick={() => {
+                          setPatientDetails((prev) => ({ ...prev, gender: g }));
+                          setIsGenderOpen(false);
+                        }}
+                        className={`px-3 py-2 text-sm rounded-lg hover:bg-gray-50 cursor-pointer ${patientDetails.gender === g ? "bg-red-50 text-red-700 font-medium" : "text-gray-700"}`}
+                      >
+                        {g}
+                      </div>
+                    ))}
+                    {customGenders.length > 0 && (
+                      <div className="my-1 border-t border-gray-100"></div>
+                    )}
+                    {customGenders.map((g) => (
+                      <div
+                        key={g}
+                        onClick={() => {
+                          setPatientDetails((prev) => ({ ...prev, gender: g }));
+                          setIsGenderOpen(false);
+                        }}
+                        className={`group px-3 py-2 text-sm rounded-lg hover:bg-gray-50 cursor-pointer flex items-center justify-between ${patientDetails.gender === g ? "bg-red-50 text-red-700 font-medium" : "text-gray-700"}`}
+                      >
+                        <span className="truncate pr-2">{g}</span>
+                        <button
+                          onClick={(e) => handleDeleteCustomGender(e, g)}
+                          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-all focus:outline-none"
+                          title="Remove custom gender"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>          {/* Gender indicator */}
           <div
             className={`flex items-center space-x-1 text-xs font-semibold ${
               patientDetails.gender === "Male"

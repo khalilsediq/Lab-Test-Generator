@@ -67,11 +67,12 @@ export default function ReportPreview({
   const [showHeader, setShowHeader] = useState(true);
   const [showFooter, setShowFooter] = useState(true);
 
-  // ── Density (Feature 2) ───────────────────────────────────────────────────
+  // ── Density & Page Count (Feature 1 & 2) ─────────────────────────────────
   // "auto" means the system decides; we track both the auto-selected level
   // and whether the user has overridden it manually.
   const [density,     setDensity]     = useState("comfortable");
   const [densityAuto, setDensityAuto] = useState(true); // true = auto mode
+  const [pageCount,   setPageCount]   = useState(1);
 
   // Manual cycle: clicking the density badge cycles through levels manually
   const cycleDensity = () => {
@@ -112,6 +113,15 @@ export default function ReportPreview({
 
     const contentH = reportRoot.scrollHeight;
 
+    // Feature 1: Calculate realistic page count
+    // A normal page has margins and header/footer space.
+    const estimatedUsableRatio = 0.85; 
+    const usablePagePx = pageHeightPx * estimatedUsableRatio;
+    const count = Math.max(1, Math.ceil(contentH / usablePagePx));
+    setPageCount(count);
+
+    if (!densityAuto) return;
+
     let chosen = "comfortable";
     if (contentH <= pageHeightPx) {
       chosen = "comfortable";
@@ -134,7 +144,7 @@ export default function ReportPreview({
 
   // Run measurement after every render (debounced via rAF)
   useEffect(() => {
-    if (!show || !densityAuto) return;
+    if (!show) return;
     const id = requestAnimationFrame(() => {
       requestAnimationFrame(measureAndSetDensity);
     });
@@ -198,29 +208,24 @@ export default function ReportPreview({
         margin: ${pageLayout.margins.join("mm ")}mm;
       }
       @media print {
-        /* Fixed header repeats on every page */
-        #report-print-target #report-header-zone {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          background: white;
-          z-index: 9999;
-          visibility: visible !important;
+        /*
+          Use display: table-header-group and table-footer-group
+          to automatically repeat headers/footers on every printed page.
+          Visibility is set inline in ReportTemplate so toggles still apply.
+        */
+        .print-table {
+           width: 100%;
         }
-        /* Fixed footer repeats on every page */
-        #report-print-target .report-footer {
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background: white;
-          z-index: 9999;
+        .print-table-header {
+           display: table-header-group;
         }
-        /* Body gets top/bottom padding to clear fixed header+footer */
+        .print-table-footer {
+           display: table-footer-group;
+        }
+        /* Body content */
         #report-print-target > div {
-          padding-top: 50mm;
-          padding-bottom: 40mm;
+           /* padding top/bottom removed because table handles spacing */
+           padding: 0 !important;
         }
       }
     `;
@@ -255,10 +260,15 @@ export default function ReportPreview({
           <div className="sticky top-0 z-10 px-4 sm:px-5 py-2.5 border-b border-gray-100 bg-white/95 backdrop-blur shrink-0">
             <div className="flex flex-wrap items-center gap-2">
 
-              {/* Title */}
-              <div className="mr-auto">
-                <h2 className="text-sm font-bold text-gray-800 leading-tight">Print Preview</h2>
-                <p className="text-[10px] text-gray-400 hidden sm:block">Review before printing or saving</p>
+              {/* Title & Page Count */}
+              <div className="mr-auto flex items-center gap-3">
+                <div>
+                  <h2 className="text-sm font-bold text-gray-800 leading-tight">Print Preview</h2>
+                  <p className="text-[10px] text-gray-400 hidden sm:block">Review before printing or saving</p>
+                </div>
+                <div className="hidden sm:flex items-center justify-center px-2 py-1 bg-gray-100 border border-gray-200 rounded text-[10px] font-bold text-gray-600 tracking-wide">
+                  {pageCount} {pageCount === 1 ? "page" : "pages"}
+                </div>
               </div>
 
               {/* ── Header / Footer toggles ──────────────────────────── */}

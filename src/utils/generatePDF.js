@@ -106,7 +106,7 @@ async function captureToCanvas(liveEl, cloneEl, widthPx, heightPx) {
 function makeContainer(widthPx) {
   const c = document.createElement("div");
   c.style.cssText = [
-    "position:fixed", "top:0", "left:0",
+    "position:absolute", "top:0", "left:-9999px",
     `width:${widthPx}px`,
     "min-height:10px",
     "z-index:-99999",
@@ -125,6 +125,10 @@ function makeContainer(widthPx) {
  * @param {object} options
  */
 export async function generatePDF(sourceElement, options = {}) {
+  const originalOverflow = document.body.style.overflow;
+  document.body.style.overflow = "visible";
+
+  try {
   const {
     filename    = "report.pdf",
     format      = "a4",
@@ -148,11 +152,12 @@ export async function generatePDF(sourceElement, options = {}) {
   let headerHeightMm = 0;
   let headerHeightPx = 0;
 
-  if (liveHeader) {
-    const hContainer = makeContainer(widthPx);
+  if (liveHeader && window.getComputedStyle(liveHeader).visibility !== "hidden") {
+    const hw = liveHeader.offsetWidth || widthPx;
+    const hContainer = makeContainer(hw);
     const headerClone = liveHeader.cloneNode(true);
     headerClone.style.cssText = [
-      `width:${widthPx}px`,
+      `width:${hw}px`,
       "transform:none", "zoom:1",
       "background:white", "display:block", "visibility:visible",
     ].join(";");
@@ -163,14 +168,15 @@ export async function generatePDF(sourceElement, options = {}) {
 
     const h = headerClone.scrollHeight || headerClone.offsetHeight || 10;
     try {
-      headerCanvas = await captureToCanvas(liveHeader, headerClone, widthPx, h);
+      headerCanvas = await captureToCanvas(liveHeader, headerClone, hw, h);
     } finally {
       hContainer.remove();
     }
     if (headerCanvas) {
       // headerCanvas.height is at scale:2, so real px = height/2
       headerHeightPx = headerCanvas.height / 2;
-      headerHeightMm = (headerHeightPx / widthPx) * widthMm;
+      const actualW = headerCanvas.width / 2;
+      headerHeightMm = (headerHeightPx / actualW) * widthMm;
     }
   }
 
@@ -180,11 +186,12 @@ export async function generatePDF(sourceElement, options = {}) {
   let footerHeightMm = 0;
   let footerHeightPx = 0;
 
-  if (liveFooter) {
-    const fContainer = makeContainer(widthPx);
+  if (liveFooter && window.getComputedStyle(liveFooter).visibility !== "hidden") {
+    const fw = liveFooter.offsetWidth || widthPx;
+    const fContainer = makeContainer(fw);
     const footerClone = liveFooter.cloneNode(true);
     footerClone.style.cssText = [
-      `width:${widthPx}px`,
+      `width:${fw}px`,
       "transform:none", "zoom:1",
       "background:white", "display:block",
       // Footer is now in-flow (not absolute), so no position override needed
@@ -196,13 +203,14 @@ export async function generatePDF(sourceElement, options = {}) {
 
     const h = footerClone.scrollHeight || footerClone.offsetHeight || 10;
     try {
-      footerCanvas = await captureToCanvas(liveFooter, footerClone, widthPx, h);
+      footerCanvas = await captureToCanvas(liveFooter, footerClone, fw, h);
     } finally {
       fContainer.remove();
     }
     if (footerCanvas) {
       footerHeightPx = footerCanvas.height / 2;
-      footerHeightMm = (footerHeightPx / widthPx) * widthMm;
+      const actualW = footerCanvas.width / 2;
+      footerHeightMm = (footerHeightPx / actualW) * widthMm;
     }
   }
 
@@ -388,4 +396,8 @@ export async function generatePDF(sourceElement, options = {}) {
   document.body.appendChild(a);
   a.click();
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+
+  } finally {
+    document.body.style.overflow = originalOverflow;
+  }
 }

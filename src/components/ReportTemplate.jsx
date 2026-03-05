@@ -29,10 +29,26 @@ const effectiveParam = (field, pOverrides, pId) => {
 
 const formatRange = (rr, gender) => {
   if (!rr) return "—";
-  const [mn, mx] =
-    gender === "Male"
-      ? [rr.male_min, rr.male_max]
-      : [rr.female_min, rr.female_max];
+  
+  // Custom gender fallback logic
+  let mn = null;
+  let mx = null;
+  if (gender === "Male") {
+    mn = rr.male_min; mx = rr.male_max;
+  } else if (gender === "Female") {
+    mn = rr.female_min; mx = rr.female_max;
+  } else {
+    // For custom genders like "Child" or "Other", check if they have specific
+    // ranges (though backend currently doesn't support this via schema).
+    // Fallback: If both male/female exist and are identical, use it.
+    // Otherwise fallback to general string, or show a generic message.
+    if (rr.male_min !== null && rr.male_max !== null && rr.male_min === rr.female_min && rr.male_max === rr.female_max) {
+      mn = rr.male_min; mx = rr.male_max;
+    } else {
+      return rr.general || "—";
+    }
+  }
+
   if (mn === null && mx === null) return rr.general || "—";
   if (mn !== null && mx === null) return `≥ ${mn}`;
   if (mn === null && mx !== null) return `< ${mx}`;
@@ -43,10 +59,21 @@ const isAbnormal = (val, rr, gender, qual) => {
   if (qual || !val || !rr) return false;
   const n = parseFloat(val);
   if (isNaN(n)) return false;
-  const [mn, mx] =
-    gender === "Male"
-      ? [rr.male_min, rr.male_max]
-      : [rr.female_min, rr.female_max];
+  
+  let mn = null;
+  let mx = null;
+  if (gender === "Male") {
+    mn = rr.male_min; mx = rr.male_max;
+  } else if (gender === "Female") {
+    mn = rr.female_min; mx = rr.female_max;
+  } else {
+    if (rr.male_min !== null && rr.male_max !== null && rr.male_min === rr.female_min && rr.male_max === rr.female_max) {
+      mn = rr.male_min; mx = rr.male_max;
+    } else {
+      return false; // Safely ignore abnormal flag if we can't determine numeric range for custom gender
+    }
+  }
+
   if (mn !== null && mx === null) return n < mn;
   if (mn === null && mx !== null) return n > mx;
   if (mn !== null && mx !== null) return n < mn || n > mx;
@@ -138,7 +165,13 @@ export default function ReportTemplate({
 
   return (
     <div className="bg-white w-[210mm] min-h-[297mm] mx-auto p-[3mm] text-black font-sans box-border flex flex-col print:m-0 print:p-[10mm] print:shadow-none shadow-[0_0_10px_rgba(0,0,0,0.1)]">
-
+      
+      {/* ── Print Table Wrapping: Creates semantic headers/footers for native browser printing ── */}
+      <table className="w-full border-collapse">
+        <thead className="print-table-header">
+          <tr>
+            <td>
+              {/* Header space */}
       {/*
         ── Header ──
         BUG 2 FIX: We keep the header in the DOM at ALL TIMES (even when hidden)
@@ -206,7 +239,21 @@ export default function ReportTemplate({
         </div>
         <hr className="border-t-2 border-red-600 mb-2 print:mb-1" />
       </div>
+            </td>
+          </tr>
+        </thead>
+        <tbody className="relative">
+          {/* Watermark Logo Feature */}
+          <tr>
+            <td colSpan="100%" className="p-0">
+              <div className="absolute inset-x-0 inset-y-12 pointer-events-none flex items-center justify-center opacity-[0.03] z-0 overflow-hidden print:opacity-[0.05]">
+                <img src={logo} alt="Watermark" className="w-[80%] h-auto object-contain" />
+              </div>
+            </td>
+          </tr>
 
+          <tr>
+            <td className="relative z-10">
       {/* ── Patient Info Box ── */}
       <div className={`${dc.sectionGapClass} print:mb-2 ${dc.patientTextClass} print:text-[9pt] leading-tight shrink-0`}>
         {/* ZONE A: Barcode Strip */}
@@ -438,45 +485,58 @@ export default function ReportTemplate({
           );
         });
       })()}
+            </td>
+          </tr>
+        </tbody>
+
+        <tfoot className="print-table-footer">
+          <tr>
+            <td>
+              {/* Footer space */}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
 
       {/* ── Spacer: pushes footer to visual bottom of the A4 page ── */}
       <div className="flex-1" />
 
       {/* ── Footer ── */}
-      {showFooter && (
-        <div className="report-footer mt-4 pt-2">
-          <div className="text-right font-bold text-sm mb-2">
-            Approved By : Admin Admin
+      <div
+        className="report-footer mt-4 pt-2"
+        style={{ visibility: showFooter ? "visible" : "hidden" }}
+      >
+        <div className="text-right font-bold text-sm mb-2">
+          Approved By : Admin Admin
+        </div>
+        <div className="text-center font-bold text-xs uppercase mb-1">
+          Electronically verified report. No signatures necessary. Not Valid for
+          Legal Proceeding.
+        </div>
+        <hr />
+        <div className="flex justify-between text-xs font-semibold mb-2 mt-1">
+          <div>Offline: Print</div>
+          <div>Print At : {printDateStr}</div>
+        </div>
+        <div className="flex justify-center space-x-6 text-xs text-black mb-1">
+          <div className="flex items-center space-x-1">
+            <span className="text-green-500">📱</span>
+            <span>0321 944 7113</span>
           </div>
-          <div className="text-center font-bold text-xs uppercase mb-1">
-            Electronically verified report. No signatures necessary. Not Valid for
-            Legal Proceeding.
-          </div>
-          <hr />
-          <div className="flex justify-between text-xs font-semibold mb-2 mt-1">
-            <div>Offline: Print</div>
-            <div>Print At : {printDateStr}</div>
-          </div>
-          <div className="flex justify-center space-x-6 text-xs text-black mb-1">
-            <div className="flex items-center space-x-1">
-              <span className="text-green-500">📱</span>
-              <span>0321 944 7113</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <span className="text-blue-500">📞</span>
-              <span>0321 944 4002</span>
-            </div>
-          </div>
-          <div className="text-center text-xs text-black">
-            <span className="text-blue-700 font-bold">KS-Lab System</span> -
-            Powered by{" "}
-            <span className="text-green-600 font-bold">
-              Advanced Software Solutions
-            </span>{" "}
-            | Contact: +923708911924
+          <div className="flex items-center space-x-1">
+            <span className="text-blue-500">📞</span>
+            <span>0321 944 4002</span>
           </div>
         </div>
-      )}
+        <div className="text-center text-xs text-black">
+          <span className="text-blue-700 font-bold">KS-Lab System</span> -
+          Powered by{" "}
+          <span className="text-green-600 font-bold">
+            Advanced Software Solutions
+          </span>{" "}
+          | Contact: +923708911924
+        </div>
+      </div>
     </div>
   );
 }
