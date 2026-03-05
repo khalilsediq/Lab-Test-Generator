@@ -1,7 +1,7 @@
 [
   {
     "panel_id": "HEMATOLOGY",
-    "panel_name": "Hematology (Complete Blood Picture)",
+    "panel_name": "Hematology (Complete Blood Count)",
     "category": "Hematology",
     "description": "Full blood count evaluating red cells, white cells, platelets, and related indices.",
     "parameters": [
@@ -2105,7 +2105,7 @@
   },
   {
     "panel_id": "CBC_ADVANCED",
-    "panel_name": "CBC Advanced Analyzer Parameters",
+    "panel_name": "CBC (Complete Blood Count)",
     "category": "Hematology – CBC Advanced",
     "description": "Extended hematology parameters reported by automated CBC analyzers (e.g., Erba) including differential absolute counts, platelet indices, and RDW values.",
     "parameters": [

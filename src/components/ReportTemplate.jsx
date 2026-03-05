@@ -172,13 +172,13 @@ export default function ReportTemplate({
           <tr>
             <td>
               {/* Header space */}
-      {/*
-        ── Header ──
-        BUG 2 FIX: We keep the header in the DOM at ALL TIMES (even when hidden)
-        so the space it occupies is always reserved and content below never shifts.
-        visibility:hidden makes it invisible without removing it from flow.
-        (If showHeader is false, the hr separator is also hidden.)
-      */}
+              {/*
+                ── Header ──
+                BUG 2 FIX: We keep the header in the DOM at ALL TIMES (even when hidden)
+                so the space it occupies is always reserved and content below never shifts.
+                visibility:hidden makes it invisible without removing it from flow.
+                (If showHeader is false, the hr separator is also hidden.)
+              */}
       <div
         id="report-header-zone"
         style={{ visibility: showHeader ? "visible" : "hidden" }}
