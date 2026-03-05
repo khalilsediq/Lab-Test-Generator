@@ -485,6 +485,7 @@ export default function ReportTemplate({
           );
         });
       })()}
+      
             </td>
           </tr>
         </tbody>
