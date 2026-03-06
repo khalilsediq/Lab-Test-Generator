@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import logo from "../assets/images/Logo.png";
 
 const CATEGORY_ORDER = [
@@ -34,6 +34,7 @@ export default function Sidebar({
 }) {
   const [query, setQuery] = useState("");
   const [collapsed, setCollapsed] = useState({});
+  const fileInputRef = useRef(null);
 
   const q = query.toLowerCase().trim();
 
@@ -72,6 +73,116 @@ export default function Sidebar({
 
   // Count total visible tests
   const totalVisible = filtered.length;
+
+  // ── EXPORT CUSTOM PANELS ──
+  const handleExportCustomPanels = () => {
+    // 1. Get all custom panels from testTemplates or localStorage
+    const allCustomPanels = testTemplates.filter((p) => p.isCustom);
+    if (allCustomPanels.length === 0) {
+      alert("No custom panels found to export.");
+      return;
+    }
+    
+    // 2. Serialize to JSON
+    const dataStr = JSON.stringify(allCustomPanels, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    // 3. Download
+    const dateStr = new Date().toISOString().split("T")[0];
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `custom-panels-backup-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // ── IMPORT CUSTOM PANELS ──
+  const handleImportCustomPanels = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedData = JSON.parse(event.target.result);
+        
+        if (!Array.isArray(importedData)) {
+          alert("Invalid file format: Expected an array of panels.");
+          return;
+        }
+
+        const existingCustomPanels = testTemplates.filter((p) => p.isCustom);
+        
+        let newCount = 0;
+        let overwriteCount = 0;
+        let skipCount = 0;
+        let keepBothCount = 0;
+
+        const updatedPanels = [...existingCustomPanels];
+
+        for (const imported of importedData) {
+          // Validate structure (basic check)
+          if (!imported.panel_id || !imported.panel_name || !imported.parameters) {
+            console.warn("Skipping invalid panel data:", imported);
+            continue;
+          }
+          
+          imported.isCustom = true; // Ensure it's marked as custom
+
+          const existingIndex = updatedPanels.findIndex(p => p.panel_id === imported.panel_id);
+          
+          if (existingIndex >= 0) {
+            // Conflict
+            // Use window.prompt or confirm to simulate the 3 options.
+            // For a complete 3-option choice natively, we can prompt for a number.
+            const msg = `Conflict: Custom panel "${imported.panel_name}" (${imported.panel_id}) already exists.\n\nType '1' to Overwrite\nType '2' to Skip\nType '3' to Keep Both`;
+            const choice = prompt(msg, "1");
+            
+            if (choice === "1") {
+              // Overwrite
+              updatedPanels[existingIndex] = imported;
+              overwriteCount++;
+            } else if (choice === "3") {
+              // Keep Both
+              const newAppendedId = `${imported.panel_id}-imported-${Date.now().toString().slice(-4)}`;
+              const newAppendedName = `${imported.panel_name} (Imported)`;
+              updatedPanels.push({
+                ...imported,
+                panel_id: newAppendedId,
+                panel_name: newAppendedName
+              });
+              keepBothCount++;
+            } else {
+              // Skip (or cancelled)
+              skipCount++;
+            }
+          } else {
+            // New Panel
+            updatedPanels.push(imported);
+            newCount++;
+          }
+        }
+        
+        // Save back to localStorage
+        localStorage.setItem("customTestPanels", JSON.stringify(updatedPanels));
+        
+        // Trigger a reload or pass to parent handler so state updates.
+        alert(`Import Complete!\n\nAdded New: ${newCount}\nOverwritten: ${overwriteCount}\nSkipped: ${skipCount}\nKept Both (Duplicated): ${keepBothCount}\n\nPlease refresh the application to view the changes.`);
+        // Reload page to re-init app state from localStorage (simplest way without refactoring parent)
+        window.location.reload();
+
+      } catch (err) {
+        alert("Error parsing JSON file. Please make sure it is a valid backup.");
+        console.error(err);
+      }
+    };
+    reader.readAsText(file);
+    // Reset input so the same file can be selected again
+    e.target.value = null;
+  };
 
   return (
     <div className="w-72 bg-gray-900 text-white h-full min-h-screen flex flex-col shadow-2xl select-none">
@@ -293,25 +404,48 @@ export default function Sidebar({
 
       {/* Create Custom Test */}
       <div className="p-4 border-t border-gray-800 shrink-0">
-        <button
-          onClick={onCreateCustom}
-          className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 font-semibold text-sm transition-all active:scale-95"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div className="flex flex-col space-y-2">
+          <button
+            onClick={onCreateCustom}
+            className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 font-semibold text-sm transition-all active:scale-95"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2.5"
-              d="M12 4v16m8-8H4"
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Create Custom Test</span>
+          </button>
+          
+          <div className="flex space-x-2">
+            <button
+              onClick={handleExportCustomPanels}
+              title="Export Custom Panels"
+              className="flex-1 flex items-center justify-center space-x-1 px-2 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-xs font-semibold transition-all active:scale-95"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+              <span>Export</span>
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              title="Import Custom Panels"
+              className="flex-1 flex items-center justify-center space-x-1 px-2 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-xs font-semibold transition-all active:scale-95"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4V4"/>
+              </svg>
+              <span>Import</span>
+            </button>
+            <input 
+              type="file" 
+              accept=".json" 
+              ref={fileInputRef} 
+              style={{ display: "none" }} 
+              onChange={handleImportCustomPanels} 
             />
-          </svg>
-          <span>Create Custom Test</span>
-        </button>
+          </div>
+        </div>
+        
         <p className="text-center text-xs text-gray-700 mt-3 leading-relaxed">
           Bukhari Lab System © 2026
           <br />

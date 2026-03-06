@@ -239,23 +239,9 @@ export default function ReportTemplate({
         </div>
         <hr className="border-t-2 border-red-600 mb-2 print:mb-1" />
       </div>
-            </td>
-          </tr>
-        </thead>
-        <tbody className="relative">
-          {/* Watermark Logo Feature */}
-          <tr>
-            <td colSpan="100%" className="p-0">
-              <div className="absolute inset-x-0 inset-y-12 pointer-events-none flex items-center justify-center opacity-[0.03] z-0 overflow-hidden print:opacity-[0.05]">
-                <img src={logo} alt="Watermark" className="w-[80%] h-auto object-contain" />
-              </div>
-            </td>
-          </tr>
 
-          <tr>
-            <td className="relative z-10">
-      {/* ── Patient Info Box ── */}
-      <div className={`${dc.sectionGapClass} print:mb-2 ${dc.patientTextClass} print:text-[9pt] leading-tight shrink-0`}>
+      {/* ── Patient Info Box (BUG 5 FIX: Moved into semantic thead to repeat on every page) ── */}
+      <div id="patient-details-zone" className={`${dc.sectionGapClass} print:mb-2 ${dc.patientTextClass} print:text-[9pt] leading-tight shrink-0 text-left`}>
         {/* ZONE A: Barcode Strip */}
         <div className="border-t-[1.5px] border-b-[1.5px] border-black py-1 mb-2">
           <div className="flex items-center justify-between px-1">
@@ -345,6 +331,12 @@ export default function ReportTemplate({
             <div className="font-normal text-black">
               {patientDetails.address || "—"}
             </div>
+            
+            {/* BUG 3 FIX: Add Consultant/Doctor */}
+            <div className="font-normal text-black">Consultant:</div>
+            <div className="font-bold text-black text-red-600">
+              {patientDetails.consultant || "—"}
+            </div>
           </div>
 
           {/* Right Column */}
@@ -380,6 +372,21 @@ export default function ReportTemplate({
         <hr />
       </div>
 
+            </td>
+          </tr>
+        </thead>
+        <tbody className="relative">
+          {/* Watermark Logo Feature */}
+          <tr>
+            <td colSpan="100%" className="p-0">
+              <div className="absolute inset-x-0 inset-y-12 pointer-events-none flex items-center justify-center opacity-[0.03] z-0 overflow-hidden print:opacity-[0.05]">
+                <img src={logo} alt="Watermark" className="w-[80%] h-auto object-contain" />
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td className="relative z-10">
       {/* ── Stacked Reports ── */}
       {(() => {
         const activePanels = [selectedTest, ...(additionalPanels || [])];
@@ -399,7 +406,7 @@ export default function ReportTemplate({
           const isBloodBank = panel?.category?.toLowerCase()?.includes("blood");
 
           return (
-            <div key={panelId + idx} className={dc.sectionGapClass}>
+            <div key={panelId + idx} className={`panel-container ${dc.sectionGapClass} print:break-inside-avoid`}>
               {/* ── Report Title ── */}
               <div className={`bg-gray-200 ${dc.titlePaddingClass} print:py-px flex items-center justify-center font-bold ${dc.titleTextClass} print:text-sm tracking-widest uppercase mb-2 border-t border-b border-gray-400 print:break-after-avoid`}>
                 {panel?.panel_name
@@ -503,38 +510,52 @@ export default function ReportTemplate({
 
       {/* ── Footer ── */}
       <div
-        className="report-footer mt-4 pt-2"
+        className="report-footer mt-auto pt-4 pb-2"
         style={{ visibility: showFooter ? "visible" : "hidden" }}
       >
-        <div className="text-right font-bold text-sm mb-2">
-          Approved By : Admin Admin
-        </div>
-        <div className="text-center font-bold text-xs uppercase mb-1">
-          Electronically verified report. No signatures necessary. Not Valid for
-          Legal Proceeding.
-        </div>
-        <hr />
-        <div className="flex justify-between text-xs font-semibold mb-2 mt-1">
-          <div>Offline: Print</div>
-          <div>Print At : {printDateStr}</div>
-        </div>
-        <div className="flex justify-center space-x-6 text-xs text-black mb-1">
-          <div className="flex items-center space-x-1">
-            <span className="text-green-500">📱</span>
-            <span>0321 944 7113</span>
+        {/* ZONE 1 — The Signature Row */}
+        <div className="flex justify-between items-end mb-2">
+          {/* Left: Technician */}
+          <div className="flex flex-col items-center w-1/3 text-center">
+            <div className="w-40 border-b border-black mb-1"></div>
+            <div className="font-bold text-[10pt] tracking-wider uppercase">LAB TECHNICIAN</div>
           </div>
-          <div className="flex items-center space-x-1">
-            <span className="text-blue-500">📞</span>
-            <span>0321 944 4002</span>
+
+          {/* Center: Disclaimer */}
+          <div className="flex flex-col items-center w-1/3 text-center">
+            <div className="font-bold text-[10pt] uppercase mb-1">
+              NOT VALID FOR THE COURT
+            </div>
+          </div>
+
+          {/* Right: Pathologist */}
+          <div className="flex flex-col items-center w-1/3 text-center">
+            <div className="w-40 border-b border-black mb-1"></div>
+            <div className="font-bold text-[10pt] tracking-wider uppercase">PATHOLOGIST</div>
           </div>
         </div>
-        <div className="text-center text-xs text-black">
-          <span className="text-blue-700 font-bold">KS-Lab System</span> -
-          Powered by{" "}
-          <span className="text-green-600 font-bold">
-            Advanced Software Solutions
-          </span>{" "}
-          | Contact: +923708911924
+
+        <hr className="border-t border-gray-300 mt-2 mb-2" />
+
+        {/* ZONE 2 — The Developer Branding Strip */}
+        <div className="flex justify-center items-center text-[7pt] text-gray-500 font-medium tracking-wide">
+          <span>Developed by KS Tech</span>
+          <span className="mx-2">·</span>
+          <a
+            href="https://wa.me/923708911924"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center hover:text-green-600 transition-colors"
+          >
+            <svg
+              className="w-3 h-3 mr-1 text-green-500"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M11.99 2C6.47 2 2 6.48 2 12c0 1.76.46 3.41 1.25 4.89L2 22l5.24-1.22A9.94 9.94 0 0 0 11.99 22c5.52 0 10-4.48 10-10S17.51 2 11.99 2zm5.71 14.53c-.24.7-1.35 1.34-1.89 1.41-.5.06-1.14.15-3.32-.75-2.61-1.09-4.31-3.76-4.44-3.93-.13-.18-1.06-1.42-1.06-2.71s.68-1.92.91-2.17c.18-.19.49-.29.74-.29.2 0 .4.01.58.01.21.01.49-.08.73.51.3.73 1.05 2.57 1.15 2.76.09.19.15.42.02.66-.13.24-.19.39-.38.61-.19.22-.4.48-.56.66-.19.19-.38.4-.17.76.22.37.97 1.58 2.08 2.56 1.44 1.28 2.62 1.68 2.98 1.84.36.16.57.14.78-.1.22-.24.93-1.08 1.18-1.45.24-.37.48-.31.81-.19.34.13 2.14 1.01 2.51 1.2.36.19.61.28.7.44.09.16.09.92-.15 1.62z" />
+            </svg>
+            +92-370-891-1924
+          </a>
         </div>
       </div>
     </div>
