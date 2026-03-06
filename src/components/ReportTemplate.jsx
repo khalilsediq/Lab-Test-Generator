@@ -334,7 +334,7 @@ export default function ReportTemplate({
             
             {/* BUG 3 FIX: Add Consultant/Doctor */}
             <div className="font-normal text-black">Consultant:</div>
-            <div className="font-bold text-black text-red-600">
+            <div className="font-bold text-red-600">
               {patientDetails.consultant || "—"}
             </div>
           </div>
