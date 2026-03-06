@@ -167,7 +167,7 @@ export default function Sidebar({
         }
         
         // Save back to localStorage
-        localStorage.setItem("customTestPanels", JSON.stringify(updatedPanels));
+        localStorage.setItem("customTests", JSON.stringify(updatedPanels));
         
         // Trigger a reload or pass to parent handler so state updates.
         alert(`Import Complete!\n\nAdded New: ${newCount}\nOverwritten: ${overwriteCount}\nSkipped: ${skipCount}\nKept Both (Duplicated): ${keepBothCount}\n\nPlease refresh the application to view the changes.`);
