@@ -22,16 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-For-Reference/design.jpeg
-For-Reference/Patient-Detail-Layout.png
-For-Reference/New-Design.jpeg
-For-Reference/New-Design.png
-For-Reference/Old-Design.png
-For-Reference/The-Fotter-Section_Layout.jpeg
-For-Reference/Provided-1.pdf
-For-Reference/Provided-2nd.pdf
-For-Reference/Generated-Report-PREVIEW-With_Header-fotter.png
-For-Reference/Gnerated-report-PREVIEW.png
-For-Reference/Print-Preview-With_ONLY_ONE_TEST_PANEL.png
-For-Reference/Generated-Report-PREVIEW-With_Header-fotter.png
-For-Reference/Gnerated-report-PREVIEW.png
+
+##For reference folder.
+For-Reference/
