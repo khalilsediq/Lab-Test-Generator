@@ -217,8 +217,15 @@ export default function ReportPreview({
         /*
           Use display: table-header-group and table-footer-group
           to automatically repeat headers/footers on every printed page.
-          Visibility is set inline in ReportTemplate so toggles still apply.
         */
+        html, body {
+           display: block !important;
+           height: auto !important;
+           min-height: auto !important;
+        }
+        #report-print-target {
+           display: block !important;
+        }
         /* Ensure native repeating headers on all pages */
         #report-print-target > div { display: block !important; }
         .print-table { display: table !important; width: 100% !important; }

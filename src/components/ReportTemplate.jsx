@@ -172,10 +172,10 @@ export default function ReportTemplate({
       </div>
 
       {/* ── Print Table Wrapping: Creates semantic headers/footers for native browser printing ── */}
-      <table className="print-table w-full border-collapse">
+      <table className="print-table w-full border-separate" style={{ borderSpacing: 0 }}>
         <thead className="print-table-header">
           <tr>
-            <th className="font-normal text-left">
+            <th className="font-normal text-left" id="report-stamp-zone">
               {/* Header space */}
               {/*
                 ── Header ──
