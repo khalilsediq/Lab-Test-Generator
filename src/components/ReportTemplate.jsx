@@ -172,11 +172,10 @@ export default function ReportTemplate({
       </div>
 
       {/* ── Print Table Wrapping: Creates semantic headers/footers for native browser printing ── */}
-      <table className="w-full border-collapse">
+      <table className="print-table w-full border-collapse">
         <thead className="print-table-header">
           <tr>
-            <td>
-              <div id="report-stamp-zone">
+            <th className="font-normal text-left">
               {/* Header space */}
               {/*
                 ── Header ──
@@ -187,9 +186,10 @@ export default function ReportTemplate({
               */}
       <div
         id="report-header-zone"
+        className="print:block print:w-full"
         style={{ visibility: showHeader ? "visible" : "hidden" }}
       >
-        <div className="report-header flex justify-between items-center mb-2 px-2 print:mb-1">
+        <div className="report-header flex print:flex justify-between items-center mb-2 px-2 print:mb-1">
           <div
             className="flex flex-col text-red-600 font-serif font-bold italic leading-none shrink-0"
             style={{ transform: "scaleY(1.1)", transformOrigin: "left center" }}
@@ -247,7 +247,7 @@ export default function ReportTemplate({
       </div>
 
       {/* ── Patient Info Box (BUG 5 FIX: Moved into semantic thead to repeat on every page) ── */}
-      <div id="patient-details-zone" className={`${dc.sectionGapClass} print:mb-2 ${dc.patientTextClass} print:text-[9pt] leading-tight shrink-0 text-left`}>
+      <div id="patient-details-zone" className={`${dc.sectionGapClass} print:mb-2 ${dc.patientTextClass} print:text-[9pt] leading-tight text-left print:block print:w-full print:break-inside-avoid`}>
         {/* ZONE A: Barcode Strip */}
         <div className="border-t-[1.5px] border-b-[1.5px] border-black py-1 mb-2">
           <div className="flex items-center justify-between px-1">
@@ -375,14 +375,11 @@ export default function ReportTemplate({
             </div>
           </div>
         </div>
-        <hr />
-      </div>
               </div>
-
-            </td>
+            </th>
           </tr>
         </thead>
-        <tbody className="">
+        <tbody className="print-table-body">
           {/* ── Stacked Reports ── */}
           {(() => {
         const activePanels = [selectedTest, ...(additionalPanels || [])];
@@ -404,7 +401,7 @@ export default function ReportTemplate({
           return (
             <tr key={panelId + idx}>
               <td className="relative z-10 p-0 border-none">
-                <div className={`panel-container ${dc.sectionGapClass} print:break-inside-avoid`}>
+                <div className={`panel-container ${dc.sectionGapClass} print:break-inside-avoid print:break-before-auto`}>
               {/* ── Report Title ── */}
               <div className={`bg-gray-200 ${dc.titlePaddingClass} print:py-px flex items-center justify-center font-bold ${dc.titleTextClass} print:text-sm tracking-widest uppercase mb-2 border-t border-b border-gray-400 print:break-after-avoid`}>
                 {panel?.panel_name

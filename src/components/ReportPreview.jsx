@@ -200,6 +200,10 @@ export default function ReportPreview({
   // FEATURE 1 (print path): inject CSS that holds header/footer fixed at
   // top/bottom of each print page, with body padding so content never overlaps.
   const handlePrint = () => {
+    // BUG FIX: Chromium disables native repeating <thead > if body is overflow:hidden
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "visible";
+
     const styleId = "dynamic-print-style";
     let el = document.getElementById(styleId);
     if (!el) { el = document.createElement("style"); el.id = styleId; document.head.appendChild(el); }
@@ -215,18 +219,13 @@ export default function ReportPreview({
           to automatically repeat headers/footers on every printed page.
           Visibility is set inline in ReportTemplate so toggles still apply.
         */
-        .print-table {
-           width: 100%;
-        }
-        .print-table-header {
-           display: table-header-group !important;
-        }
-        .print-table-footer {
-           display: table-footer-group !important;
-        }
-        .print-table-spacer {
-           height: 140px !important;
-        }
+        /* Ensure native repeating headers on all pages */
+        #report-print-target > div { display: block !important; }
+        .print-table { display: table !important; width: 100% !important; }
+        .print-table-header { display: table-header-group !important; }
+        .print-table-body { display: table-row-group !important; }
+        .print-table-footer { display: table-footer-group !important; }
+        .print-table-spacer { height: 140px !important; display: block !important; }
 
         .report-footer {
           position: fixed;
@@ -242,6 +241,7 @@ export default function ReportPreview({
     // Bug fix: Electron's print-to-pdf is async and might take longer than 2s.
     // Use the native afterprint event to clean up the stylesheet, with a long fallback.
     const cleanup = () => {
+      document.body.style.overflow = originalOverflow;
       if (document.getElementById(styleId)) el.remove();
     };
     window.addEventListener("afterprint", cleanup, { once: true });
