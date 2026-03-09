@@ -164,13 +164,19 @@ export default function ReportTemplate({
   });
 
   return (
-    <div className="bg-white w-[210mm] min-h-[297mm] mx-auto p-[3mm] text-black font-sans box-border flex flex-col print:m-0 print:p-[10mm] print:shadow-none shadow-[0_0_10px_rgba(0,0,0,0.1)]">
+    <div className="relative bg-white w-[210mm] min-h-[297mm] mx-auto p-[3mm] text-black font-sans box-border flex flex-col print:block print:m-0 print:p-0 print:min-h-0 print:shadow-none shadow-[0_0_10px_rgba(0,0,0,0.1)]">
       
+      {/* ── Background Watermark (Repeats on every print page via fixed) ── */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03] z-0 overflow-hidden print:fixed print:inset-0 print:h-full print:w-full print:opacity-[0.05]">
+        <img src={logo} alt="Watermark" className="w-[80%] max-w-[600px] h-auto object-contain" />
+      </div>
+
       {/* ── Print Table Wrapping: Creates semantic headers/footers for native browser printing ── */}
       <table className="w-full border-collapse">
         <thead className="print-table-header">
           <tr>
             <td>
+              <div id="report-stamp-zone">
               {/* Header space */}
               {/*
                 ── Header ──
@@ -371,24 +377,14 @@ export default function ReportTemplate({
         </div>
         <hr />
       </div>
+              </div>
 
             </td>
           </tr>
         </thead>
-        <tbody className="relative">
-          {/* Watermark Logo Feature */}
-          <tr>
-            <td colSpan="100%" className="p-0">
-              <div className="absolute inset-x-0 inset-y-12 pointer-events-none flex items-center justify-center opacity-[0.03] z-0 overflow-hidden print:opacity-[0.05]">
-                <img src={logo} alt="Watermark" className="w-[80%] h-auto object-contain" />
-              </div>
-            </td>
-          </tr>
-
-          <tr>
-            <td className="relative z-10">
-      {/* ── Stacked Reports ── */}
-      {(() => {
+        <tbody className="">
+          {/* ── Stacked Reports ── */}
+          {(() => {
         const activePanels = [selectedTest, ...(additionalPanels || [])];
 
         return activePanels.map((panelId, idx) => {
@@ -406,7 +402,9 @@ export default function ReportTemplate({
           const isBloodBank = panel?.category?.toLowerCase()?.includes("blood");
 
           return (
-            <div key={panelId + idx} className={`panel-container ${dc.sectionGapClass} print:break-inside-avoid`}>
+            <tr key={panelId + idx}>
+              <td className="relative z-10 p-0 border-none">
+                <div className={`panel-container ${dc.sectionGapClass} print:break-inside-avoid`}>
               {/* ── Report Title ── */}
               <div className={`bg-gray-200 ${dc.titlePaddingClass} print:py-px flex items-center justify-center font-bold ${dc.titleTextClass} print:text-sm tracking-widest uppercase mb-2 border-t border-b border-gray-400 print:break-after-avoid`}>
                 {panel?.panel_name
@@ -483,23 +481,23 @@ export default function ReportTemplate({
                               : `${formatRange(rr, gender)}${overriddenParam.unit ? ` ${overriddenParam.unit}` : ""}`}
                           </td>
                         </tr>
-                      );
+                        );
                     })}
                   </tbody>
                 </table>
               )}
             </div>
+           </td>
+          </tr>
           );
         });
       })()}
-            </td>
-          </tr>
         </tbody>
-
-        <tfoot className="print-table-footer">
+        {/* Invisible spacer to reserve footer space on every printed page */}
+        <tfoot className="print-table-footer hidden">
           <tr>
-            <td>
-              {/* Footer space */}
+            <td className="border-none p-0">
+              <div className="print-table-spacer" aria-hidden="true" />
             </td>
           </tr>
         </tfoot>

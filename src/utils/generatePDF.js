@@ -155,33 +155,45 @@ export async function generatePDF(sourceElement, options = {}) {
       customWidth = 210,
       customHeight = 297,
       margins = [10, 10, 10, 10],
+      showHeader = true,
+      showFooter = true,
     } = options;
 
     const sizes = PAGE_SIZES[format] || PAGE_SIZES.a4;
     const widthMm = format === "custom" ? customWidth : sizes.width;
-    const widthPx = Math.round(mmToPx(widthMm));
+    
+    // BUG 4 FIX: Use usableW for PDF rendering area, but capture at full widthMm so text doesn't overlap/crush
+    const [mTop, mRight, mBottom, mLeft] = margins;
+    const usableW = widthMm - mLeft - mRight;
+    
+    // Capture at native desktop pixel ratios corresponding to full sheet width
+    const captureWidthPx = Math.round(mmToPx(widthMm));
 
     // The A4 report root div (inside the wrapper)
     const innerEl = sourceElement.firstElementChild || sourceElement;
 
     // ── STEP A: Capture header ────────────────────────────────────────────────
-    // Bug 1 fix: use usableW to ensure proper aspect ratio matching the PDF.
-    const [mTop, mRight, mBottom, mLeft] = margins;
-    const usableW = widthMm - mLeft - mRight;
 
     // Find the header zone element.
-    const liveHeader = innerEl.querySelector("#report-header-zone");
+    const liveHeader = innerEl.querySelector("#report-stamp-zone");
     let headerCanvas = null;
     let headerHeightMm = 0;
     let headerHeightPx = 0;
 
-    if (
-      liveHeader &&
-      window.getComputedStyle(liveHeader).visibility !== "hidden"
-    ) {
-      const hw = liveHeader.offsetWidth || widthPx;
+    const headerZoneInner = innerEl.querySelector("#report-header-zone");
+    const headerIsHidden = headerZoneInner && 
+      window.getComputedStyle(headerZoneInner).visibility === "hidden";
+
+    if (liveHeader) {
+      const hw = liveHeader.offsetWidth || captureWidthPx;
       const hContainer = makeContainer(hw);
       const headerClone = liveHeader.cloneNode(true);
+      
+      if (headerIsHidden) {
+        const cloneInnerHeader = headerClone.querySelector("#report-header-zone");
+        if (cloneInnerHeader) cloneInnerHeader.style.visibility = "hidden";
+      }
+
       headerClone.style.cssText = [
         `width:${hw}px`,
         "transform:none",
@@ -221,7 +233,7 @@ export async function generatePDF(sourceElement, options = {}) {
       liveFooter &&
       window.getComputedStyle(liveFooter).visibility !== "hidden"
     ) {
-      const fw = liveFooter.offsetWidth || widthPx;
+      const fw = liveFooter.offsetWidth || captureWidthPx;
       const fContainer = makeContainer(fw);
       const footerClone = liveFooter.cloneNode(true);
       footerClone.style.cssText = [
@@ -270,12 +282,12 @@ export async function generatePDF(sourceElement, options = {}) {
     // Fix: after hiding header/footer in the clone, also remove pb padding and
     // reset min-height, then measure the ACTUAL scroll height after layout.
 
-    const container = makeContainer(widthPx);
+    const container = makeContainer(captureWidthPx);
     const clone = innerEl.cloneNode(true);
 
     // Reset only the structural sizing — keep all other Tailwind classes intact
     clone.style.cssText = [
-      `width:${widthPx}px`,
+      `width:${captureWidthPx}px`,
       "transform:none",
       "zoom:1",
       "background:white",
@@ -288,16 +300,28 @@ export async function generatePDF(sourceElement, options = {}) {
     clone.classList.remove("hidden");
 
     // BUG 2+4 FIX: Hide the header zone (which includes the hr separator) inside
-    // the clone so it doesn't appear in the body canvas (we stamp it separately).
-    const cloneHeaderZone = clone.querySelector("#report-header-zone");
-    if (cloneHeaderZone) {
-      cloneHeaderZone.style.display = "none";
+    // the clone so it doesn't appear in the body canvas.
+    const cloneStampZone = clone.querySelector("#report-stamp-zone");
+    if (cloneStampZone) {
+      // BUG 3 FIX: Use display:none if stamped separately (TRUE), or visibility:hidden if we just want to hide but preserve space (FALSE)
+      if (showHeader) {
+        cloneStampZone.style.display = "none";
+      } else {
+        cloneStampZone.style.display = "";
+        cloneStampZone.style.visibility = "hidden";
+      }
     }
 
     // BUG 2+4 FIX: Also hide the footer inside the clone.
     const cloneFooter = clone.querySelector(".report-footer");
     if (cloneFooter) {
-      cloneFooter.style.display = "none";
+      // BUG 3 FIX: Same rule applies to the footer space
+      if (showFooter) {
+        cloneFooter.style.display = "none";
+      } else {
+        cloneFooter.style.display = "";
+        cloneFooter.style.visibility = "hidden";
+      }
     }
 
     // BUG 2+5 FIX: Hide the large watermark if present inside the clone
@@ -328,9 +352,10 @@ export async function generatePDF(sourceElement, options = {}) {
     const panelBoundaries = [];
     const panels = clone.querySelectorAll(".panel-container");
     panels.forEach((p) => {
+      // BUG 2 FIX: Mapping boundary pixels to canvas height (* 2 scale)
       panelBoundaries.push({
-        top: p.offsetTop,
-        bottom: p.offsetTop + p.offsetHeight,
+        top: p.offsetTop * 2,
+        bottom: (p.offsetTop + p.offsetHeight) * 2,
       });
     });
 
@@ -400,7 +425,11 @@ export async function generatePDF(sourceElement, options = {}) {
         if (proposedBottomPx > b.top && proposedBottomPx < b.bottom) {
           // Can we push it to the next page? Only if the panel isn't so big it spans an entire page itself
           if (b.top > topPx) {
-            sliceH = ((b.top - topPx) / bodyCanvas.height) * bodyH;
+            // BUG 2 FIX: Only allow pushing to the next page if what remains on THIS page is meaningful.
+            const proposedSliceH = ((b.top - topPx) / bodyCanvas.height) * bodyH;
+            if (proposedSliceH >= 10) {
+              sliceH = proposedSliceH;
+            }
           }
           break;
         }

@@ -185,6 +185,8 @@ export default function ReportPreview({
         customWidth:  pageLayout.customWidth,
         customHeight: pageLayout.customHeight,
         margins:      pageLayout.margins,
+        showHeader:   showHeader,
+        showFooter:   showFooter,
       });
     } catch (err) {
       console.error("PDF generation failed:", err);
@@ -217,20 +219,37 @@ export default function ReportPreview({
            width: 100%;
         }
         .print-table-header {
-           display: table-header-group;
+           display: table-header-group !important;
         }
         .print-table-footer {
-           display: table-footer-group;
+           display: table-footer-group !important;
         }
-        /* Body content */
-        #report-print-target > div {
-           /* padding top/bottom removed because table handles spacing */
-           padding: 0 !important;
+        .print-table-spacer {
+           height: 140px !important;
         }
+
+        .report-footer {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          width: 100%;
+        }
+
       }
     `;
+    
+    // Bug fix: Electron's print-to-pdf is async and might take longer than 2s.
+    // Use the native afterprint event to clean up the stylesheet, with a long fallback.
+    const cleanup = () => {
+      if (document.getElementById(styleId)) el.remove();
+    };
+    window.addEventListener("afterprint", cleanup, { once: true });
+    
     window.print();
-    setTimeout(() => el.remove(), 2000);
+    
+    // Fallback in case the event fails to fire
+    setTimeout(cleanup, 15000);
   };
 
   // ── Shared template props ─────────────────────────────────────────────────
