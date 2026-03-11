@@ -52,14 +52,15 @@
     margin: 0 auto !important;
     width: 210mm !important;
     min-height: unset !important;
-    /* Remove the large bottom padding used for the absolute footer on screen */
-    padding-bottom: 30mm !important;
   }
 
-  /* Avoid page breaks inside table rows */
+  /* Secondary safeguard: prevent rows from splitting within a panel */
   tr {
-    page-break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
+
+  /* Panel-container rules: JS pagination is primary; removed break-inside to allow multi-page panels */
 }
 
 /* Legacy PDF-capture class — kept for compatibility */

@@ -349,7 +349,40 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
             className={inp}
           />
         </div>
-      </div>
+
+        {/* Registration Location */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-600">
+            Registration Location
+          </label>
+          <input
+            type="text"
+            name="registrationLocation"
+            value={patientDetails.registrationLocation || ""}
+            onChange={handleChange}
+            placeholder="e.g. Lab data_Main"
+            autoComplete="off"
+            className={inp}
+          />
+        </div>
+
+        {/* Specimen */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-600">
+            Specimen
+          </label>
+          <input
+            type="text"
+            name="specimen"
+            value={patientDetails.specimen || ""}
+            onChange={handleChange}
+            placeholder="e.g. Taken in lab"
+            autoComplete="off"
+            className={inp}
+          />
+        </div>
+
+      </div>{/* /grid */}
 
       {/* Completeness bar */}
       {(() => {

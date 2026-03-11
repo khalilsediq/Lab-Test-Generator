@@ -46,6 +46,8 @@ function App() {
     address: "",
     reference: "",
     sampleLocation: "Collected In Lab",
+    registrationLocation: "Lab data_Main",
+    specimen: "Taken in lab",
     registrationDate: new Date()
       .toLocaleString("en-GB", {
         day: "2-digit",
@@ -57,6 +59,7 @@ function App() {
       })
       .replace(",", ""),
   });
+
   const [testData, setTestData] = useState({});
   const [additionalPanels, setAdditionalPanels] = useState([]); // [{panelId, testData}]
   const [showPreview, setShowPreview] = useState(false);

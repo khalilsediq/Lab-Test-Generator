@@ -197,12 +197,87 @@ export default function ReportPreview({
   };
 
   // ── Print ─────────────────────────────────────────────────────────────────
-  // FEATURE 1 (print path): inject CSS that holds header/footer fixed at
-  // top/bottom of each print page, with body padding so content never overlaps.
   const handlePrint = () => {
-    // BUG FIX: Chromium disables native repeating <thead > if body is overflow:hidden
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "visible";
+
+    // Sync the CSS variable used by the header spacer div
+    const stampZone = document.getElementById("report-stamp-zone");
+    if (stampZone) {
+      document.documentElement.style.setProperty("--print-header-h", `${stampZone.offsetHeight}px`);
+    }
+
+    // ── Safe DOM-Injection Pagination for Native Print ────────────────────────
+    // Chromium has known bugs where placing large blocks inside <table /> disrupts the
+    // native `thead` repeating, causing overlap with position:fixed headers on page 2+.
+    // Our bulletproof solution: Manually calculate panel heights, inject a break
+    // spacer <div> when overflow occurs, and use that spacer to push the NEXT page's
+    // content safely down below the fixed header via physical div height!
+    const printTarget = document.getElementById("report-print-target");
+    const previewRoot = reportWrapperRef.current;
+
+    // Clear previously injected spacers if user prints multiple times
+    if (printTarget) {
+      printTarget.querySelectorAll(".js-print-spacer").forEach(e => e.remove());
+    }
+
+    if (printTarget && previewRoot) {
+      // Expose footer height as CSS var for dynamic padding-bottom
+      const previewFooter = previewRoot.querySelector(".report-footer");
+      const footerHpx     = previewFooter ? previewFooter.getBoundingClientRect().height : 80;
+      const footerHmm     = Math.ceil((footerHpx * 25.4) / 96) + 6;
+      document.documentElement.style.setProperty("--print-footer-h", `${footerHmm}mm`);
+
+      const stampZone = previewRoot.querySelector("#report-stamp-zone");
+      const headerHpx = stampZone ? stampZone.offsetHeight : 170;
+
+      const previewPanels = Array.from(previewRoot.querySelectorAll(".panel-container"));
+      const printPanels   = Array.from(printTarget.querySelectorAll(".panel-container"));
+
+      if (previewPanels.length > 0 && previewPanels.length === printPanels.length) {
+        // Page math (A4 default: 297mm height)
+        const sizes    = PAGE_SIZES[pageLayout.format] || PAGE_SIZES.a4;
+        const pgH      = pageLayout.format === "custom" ? pageLayout.customHeight : sizes.height;
+        const pgW      = pageLayout.format === "custom" ? pageLayout.customWidth : sizes.width;
+        const pageH    = pageLayout.orientation === "portrait" ? pgH : pgW;
+        
+        // Convert to px assuming 96dpi (standard web ratio offset by Chromium scaling)
+        const pageHpx  = (pageH * 96) / 25.4;
+        const topMpx   = (pageLayout.margins[0] * 96) / 25.4;
+        const botMpx   = (pageLayout.margins[2] * 96) / 25.4;
+        
+        const usableHpx = pageHpx - topMpx - botMpx - footerHpx;
+
+        // Start counting. Page 1 already has the physical "report-header-spacer" pushing it down.
+        let usedHpx = headerHpx;
+
+        previewPanels.forEach((pre, idx) => {
+          const pnl    = printPanels[idx];
+          const panelH = pre.getBoundingClientRect().height;
+          
+          if (usedHpx + panelH > usableHpx) {
+            // It overflows! Create a physical spacer that breaks the page and simulates the header gap
+            const spacer = document.createElement("div");
+            spacer.className = "js-print-spacer screen-only"; // Only affect the print clone
+            spacer.style.pageBreakBefore = "always";
+            spacer.style.breakBefore = "page";
+            spacer.style.height = headerHpx + "px"; // Reserves physical space on new page top!
+            spacer.style.width = "100%";
+            pnl.parentNode.insertBefore(spacer, pnl);
+            
+            // Advance tracker: New page starts with header height + this panel's height
+            usedHpx = headerHpx + panelH;
+            
+            // Failsafe: if the single panel is so huge it spans MULTIPLE pages natively...
+            while (usedHpx > pageHpx - topMpx - botMpx - footerHpx) {
+              usedHpx -= usableHpx;
+            }
+          } else {
+            usedHpx += panelH;
+          }
+        });
+      }
+    }
 
     const styleId = "dynamic-print-style";
     let el = document.getElementById(styleId);
@@ -214,50 +289,38 @@ export default function ReportPreview({
         margin: ${pageLayout.margins.join("mm ")}mm;
       }
       @media print {
-        /*
-          Use display: table-header-group and table-footer-group
-          to automatically repeat headers/footers on every printed page.
-        */
-        html, body {
-           display: block !important;
-           height: auto !important;
-           min-height: auto !important;
+        html, body { display: block !important; height: auto !important; min-height: auto !important; }
+        #report-print-target { display: block !important; }
+        #report-print-target > div {
+          display: block !important;
+          padding-bottom: var(--print-footer-h, 35mm) !important;
         }
-        #report-print-target {
-           display: block !important;
-        }
-        /* Ensure native repeating headers on all pages */
-        #report-print-target > div { display: block !important; }
-        .print-table { display: table !important; width: 100% !important; }
-        .print-table-header { display: table-header-group !important; }
-        .print-table-body { display: table-row-group !important; }
-        .print-table-footer { display: table-footer-group !important; }
-        .print-table-spacer { height: 140px !important; display: block !important; }
-
+        /* Footer fixed at page bottom — appears on every printed page */
         .report-footer {
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          width: 100%;
+          position: fixed !important;
+          bottom: 0 !important; left: 0 !important; right: 0 !important;
+          width: 100% !important;
+          background: white !important;
+          padding-top: 2mm !important;
         }
-
+        /* JS already placed explicit break-before:page where needed. Removed panel-container break-inside: avoid to allow long panels to span multiple pages. */
+        .grid > div { break-inside: avoid !important; page-break-inside: avoid !important; }
       }
     `;
-    
-    // Bug fix: Electron's print-to-pdf is async and might take longer than 2s.
-    // Use the native afterprint event to clean up the stylesheet, with a long fallback.
+
     const cleanup = () => {
       document.body.style.overflow = originalOverflow;
       if (document.getElementById(styleId)) el.remove();
+      // Reset JS-injected page breaks so screen preview stays clean
+      if (printTarget) {
+        printTarget.querySelectorAll(".js-print-spacer").forEach(e => e.remove());
+      }
     };
     window.addEventListener("afterprint", cleanup, { once: true });
-    
     window.print();
-    
-    // Fallback in case the event fails to fire
     setTimeout(cleanup, 15000);
   };
+
 
   // ── Shared template props ─────────────────────────────────────────────────
   const templateProps = {

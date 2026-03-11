@@ -348,14 +348,17 @@ export async function generatePDF(sourceElement, options = {}) {
     const captureW = clone.offsetWidth || widthPx;
     const captureH = Math.max(clone.scrollHeight, clone.offsetHeight, 10);
 
-    // BUG 4 FIX: Identify panel boundaries before capturing
+    // BUG 4 FIX: Identify panel boundaries before capturing using accurate ClientRects
     const panelBoundaries = [];
+    const cloneRect = clone.getBoundingClientRect();
     const panels = clone.querySelectorAll(".panel-container");
     panels.forEach((p) => {
+      const pRect = p.getBoundingClientRect();
+      const top = pRect.top - cloneRect.top;
       // BUG 2 FIX: Mapping boundary pixels to canvas height (* 2 scale)
       panelBoundaries.push({
-        top: p.offsetTop * 2,
-        bottom: (p.offsetTop + p.offsetHeight) * 2,
+        top: top * 2,
+        bottom: (top + pRect.height) * 2,
       });
     });
 
@@ -423,21 +426,27 @@ export async function generatePDF(sourceElement, options = {}) {
       for (const b of panelBoundaries) {
         // If the proposed bottom slice cuts through a panel
         if (proposedBottomPx > b.top && proposedBottomPx < b.bottom) {
-          // Can we push it to the next page? Only if the panel isn't so big it spans an entire page itself
-          if (b.top > topPx) {
-            // BUG 2 FIX: Only allow pushing to the next page if what remains on THIS page is meaningful.
-            const proposedSliceH = ((b.top - topPx) / bodyCanvas.height) * bodyH;
-            if (proposedSliceH >= 10) {
-              sliceH = proposedSliceH;
-            }
+          // Can we push it to the next page? Yes, if the panel does not already
+          // start exactly at the current top slice (meaning it spans > 1 full page).
+          if (b.top > topPx + 1) {
+            sliceH = ((b.top - topPx) / bodyCanvas.height) * bodyH;
+            
+            // BUG 5 FIX (Missing Headers): We MUST tell the global loop that the empty whitespace left
+            // at the bottom of this page is conceptually "consumed", otherwise the next page will
+            // slice the TOP of the panel off because it assumes the panel was printed lower.
+            yBodySoFar = (b.top / bodyCanvas.height) * bodyH - sliceH;
           }
           break;
         }
       }
 
+      // If the slice gets dangerously small due to floating point or tightly packed panels,
+      // we don't snap it back to usableH (which would slice the panel!). We just let it be small.
       if (sliceH <= 0.5) {
-        // Failsafe: if the slice gets too small, force it forward anyway to avoid infinite loop
-        sliceH = Math.min(usableH, bodyH - yBodySoFar);
+        // Only force forward if we literally haven't advanced at all to prevent infinite loop
+        if (sliceH <= 0) {
+          sliceH = Math.min(usableH, bodyH - yBodySoFar);
+        }
       }
 
       if (sliceH <= 0) break;

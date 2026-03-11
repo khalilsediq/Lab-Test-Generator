@@ -171,25 +171,21 @@ export default function ReportTemplate({
         <img src={logo} alt="Watermark" className="w-[80%] max-w-[600px] h-auto object-contain" />
       </div>
 
-      {/* ── Print Table Wrapping: Creates semantic headers/footers for native browser printing ── */}
-      <table className="print-table w-full border-separate" style={{ borderSpacing: 0 }}>
-        <thead className="print-table-header">
-          <tr>
-            <th className="font-normal text-left" id="report-stamp-zone">
-              {/* Header space */}
-              {/*
-                ── Header ──
-                BUG 2 FIX: We keep the header in the DOM at ALL TIMES (even when hidden)
-                so the space it occupies is always reserved and content below never shifts.
-                visibility:hidden makes it invisible without removing it from flow.
-                (If showHeader is false, the hr separator is also hidden.)
-              */}
+      {/*
+        ── PRINT HEADER (Fixed Position) ──
+        This block is rendered ONCE in the DOM but becomes position:fixed during print,
+        causing Chromium to stamp it at the top of EVERY printed page automatically.
+        A spacer `div` below reserves the same vertical space so content never overlaps.
+      */}
+      <div
+        id="report-stamp-zone"
+        className="bg-white print:fixed print:top-0 print:left-0 print:right-0 print:z-50 print:w-full"
+      >
       <div
         id="report-header-zone"
-        className="print:block print:w-full"
         style={{ visibility: showHeader ? "visible" : "hidden" }}
       >
-        <div className="report-header flex print:flex justify-between items-center mb-2 px-2 print:mb-1">
+        <div className="report-header flex justify-between items-center mb-2 px-2 print:mb-1">
           <div
             className="flex flex-col text-red-600 font-serif font-bold italic leading-none shrink-0"
             style={{ transform: "scaleY(1.1)", transformOrigin: "left center" }}
@@ -348,7 +344,7 @@ export default function ReportTemplate({
           {/* Right Column */}
           <div className="grid grid-cols-[140px_1fr] gap-x-2 gap-y-[4px]">
             <div className="font-normal text-black">Registration Location:</div>
-            <div className="font-bold text-black">Lab data_Main</div>
+            <div className="font-bold text-black">{patientDetails.registrationLocation || "Lab data_Main"}</div>
 
             <div className="font-normal text-black">Registered Date:</div>
             <div className="font-bold text-black">{regDateStr}</div>
@@ -362,7 +358,7 @@ export default function ReportTemplate({
             </div>
 
             <div className="font-normal text-black">Specimen:</div>
-            <div className="font-bold text-black">Taken in lab</div>
+            <div className="font-bold text-black">{patientDetails.specimen || "Taken in lab"}</div>
           </div>
 
           {/* Far Right: QR Code Placeholder */}
@@ -375,11 +371,15 @@ export default function ReportTemplate({
             </div>
           </div>
         </div>
-              </div>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="print-table-body">
+      </div>{/* /patient-details-zone */}
+      </div>{/* /report-stamp-zone */}
+
+      {/* PRINT ALIGNMENT WRAPPER */}
+      {/* Natively reserves space for fixed header/footer on EVERY printed page using DOM Injection (ReportPreview.jsx) */}
+      <div id="report-header-spacer" className="hidden print:block" style={{ height: "var(--print-header-h, 170px)" }} />
+
+      {/* ── Test Panels ── */}
+      <div id="report-panels">
           {/* ── Stacked Reports ── */}
           {(() => {
         const activePanels = [selectedTest, ...(additionalPanels || [])];
@@ -399,11 +399,12 @@ export default function ReportTemplate({
           const isBloodBank = panel?.category?.toLowerCase()?.includes("blood");
 
           return (
-            <tr key={panelId + idx}>
-              <td className="relative z-10 p-0 border-none">
-                <div className={`panel-container ${dc.sectionGapClass} print:break-inside-avoid print:break-before-auto`}>
+            <div
+              key={panelId + idx}
+              className={`panel-container ${dc.sectionGapClass} print:break-inside-avoid`}
+            >
               {/* ── Report Title ── */}
-              <div className={`bg-gray-200 ${dc.titlePaddingClass} print:py-px flex items-center justify-center font-bold ${dc.titleTextClass} print:text-sm tracking-widest uppercase mb-2 border-t border-b border-gray-400 print:break-after-avoid`}>
+              <div className={`panel-title bg-gray-200 ${dc.titlePaddingClass} print:py-px flex items-center justify-center font-bold ${dc.titleTextClass} print:text-sm tracking-widest uppercase mb-2 border-t border-b border-gray-400`}>
                 {panel?.panel_name
                   ?.replace(" Test", "")
                   .replace(" Profile", "") || panelId}{" "}
@@ -419,24 +420,24 @@ export default function ReportTemplate({
                   paramOrders={paramOrders}
                 />
               ) : (
-                <table className={`w-full ${dc.tableTextClass} print:text-[9pt] mt-1 mb-2`}>
-                  <thead>
-                    <tr className="border-b-2 border-gray-400">
-                      <th className={`${dc.rowPaddingClass} print:py-[2px] text-left font-bold uppercase w-2/5`}>
-                        TEST
-                      </th>
-                      <th className={`${dc.rowPaddingClass} print:py-[2px] text-left font-bold uppercase w-1/6`}>
-                        RESULT
-                      </th>
-                      <th className={`${dc.rowPaddingClass} print:py-[2px] text-left font-bold uppercase w-1/6`}>
-                        UNITS
-                      </th>
-                      <th className={`${dc.rowPaddingClass} print:py-[2px] text-left font-bold uppercase`}>
-                        REF. RANGE
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="print:break-inside-avoid">
+                <div className={`w-full ${dc.tableTextClass} print:text-[9pt] mt-1 mb-2`}>
+                  {/* Table Header */}
+                  <div className="grid grid-cols-[2fr_1fr_1fr_2fr] border-b-2 border-gray-400">
+                    <div className={`${dc.rowPaddingClass} print:py-[2px] text-left font-bold uppercase`}>
+                      TEST
+                    </div>
+                    <div className={`${dc.rowPaddingClass} print:py-[2px] text-left font-bold uppercase`}>
+                      RESULT
+                    </div>
+                    <div className={`${dc.rowPaddingClass} print:py-[2px] text-left font-bold uppercase`}>
+                      UNITS
+                    </div>
+                    <div className={`${dc.rowPaddingClass} print:py-[2px] text-left font-bold uppercase`}>
+                      REF. RANGE
+                    </div>
+                  </div>
+                  {/* Table Body */}
+                  <div className="print:break-inside-avoid">
                     {fields.map((field) => {
                       const rr = effectiveRange(field, editedRanges, panelId);
                       const qual = isQual(field);
@@ -449,61 +450,56 @@ export default function ReportTemplate({
                       );
 
                       return (
-                        <tr
+                        <div
                           key={field.id}
-                          className="border-b border-gray-100/50"
+                          className="grid grid-cols-[2fr_1fr_1fr_2fr] border-b border-gray-100/50"
                         >
-                          <td className={`${dc.rowPaddingClass} print:py-[3px] font-semibold`}>
+                          <div className={`${dc.rowPaddingClass} print:py-[3px] font-semibold`}>
                             {overriddenParam.name}
                             {overriddenParam.abbreviation && (
                               <span className="text-gray-500 font-normal ml-1 text-[8pt]">
                                 ({overriddenParam.abbreviation})
                               </span>
                             )}
-                          </td>
-                          <td
+                          </div>
+                          <div
                             className={`${dc.rowPaddingClass} print:py-[3px] font-mono ${abn ? "font-bold text-red-700" : ""}`}
                           >
                             {val || "—"}
                             {abn && (
                               <span className="text-red-600 ml-0.5">*</span>
                             )}
-                          </td>
-                          <td className={`${dc.rowPaddingClass} print:py-[3px]`}>
+                          </div>
+                          <div className={`${dc.rowPaddingClass} print:py-[3px]`}>
                             {qual ? "Qualitative" : overriddenParam.unit}
-                          </td>
-                          <td className={`${dc.rowPaddingClass} print:py-[3px] font-mono`}>
+                          </div>
+                          <div className={`${dc.rowPaddingClass} print:py-[3px] font-mono`}>
                             {qual
                               ? rr?.general || "See report"
                               : `${formatRange(rr, gender)}${overriddenParam.unit ? ` ${overriddenParam.unit}` : ""}`}
-                          </td>
-                        </tr>
-                        );
+                          </div>
+                        </div>
+                      );
                     })}
-                  </tbody>
-                </table>
+                  </div>
+                </div>
               )}
             </div>
-           </td>
-          </tr>
           );
         });
       })()}
-        </tbody>
-        {/* Invisible spacer to reserve footer space on every printed page */}
-        <tfoot className="print-table-footer hidden">
-          <tr>
-            <td className="border-none p-0">
-              <div className="print-table-spacer" aria-hidden="true" />
-            </td>
-          </tr>
-        </tfoot>
-      </table>
+      </div>
 
-      {/* ── Spacer: pushes footer to visual bottom of the A4 page ── */}
-      <div className="flex-1" />
+      <div className="flex-1 print:hidden" />
 
       {/* ── Footer ── */}
+      {/*
+        The footer renders in NORMAL DOCUMENT FLOW at the end of the content.
+        On screen: the flex-col parent with min-h-[297mm] pushes it down via mt-auto.
+        On print: it flows naturally after all panels, and the fixed header
+        at the top of each page provides its own clearance via the spacer div.
+        This avoids the old position:fixed approach which caused panel overlap.
+      */}
       <div
         className="report-footer mt-auto pt-4 pb-2"
         style={{ visibility: showFooter ? "visible" : "hidden" }}
