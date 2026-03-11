@@ -29,6 +29,8 @@ function App() {
   const [showCustomModal, setShowCustomModal] = useState(false);
   // Sidebar: open by default on desktop, closed on mobile
   const [sidebarOpen, setSidebarOpen] = useState(() => !isMobileScreen());
+  const [sidebarWidth, setSidebarWidth] = useState(() => load("sidebarWidth", 288));
+  const [isResizing, setIsResizing] = useState(false);
 
   const testTemplates = [...staticTemplates, ...customTests];
 
@@ -73,6 +75,30 @@ function App() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  // Sidebar Resizing Logic
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const onMouseMove = (e) => {
+      let newWidth = e.clientX;
+      if (newWidth < 240) newWidth = 240;
+      if (newWidth > 480) newWidth = 480;
+      setSidebarWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      setIsResizing(false);
+      localStorage.setItem("sidebarWidth", JSON.stringify(sidebarWidth));
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [isResizing, sidebarWidth]);
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -146,7 +172,7 @@ function App() {
 
   return (
     <>
-      <div className="flex min-h-screen bg-gray-50 font-sans print:hidden relative">
+      <div className="flex h-screen bg-gray-50 font-sans print:hidden relative overflow-hidden">
         {/* Mobile backdrop */}
         {sidebarOpen && (
           <div
@@ -157,22 +183,37 @@ function App() {
 
         {/* Sidebar */}
         <div
+          style={{ width: sidebarOpen ? sidebarWidth : 0 }}
           className={`
-          fixed inset-y-0 left-0 z-40 transition-all duration-300 ease-in-out
-          md:relative md:z-auto md:shrink-0
-          ${sidebarOpen ? "translate-x-0 w-72 opacity-100" : "-translate-x-full md:translate-x-0 md:w-0 md:opacity-0 md:pointer-events-none"}
+          fixed inset-y-0 left-0 z-40 transition-[width,opacity,transform] duration-300 ease-in-out
+          md:relative md:z-auto md:shrink-0 h-full overflow-hidden
+          ${sidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-full md:translate-x-0 md:opacity-0 md:pointer-events-none"}
+          ${isResizing ? "transition-none" : ""}
         `}
         >
-          <Sidebar
-            selectedTest={selectedTest}
-            setSelectedTest={handleSelectTest}
-            testTemplates={testTemplates}
-            onCreateCustom={() => setShowCustomModal(true)}
-            onDeleteCustom={handleDeleteCustomTest}
-            onClose={() => setSidebarOpen(false)}
-            sidebarOpen={sidebarOpen}
-          />
+          <div className="h-full" style={{ width: sidebarWidth }}>
+            <Sidebar
+              selectedTest={selectedTest}
+              setSelectedTest={handleSelectTest}
+              testTemplates={testTemplates}
+              onCreateCustom={() => setShowCustomModal(true)}
+              onDeleteCustom={handleDeleteCustomTest}
+              onClose={() => setSidebarOpen(false)}
+              sidebarOpen={sidebarOpen}
+            />
+          </div>
         </div>
+
+        {/* Resize Handle */}
+        {sidebarOpen && (
+          <div
+            onMouseDown={() => setIsResizing(true)}
+            className="hidden md:block absolute top-0 bottom-0 z-50 w-2 cursor-col-resize group transition-colors"
+            style={{ left: sidebarWidth - 4 }}
+          >
+            <div className="h-full w-[2px] mx-auto bg-gray-800/50 group-hover:bg-red-500/50 transition-colors" />
+          </div>
+        )}
 
         {/* Main content */}
         <main className="flex-1 min-w-0 overflow-y-auto">

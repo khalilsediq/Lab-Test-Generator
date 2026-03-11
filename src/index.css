@@ -68,3 +68,62 @@
   --tw-prose-body: #111827 !important;
   --tw-prose-headings: #111827 !important;
 }
+
+/* ── Custom Scrollbar for Sidebar ────────────────────────────────────────── */
+.custom-sidebar-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #374151; /* gray-700 */
+  border-radius: 20px;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ef4444; /* red-500 */
+}
+
+/* For Firefox */
+.custom-sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #374151 transparent;
+}
+
+/* ── Global Interactivity ────────────────────────────────────────────────── */
+button {
+  cursor: pointer;
+}
+
+/* ── Premium Search Bar Effects ──────────────────────────────────────────── */
+.premium-search-container {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.premium-search-input {
+  background: rgba(31, 41, 55, 0.6) !important; /* gray-800 with opacity */
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(75, 85, 99, 0.4) !important; /* gray-600 with opacity */
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.premium-search-input:focus {
+  background: rgba(31, 41, 55, 0.8) !important;
+  border-color: #ef4444 !important; /* red-500 */
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15), 0 0 1px rgba(239, 68, 68, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+.premium-search-icon {
+  transition: all 0.3s ease;
+}
+
+.premium-search-container:focus-within .premium-search-icon {
+  color: #ef4444 !important;
+  transform: scale(1.1);
+}
+
