@@ -508,7 +508,7 @@ export default function ReportTemplate({
         <div className="flex justify-between items-end mb-2">
           {/* Left: Technician */}
           <div className="flex flex-col items-center w-1/3 text-center">
-            <div className="w-40 border-b border-black mb-1"></div>
+            <div className="w-40 border-b border-black mb-1 h-12"></div>
             <div className="font-bold text-[10pt] tracking-wider uppercase">LAB TECHNICIAN</div>
           </div>
 
@@ -521,7 +521,7 @@ export default function ReportTemplate({
 
           {/* Right: Pathologist */}
           <div className="flex flex-col items-center w-1/3 text-center">
-            <div className="w-40 border-b border-black mb-1"></div>
+            <div className="w-40 border-b border-black mb-1 h-12"></div>
             <div className="font-bold text-[10pt] tracking-wider uppercase">PATHOLOGIST</div>
           </div>
         </div>
