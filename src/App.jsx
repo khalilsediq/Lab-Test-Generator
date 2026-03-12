@@ -146,6 +146,14 @@ function App() {
     showToast("Reference range saved");
   };
 
+  const handleResetRange = (panelId, paramId) => {
+    const panelOverrides = { ...(editedRanges[panelId] || {}) };
+    delete panelOverrides[paramId];
+    const updated = { ...editedRanges, [panelId]: panelOverrides };
+    persist("editedRanges", updated, setEditedRanges);
+    showToast("Reference range reset to default");
+  };
+
   const handleSaveParam = (panelId, paramId, updatedFields) => {
     const updated = {
       ...editedParams,
@@ -309,6 +317,7 @@ function App() {
               additionalPanels={additionalPanels}
               setAdditionalPanels={setAdditionalPanels}
               onSaveRange={handleSaveRange}
+              onResetRange={handleResetRange}
               onSaveParam={handleSaveParam}
               onResetParam={handleResetParam}
               onSaveOrder={handleSaveOrder}

@@ -56,12 +56,14 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
   };
 
   const inp =
-    "w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-500/10 transition-all outline-none text-gray-800 placeholder-gray-400";
+    "w-full px-4 py-1.5 rounded-xl bg-gray-50/50 border border-gray-200 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-500/10 transition-all outline-none text-gray-800 placeholder-gray-400 text-sm shadow-xs hover:border-gray-300";
+
+  const labelStyle = "text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block";
 
   return (
-    <div className="bg-white p-5 sm:p-8 rounded-2xl shadow-sm border border-gray-100 mb-6 sm:mb-8 max-w-4xl transition-all duration-300 hover:shadow-md">
+    <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-xs border border-gray-100 mb-6 sm:mb-8 max-w-4xl transition-all duration-300 hover:shadow-md">
       {/* Title */}
-      <div className="flex items-center space-x-3 mb-5 sm:mb-6">
+      <div className="flex items-center space-x-3 mb-3 sm:mb-4">
         <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
           <svg
             className="w-4 h-4 text-red-600"
@@ -87,44 +89,38 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
         </div>
       </div>
       <hr />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-3">
         {/* Patient Name */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-600">
-            Patient Name
-          </label>
+        <div className="space-y-1">
+          <label className={labelStyle}>Patient Name</label>
           <input
             type="text"
             name="name"
             value={patientDetails.name}
             onChange={handleChange}
-            placeholder="e.g. John Doe"
+            placeholder="Full Name"
             autoComplete="off"
             className={inp}
           />
         </div>
 
         {/* Father/Husband Name */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-600">
-            S/O D/O W/O
-          </label>
+        <div className="space-y-1">
+          <label className={labelStyle}>S/O D/O W/O</label>
           <input
             type="text"
             name="fatherHusbandName"
             value={patientDetails.fatherHusbandName}
             onChange={handleChange}
-            placeholder="e.g. Richard Doe"
+            placeholder="Guardian Name"
             autoComplete="off"
             className={inp}
           />
         </div>
 
         {/* Age & Gender */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-600">
-            Age & Gender
-          </label>
+        <div className="space-y-1">
+          <label className={labelStyle}>Age & Gender</label>
           <div className="flex space-x-2 relative" ref={genderRef}>
             <input
               type="number"
@@ -132,20 +128,17 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
               value={patientDetails.age}
               onChange={handleChange}
               placeholder="Age"
-              min="0"
-              max="150"
-              className={`w-24 text-center ${inp}`}
+              className={`w-16 text-center ${inp} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
             />
             
-            {/* Custom Gender ComboBox */}
             <div className={`flex-1 relative ${inp} cursor-pointer flex items-center justify-between p-0`}
                  onClick={() => setIsGenderOpen(!isGenderOpen)}>
-              <div className="px-4 py-3 w-full h-full flex items-center select-none text-gray-800">
-                {patientDetails.gender || "Select Gender"}
+              <div className="px-3 w-full h-full flex items-center select-none text-gray-700">
+                {patientDetails.gender || "Gender"}
               </div>
-              <div className="px-3 text-gray-400">
-                <svg className={`w-4 h-4 transition-transform ${isGenderOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              <div className="pr-2 text-gray-400">
+                <svg className={`w-3.5 h-3.5 transition-transform duration-300 ${isGenderOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
 
@@ -207,7 +200,7 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
           </div>
           {/* Gender indicator */}
           <div
-            className={`flex items-center space-x-1 text-xs font-semibold ${
+            className={`flex items-center space-x-1.5 px-1 pt-1 text-[10px] font-bold uppercase tracking-tight ${
               patientDetails.gender === "Male"
                 ? "text-blue-500"
                 : patientDetails.gender === "Female"
@@ -215,173 +208,148 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
                   : "text-gray-400"
             }`}
           >
-            <span>
+            <span className="text-sm">
               {patientDetails.gender === "Male"
                 ? "♂"
                 : patientDetails.gender === "Female"
                   ? "♀"
                   : "⊕"}
             </span>
-            <span>
-              Reference ranges will adjust to {patientDetails.gender} values
+            <span className="leading-none opacity-80">
+              Reference ranges: {patientDetails.gender || "Default"}
             </span>
           </div>
         </div>
 
         {/* MR Number */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-600">
-            Patient No / MR No
-          </label>
+        <div className="space-y-1">
+          <label className={labelStyle}>Patient / MR No</label>
           <input
             type="text"
             name="mrNo"
             value={patientDetails.mrNo}
             onChange={handleChange}
-            placeholder="e.g. 1281346"
-            autoComplete="off"
-            className={`${inp} font-mono tracking-wider`}
+            placeholder="MRN-12345"
+            className={`${inp} font-mono uppercase text-[11px] tracking-wider`}
           />
         </div>
 
         {/* T/R ID */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-600">T/R ID</label>
+        <div className="space-y-1">
+          <label className={labelStyle}>T/R ID</label>
           <input
             type="text"
             name="trId"
             value={patientDetails.trId || ""}
             onChange={handleChange}
-            placeholder="e.g. 1221869"
-            autoComplete="off"
-            className={`${inp} font-mono tracking-wider`}
+            placeholder="TR-ID"
+            className={`${inp} font-mono uppercase text-[11px] tracking-wider`}
           />
         </div>
 
         {/* T/R No */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-600">T/R No</label>
+        <div className="space-y-1">
+          <label className={labelStyle}>T/R Number</label>
           <input
             type="text"
             name="trNo"
             value={patientDetails.trNo || ""}
             onChange={handleChange}
-            placeholder="e.g. TR241210-159-001-0"
-            autoComplete="off"
-            className={`${inp} font-mono tracking-wider`}
+            placeholder="TR-TRACKING-NUMBER"
+            className={`${inp} font-mono uppercase text-[11px] tracking-wider`}
           />
         </div>
 
         {/* Consulting Doctor */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-600">
-            Consulting Doctor
-          </label>
+        <div className="space-y-1">
+          <label className={labelStyle}>Consulting Doctor</label>
           <input
             type="text"
             name="consultant"
             value={patientDetails.consultant}
             onChange={handleChange}
-            placeholder="e.g. Dr. Jane Smith"
-            autoComplete="off"
+            placeholder="Dr. Name"
             className={inp}
           />
         </div>
 
         {/* Contact No */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-600">
-            Contact No
-          </label>
+        <div className="space-y-1">
+          <label className={labelStyle}>Contact Number</label>
           <input
             type="tel"
             name="contactNo"
             value={patientDetails.contactNo}
             onChange={handleChange}
-            placeholder="e.g. 0300-1234567"
-            autoComplete="off"
-            className={inp}
-          />
-        </div>
-
-        {/* Address */}
-        <div className="space-y-1.5 lg:col-span-2">
-          <label className="text-sm font-semibold text-gray-600">Address</label>
-          <input
-            type="text"
-            name="address"
-            value={patientDetails.address}
-            onChange={handleChange}
-            placeholder="e.g. 123 Main Street"
-            autoComplete="off"
-            className={inp}
-          />
-        </div>
-
-        {/* Reference */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-600">
-            Reference
-          </label>
-          <input
-            type="text"
-            name="reference"
-            value={patientDetails.reference}
-            onChange={handleChange}
-            placeholder="N/A"
-            autoComplete="off"
-            className={inp}
-          />
-        </div>
-
-        {/* Sample Location */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-600">
-            Sample Location
-          </label>
-          <input
-            type="text"
-            name="sampleLocation"
-            value={patientDetails.sampleLocation}
-            onChange={handleChange}
-            placeholder="Collected In Lab"
-            autoComplete="off"
+            placeholder="+92 XXX XXXXXXX"
             className={inp}
           />
         </div>
 
         {/* Registration Location */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-600">
-            Registration Location
-          </label>
+        <div className="space-y-1">
+          <label className={labelStyle}>Reg. Location</label>
           <input
             type="text"
             name="registrationLocation"
             value={patientDetails.registrationLocation || ""}
             onChange={handleChange}
-            placeholder="e.g. Lab data_Main"
-            autoComplete="off"
+            placeholder="Lab Branch"
+            className={inp}
+          />
+        </div>
+
+        {/* Address */}
+        <div className="lg:col-span-2 space-y-1">
+          <label className={labelStyle}>Address</label>
+          <input
+            type="text"
+            name="address"
+            value={patientDetails.address}
+            onChange={handleChange}
+            placeholder="Street Address, City"
+            className={inp}
+          />
+        </div>
+
+        {/* Reference */}
+        <div className="space-y-1">
+          <label className={labelStyle}>Reference</label>
+          <input
+            type="text"
+            name="reference"
+            value={patientDetails.reference}
+            onChange={handleChange}
+            placeholder="Reference/Walk-in"
+            className={inp}
+          />
+        </div>
+
+        {/* Sample Location */}
+        <div className="space-y-1">
+          <label className={labelStyle}>Sample Location</label>
+          <input
+            type="text"
+            name="sampleLocation"
+            value={patientDetails.sampleLocation}
+            onChange={handleChange}
+            placeholder="Location"
             className={inp}
           />
         </div>
 
         {/* Specimen */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-gray-600">
-            Specimen
-          </label>
+        <div className="space-y-1">
+          <label className={labelStyle}>Specimen</label>
           <input
             type="text"
             name="specimen"
             value={patientDetails.specimen || ""}
             onChange={handleChange}
-            placeholder="e.g. Taken in lab"
-            autoComplete="off"
+            placeholder="Blood, Urine, etc."
             className={inp}
           />
         </div>
-
       </div>{/* /grid */}
 
       {/* Completeness bar */}

@@ -54,8 +54,9 @@ const isAbnormal = (val, rr, gender, qual) => {
 
 // ── EditRow (reference range editor) ─────────────────────────────────────────
 
-function EditRow({ param, editedRanges, panelId, onSave, onCancel }) {
+function EditRow({ param, editedRanges, panelId, onSave, onReset, onCancel }) {
   const base = effectiveRange(param, editedRanges, panelId);
+  const hasOverride = !!editedRanges?.[panelId]?.[param.id];
   const qual = isQual(param);
   const [vals, setVals] = useState({
     general: base.general ?? "",
@@ -89,6 +90,15 @@ function EditRow({ param, editedRanges, panelId, onSave, onCancel }) {
           </span>
         </div>
         <div className="flex space-x-2">
+          {hasOverride && (
+            <button
+              onClick={() => onReset(param.id)}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg text-orange-600 hover:bg-orange-100 border border-orange-300 transition-colors"
+              title="Reset to original template value"
+            >
+              Reset Default
+            </button>
+          )}
           <button
             onClick={onCancel}
             className="px-3 py-1.5 text-xs font-semibold rounded-lg text-gray-600 hover:bg-gray-200 transition-colors"
@@ -297,6 +307,7 @@ function PanelFieldsGroup({
   editedParams,
   paramOrders,
   onSaveRange,
+  onResetRange,
   onSaveParam,
   onResetParam,
   onSaveOrder,
@@ -477,6 +488,10 @@ function PanelFieldsGroup({
                     panelId={panelId}
                     onSave={(id, range) => {
                       onSaveRange(panelId, id, range);
+                      closeEditor();
+                    }}
+                    onReset={(id) => {
+                      onResetRange(panelId, id);
                       closeEditor();
                     }}
                     onCancel={closeEditor}
@@ -691,6 +706,7 @@ export default function TestFields({
   additionalPanels = [],
   setAdditionalPanels = () => {},
   onSaveRange,
+  onResetRange,
   onSaveParam,
   onResetParam,
   onSaveOrder,
@@ -739,6 +755,7 @@ export default function TestFields({
           editedParams={editedParams}
           paramOrders={paramOrders}
           onSaveRange={onSaveRange}
+          onResetRange={onResetRange}
           onSaveParam={onSaveParam}
           onResetParam={onResetParam}
           onSaveOrder={onSaveOrder}
