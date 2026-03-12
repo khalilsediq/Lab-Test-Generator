@@ -30,6 +30,7 @@ export default function Sidebar({
   testTemplates,
   onCreateCustom,
   onDeleteCustom,
+  onDeleteAllCustom,
   onClose,
 }) {
   const [query, setQuery] = useState("");
@@ -332,19 +333,37 @@ export default function Sidebar({
                     {grouped[cat].length}
                   </span>
                 </div>
-                <svg
-                  className={`w-3 h-3 text-gray-600 transition-transform duration-200 ${expanded[cat] || (query && grouped[cat].length > 0) ? "rotate-180" : ""}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2.5"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
+                <div className="flex items-center space-x-1">
+                  {cat === "Custom" && grouped[cat].length > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm("Delete ALL custom tests? This cannot be undone.")) {
+                          onDeleteAllCustom();
+                        }
+                      }}
+                      className="p-1 rounded-md text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                      title="Remove all custom tests"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
+                  <svg
+                    className={`w-3 h-3 text-gray-600 transition-transform duration-200 ${expanded[cat] || (query && grouped[cat].length > 0) ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
               </button>
 
               {(expanded[cat] || (query && grouped[cat].length > 0)) && (

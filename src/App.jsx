@@ -129,6 +129,14 @@ function App() {
     showToast(`"${panel?.panel_name}" deleted`, "error");
   };
 
+  const handleDeleteAllCustomTests = () => {
+    persist("customTests", [], setCustomTests);
+    if (customTests.some((t) => t.panel_id === selectedTest)) {
+      setSelectedTest(staticTemplates[0].panel_id);
+    }
+    showToast("All custom tests deleted", "error");
+  };
+
   const handleSaveRange = (panelId, paramId, updatedRange) => {
     const updated = {
       ...editedRanges,
@@ -198,6 +206,7 @@ function App() {
               testTemplates={testTemplates}
               onCreateCustom={() => setShowCustomModal(true)}
               onDeleteCustom={handleDeleteCustomTest}
+              onDeleteAllCustom={handleDeleteAllCustomTests}
               onClose={() => setSidebarOpen(false)}
               sidebarOpen={sidebarOpen}
             />
