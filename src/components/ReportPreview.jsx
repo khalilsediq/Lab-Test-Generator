@@ -254,9 +254,17 @@ export default function ReportPreview({
 
         previewPanels.forEach((pre, idx) => {
           const pnl    = printPanels[idx];
-          const panelH = pre.getBoundingClientRect().height;
           
-          if (usedHpx + panelH > usableHpx) {
+          // Accounts for margins missing from getBoundingClientRect
+          const style  = window.getComputedStyle(pre);
+          const mt     = parseFloat(style.marginTop) || 0;
+          const mb     = parseFloat(style.marginBottom) || 0;
+          
+          // Adds a safety buffer so JS breaks the page conservatively BEFORE Native Chromium does
+          const SAFE_BUFFER = 15;
+          const panelH = pre.getBoundingClientRect().height + mt + mb;
+          
+          if (usedHpx > headerHpx && usedHpx + panelH + SAFE_BUFFER > usableHpx) {
             // It overflows! Create a physical spacer that breaks the page and simulates the header gap
             const spacer = document.createElement("div");
             spacer.className = "js-print-spacer screen-only"; // Only affect the print clone
@@ -270,8 +278,8 @@ export default function ReportPreview({
             usedHpx = headerHpx + panelH;
             
             // Failsafe: if the single panel is so huge it spans MULTIPLE pages natively...
-            while (usedHpx > pageHpx - topMpx - botMpx - footerHpx) {
-              usedHpx -= usableHpx;
+            while (usedHpx > usableHpx) {
+              usedHpx -= (usableHpx - headerHpx);
             }
           } else {
             usedHpx += panelH;
