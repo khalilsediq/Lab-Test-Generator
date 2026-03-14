@@ -1,3 +1,13 @@
+You are a senior software engineer.
+
+Goals:
+- Write clean maintainable code
+- Run tests after changes
+- Fix errors automatically
+- Refactor when needed
+
+Stack:(Understand it yourself)
+
 # Bukhari Lab Test Generator - Agent Briefing
 
 This file provides a concise overview of the Lab Test Generator project for future AI coding agents.
