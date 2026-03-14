@@ -166,39 +166,8 @@ export default function ReportPreview({
   const pgH      = pageLayout.format === "custom" ? pageLayout.customHeight : sizes.height;
   const previewW = pageLayout.orientation === "portrait" ? pgW : pgH;
 
-  // ── Download PDF ──────────────────────────────────────────────────────────
-  const handleDownloadPDF = async () => {
-    if (!reportWrapperRef.current) return;
-    setPdfError(null);
-    setIsGeneratingPDF(true);
-    await new Promise((r) => setTimeout(r, 50));
-
-    const testName    = editedPanelNames[selectedTest] || testTemplates.find((t) => t.panel_id === selectedTest)?.panel_name || selectedTest;
-    const patientName = patientDetails.name || "Unknown";
-    const dateStr     = new Date().toISOString().split("T")[0];
-    const filename    = `${patientName}_${testName}_${dateStr}.pdf`.replace(/[^a-zA-Z0-9_\-.]/g, "_");
-
-    try {
-      await generatePDF(reportWrapperRef.current, {
-        filename,
-        format:       pageLayout.format,
-        orientation:  pageLayout.orientation,
-        customWidth:  pageLayout.customWidth,
-        customHeight: pageLayout.customHeight,
-        margins:      pageLayout.margins,
-        showHeader:   showHeader,
-        showFooter:   showFooter,
-      });
-    } catch (err) {
-      console.error("PDF generation failed:", err);
-      setPdfError(`PDF failed: ${err.message}`);
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  };
-
-  // ── Print ─────────────────────────────────────────────────────────────────
-  const handlePrint = () => {
+  // ── Shared Print/PDF DOM Setup ───────────────────────────────────────────
+  const withPrintSetup = async (actionFn) => {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "visible";
 
@@ -209,15 +178,10 @@ export default function ReportPreview({
     }
 
     // ── Safe DOM-Injection Pagination for Native Print ────────────────────────
-    // Chromium has known bugs where placing large blocks inside <table /> disrupts the
-    // native `thead` repeating, causing overlap with position:fixed headers on page 2+.
-    // Our bulletproof solution: Manually calculate panel heights, inject a break
-    // spacer <div> when overflow occurs, and use that spacer to push the NEXT page's
-    // content safely down below the fixed header via physical div height!
     const printTarget = document.getElementById("report-print-target");
     const previewRoot = reportWrapperRef.current;
 
-    // Clear previously injected spacers if user prints multiple times
+    // Clear previously injected spacers
     if (printTarget) {
       printTarget.querySelectorAll(".js-print-spacer").forEach(e => e.remove());
     }
@@ -229,27 +193,27 @@ export default function ReportPreview({
       const footerHmm     = Math.ceil((footerHpx * 25.4) / 96) + 6;
       document.documentElement.style.setProperty("--print-footer-h", `${footerHmm}mm`);
 
-      const stampZone = previewRoot.querySelector("#report-stamp-zone");
-      const headerHpx = stampZone ? stampZone.offsetHeight : 170;
+      const stampZoneParent = previewRoot.querySelector("#report-stamp-zone");
+      const headerHpx = stampZoneParent ? stampZoneParent.offsetHeight : 170;
 
       const previewPanels = Array.from(previewRoot.querySelectorAll(".panel-container"));
       const printPanels   = Array.from(printTarget.querySelectorAll(".panel-container"));
 
       if (previewPanels.length > 0 && previewPanels.length === printPanels.length) {
         // Page math (A4 default: 297mm height)
-        const sizes    = PAGE_SIZES[pageLayout.format] || PAGE_SIZES.a4;
-        const pgH      = pageLayout.format === "custom" ? pageLayout.customHeight : sizes.height;
-        const pgW      = pageLayout.format === "custom" ? pageLayout.customWidth : sizes.width;
+        const currentSizes    = PAGE_SIZES[pageLayout.format] || PAGE_SIZES.a4;
+        const pgH      = pageLayout.format === "custom" ? pageLayout.customHeight : currentSizes.height;
+        const pgW      = pageLayout.format === "custom" ? pageLayout.customWidth : currentSizes.width;
         const pageH    = pageLayout.orientation === "portrait" ? pgH : pgW;
         
-        // Convert to px assuming 96dpi (standard web ratio offset by Chromium scaling)
-        const pageHpx  = (pageH * 96) / 25.4;
+        // Convert to px assuming 96dpi
         const topMpx   = (pageLayout.margins[0] * 96) / 25.4;
         const botMpx   = (pageLayout.margins[2] * 96) / 25.4;
+        const pageHpx  = (pageH * 96) / 25.4;
         
         const usableHpx = pageHpx - topMpx - botMpx - footerHpx;
 
-        // Start counting. Page 1 already has the physical "report-header-spacer" pushing it down.
+        // Start counting page height usage
         let usedHpx = headerHpx;
 
         previewPanels.forEach((pre, idx) => {
@@ -260,24 +224,22 @@ export default function ReportPreview({
           const mt     = parseFloat(style.marginTop) || 0;
           const mb     = parseFloat(style.marginBottom) || 0;
           
-          // Adds a safety buffer so JS breaks the page conservatively BEFORE Native Chromium does
+          // Adds a safety buffer so JS breaks the page conservatively
           const SAFE_BUFFER = 15;
           const panelH = pre.getBoundingClientRect().height + mt + mb;
           
           if (usedHpx > headerHpx && usedHpx + panelH + SAFE_BUFFER > usableHpx) {
-            // It overflows! Create a physical spacer that breaks the page and simulates the header gap
             const spacer = document.createElement("div");
-            spacer.className = "js-print-spacer screen-only"; // Only affect the print clone
+            spacer.className = "js-print-spacer screen-only";
             spacer.style.pageBreakBefore = "always";
             spacer.style.breakBefore = "page";
-            spacer.style.height = headerHpx + "px"; // Reserves physical space on new page top!
+            spacer.style.height = headerHpx + "px";
             spacer.style.width = "100%";
             pnl.parentNode.insertBefore(spacer, pnl);
             
-            // Advance tracker: New page starts with header height + this panel's height
             usedHpx = headerHpx + panelH;
             
-            // Failsafe: if the single panel is so huge it spans MULTIPLE pages natively...
+            // Failsafe if panel spans MULTIPLE pages
             while (usedHpx > usableHpx) {
               usedHpx -= (usableHpx - headerHpx);
             }
@@ -298,13 +260,12 @@ export default function ReportPreview({
         margin: ${pageLayout.margins.join("mm ")}mm;
       }
       @media print {
-        html, body { display: block !important; height: auto !important; min-height: auto !important; }
+        html, body { display: block !important; height: auto !important; min-height: auto !important; overflow: visible !important; }
         #report-print-target { display: block !important; }
         #report-print-target > div {
           display: block !important;
           padding-bottom: var(--print-footer-h, 35mm) !important;
         }
-        /* Footer fixed at page bottom — appears on every printed page */
         .report-footer {
           position: fixed !important;
           bottom: 0 !important; left: 0 !important; right: 0 !important;
@@ -312,22 +273,97 @@ export default function ReportPreview({
           background: white !important;
           padding-top: 2mm !important;
         }
-        /* JS already placed explicit break-before:page where needed. Removed panel-container break-inside: avoid to allow long panels to span multiple pages. */
         .grid > div { break-inside: avoid !important; page-break-inside: avoid !important; }
+        
+        /* Ensure hide/show settings are respected in native print engine */
+        ${!showHeader ? '#report-header-zone { visibility: hidden !important; }' : ''}
+        ${!showFooter ? '.report-footer { visibility: hidden !important; }' : ''}
       }
     `;
 
-    const cleanup = () => {
+    try {
+      // Small delay to ensure DOM and CSS are fully painted and applied before capture
+      await new Promise(r => setTimeout(r, 100));
+      await actionFn();
+    } finally {
+      // Cleanup DOM exactly as before
       document.body.style.overflow = originalOverflow;
-      if (document.getElementById(styleId)) el.remove();
-      // Reset JS-injected page breaks so screen preview stays clean
+      if (document.getElementById(styleId)) document.getElementById(styleId).remove();
       if (printTarget) {
         printTarget.querySelectorAll(".js-print-spacer").forEach(e => e.remove());
       }
-    };
-    window.addEventListener("afterprint", cleanup, { once: true });
-    window.print();
-    setTimeout(cleanup, 15000);
+    }
+  };
+
+  // ── Download PDF ──────────────────────────────────────────────────────────
+  const handleDownloadPDF = async () => {
+    if (!reportWrapperRef.current) return;
+    setPdfError(null);
+    setIsGeneratingPDF(true);
+    await new Promise((r) => setTimeout(r, 50));
+
+    const testName    = editedPanelNames[selectedTest] || testTemplates.find((t) => t.panel_id === selectedTest)?.panel_name || selectedTest;
+    const patientName = patientDetails.name || "Unknown";
+    const dateStr     = new Date().toISOString().split("T")[0];
+    const filename    = `${patientName}_${testName}_${dateStr}.pdf`.replace(/[^a-zA-Z0-9_\-.]/g, "_");
+
+    try {
+      await withPrintSetup(async () => {
+        // We use Electron IPC instead of html2canvas/generatePDF to get Pixel-Perfect Native match
+        let isElectron = false;
+        if (typeof window !== "undefined" && typeof window.require === "function") {
+          try {
+            window.require("electron");
+            isElectron = true;
+          } catch (e) {
+            // Not a real Electron require
+          }
+        }
+
+        if (isElectron) {
+          const { ipcRenderer } = window.require("electron");
+          const res = await ipcRenderer.invoke("print-to-pdf", {
+            filename,
+            pageSize: pageLayout.format === "custom" 
+              ? { width: Math.round(pageLayout.customWidth * 1000), height: Math.round(pageLayout.customHeight * 1000) }
+              : pageLayout.format.toUpperCase(),
+            margins: pageLayout.margins,
+          });
+          
+          if (res && res.error) {
+            throw new Error(res.error);
+          }
+        } else {
+          // Fallback to html2canvas for standard browser preview
+          await generatePDF(reportWrapperRef.current, {
+            filename,
+            format: pageLayout.format,
+            orientation: pageLayout.orientation,
+            customWidth: pageLayout.customWidth,
+            customHeight: pageLayout.customHeight,
+            margins: pageLayout.margins,
+            showHeader,
+            showFooter,
+          });
+        }
+      });
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      setPdfError(`PDF failed: ${err.message}`);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  // ── Print ─────────────────────────────────────────────────────────────────
+  const handlePrint = () => {
+    withPrintSetup(() => {
+      return new Promise((resolve) => {
+        window.addEventListener("afterprint", resolve, { once: true });
+        window.print();
+        setTimeout(resolve, 15000); // safety fallback
+      });
+    });
   };
 
 
