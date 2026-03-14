@@ -373,6 +373,7 @@ export default function ReportTemplate({
           </div>
         </div>
       </div>{/* /patient-details-zone */}
+      <hr/>
       </div>{/* /report-stamp-zone */}
 
       {/* PRINT ALIGNMENT WRAPPER */}

@@ -418,76 +418,89 @@ function PanelFieldsGroup({
 
   return (
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-4xl transition-all duration-300 hover:shadow-md">
-      {/* Panel Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-100">
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
-          <div className="p-1.5 bg-white rounded-lg border border-gray-200 shadow-sm text-gray-400 shrink-0">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          </div>
-          
-          {isEditingName ? (
-            <div className="flex items-center space-x-2 flex-1 animate-in fade-in slide-in-from-left-2 duration-200">
-              <input
-                type="text"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                autoFocus
-                className="flex-1 min-w-0 px-2 py-1 text-sm font-bold border-2 border-red-500 rounded-lg focus:outline-none shadow-sm"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    onSavePanelName(panelId, newName);
-                    setIsEditingName(false);
-                  }
-                  if (e.key === "Escape") setIsEditingName(false);
-                }}
-              />
-              <button
-                onClick={() => {
-                  onSavePanelName(panelId, newName);
-                  setIsEditingName(false);
-                }}
-                className="p-1 px-2 bg-red-600 text-white text-[10px] font-bold rounded-md hover:bg-red-700 transition-colors"
+      {/* Header */}
+      <div className="flex flex-col space-y-1 mb-6">
+        <div className="flex items-center justify-between border-b pb-3 mb-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-red-50 text-red-600 rounded-xl">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                Save
-              </button>
-              {hasNameOverride && (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-gray-800">Test Entry</h2>
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col flex-1 min-w-0">
+            {isEditingName ? (
+              <div className="flex items-center space-x-2 animate-in fade-in slide-in-from-left-2 duration-200 mb-1">
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  autoFocus
+                  className="flex-1 min-w-0 px-2 py-1 text-xl font-black text-gray-800 border-2 border-red-500 rounded-lg focus:outline-none shadow-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      onSavePanelName(panelId, newName);
+                      setIsEditingName(false);
+                    }
+                    if (e.key === "Escape") setIsEditingName(false);
+                  }}
+                />
                 <button
                   onClick={() => {
-                    onResetPanelName(panelId);
+                    onSavePanelName(panelId, newName);
                     setIsEditingName(false);
                   }}
-                  className="p-1 px-2 border border-orange-200 text-orange-600 text-[10px] font-bold rounded-md hover:bg-orange-50 transition-colors"
+                  className="p-1 px-2 bg-red-600 text-white text-[10px] font-bold rounded-md hover:bg-red-700 transition-colors"
                 >
-                  Reset
+                  Save
                 </button>
-              )}
-              <button
-                onClick={() => setIsEditingName(false)}
-                className="p-1 px-2 bg-gray-200 text-gray-600 text-[10px] font-bold rounded-md hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-2 min-w-0 group/name">
-              <h3 className="text-sm font-bold text-gray-800 truncate uppercase tracking-wider">
-                {panelName}
-              </h3>
-              <button
-                onClick={() => setIsEditingName(true)}
-                className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover/name:opacity-100 transition-all rounded-md hover:bg-red-50"
-                title="Edit panel name"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-              </button>
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col">
+                {hasNameOverride && (
+                  <button
+                    onClick={() => {
+                      onResetPanelName(panelId);
+                      setIsEditingName(false);
+                    }}
+                    className="p-1 px-2 border border-orange-200 text-orange-600 text-[10px] font-bold rounded-md hover:bg-orange-50 transition-colors"
+                  >
+                    Reset
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsEditingName(false)}
+                  className="p-1 px-2 bg-gray-200 text-gray-600 text-[10px] font-bold rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2 min-w-0 group/name mb-1">
+                <p className="text-xl font-black text-gray-800 tracking-tight leading-none truncate uppercase">
+                  {panelName}
+                </p>
+                <button
+                  onClick={() => setIsEditingName(true)}
+                  className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover/name:opacity-100 transition-all rounded-md hover:bg-red-50"
+                  title="Edit panel name"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              </div>
+            )}
             <span
               className={`text-[10px] w-fit font-bold px-2 py-0.5 rounded-full ${gender === "Male" ? "bg-blue-100 text-blue-700" : "bg-pink-100 text-pink-700"}`}
             >
@@ -502,6 +515,7 @@ function PanelFieldsGroup({
               ✕ Remove
             </button>
           )}
+        </div>
       </div>
 
       {isBloodBank ? (
