@@ -45,6 +45,7 @@ export default function ReportPreview({
   editedParams,
   paramOrders,
   additionalPanels,
+  editedPanelNames = {},
 }) {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [pdfError,        setPdfError]        = useState(null);
@@ -172,7 +173,7 @@ export default function ReportPreview({
     setIsGeneratingPDF(true);
     await new Promise((r) => setTimeout(r, 50));
 
-    const testName    = testTemplates.find((t) => t.panel_id === selectedTest)?.panel_name || selectedTest;
+    const testName    = editedPanelNames[selectedTest] || testTemplates.find((t) => t.panel_id === selectedTest)?.panel_name || selectedTest;
     const patientName = patientDetails.name || "Unknown";
     const dateStr     = new Date().toISOString().split("T")[0];
     const filename    = `${patientName}_${testName}_${dateStr}.pdf`.replace(/[^a-zA-Z0-9_\-.]/g, "_");
@@ -332,6 +333,7 @@ export default function ReportPreview({
     editedParams,
     paramOrders,
     additionalPanels,
+    editedPanelNames,
     showHeader,
     showFooter,
     density,

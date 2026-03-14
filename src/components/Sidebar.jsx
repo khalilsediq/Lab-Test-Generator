@@ -32,6 +32,7 @@ export default function Sidebar({
   onDeleteCustom,
   onDeleteAllCustom,
   onClose,
+  editedPanelNames = {},
 }) {
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState({});
@@ -42,7 +43,8 @@ export default function Sidebar({
   const filtered = useMemo(() => {
     if (!q) return testTemplates;
     return testTemplates.filter((panel) => {
-      if (panel.panel_name.toLowerCase().includes(q)) return true;
+      const displayName = editedPanelNames[panel.panel_id] || panel.panel_name;
+      if (displayName.toLowerCase().includes(q)) return true;
       if (panel.panel_id.toLowerCase().includes(q)) return true;
       if ((panel.category || "").toLowerCase().includes(q)) return true;
       if ((panel.description || "").toLowerCase().includes(q)) return true;
@@ -382,7 +384,7 @@ export default function Sidebar({
                         }`}
                       >
                         <span className="block truncate leading-snug">
-                          {test.panel_name}
+                          {editedPanelNames[test.panel_id] || test.panel_name}
                         </span>
                         <span className="block text-[10px] font-mono text-gray-600 mt-0.5">
                           {test.panel_id}

@@ -140,6 +140,7 @@ export default function ReportTemplate({
   showHeader = true,
   showFooter = true,
   density = "comfortable",
+  editedPanelNames = {},
 }) {
   const gender = patientDetails.gender;
   const dc = DENSITY_CONFIG[density] || DENSITY_CONFIG.comfortable;
@@ -405,9 +406,9 @@ export default function ReportTemplate({
             >
               {/* ── Report Title ── */}
               <div className={`panel-title bg-gray-200 ${dc.titlePaddingClass} print:py-px flex items-center justify-center font-bold ${dc.titleTextClass} print:text-sm tracking-widest uppercase mb-2 border-t border-b border-gray-400`}>
-                {panel?.panel_name
+                {(editedPanelNames[panelId] || panel?.panel_name || panelId)
                   ?.replace(" Test", "")
-                  .replace(" Profile", "") || panelId}{" "}
+                  .replace(" Profile", "")}{" "}
                 REPORT
               </div>
 

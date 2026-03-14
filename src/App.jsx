@@ -25,6 +25,9 @@ function App() {
   const [editedParams, setEditedParams] = useState(() =>
     load("editedParams", {}),
   );
+  const [editedPanelNames, setEditedPanelNames] = useState(() =>
+    load("editedPanelNames", {}),
+  );
   const [paramOrders, setParamOrders] = useState(() => load("paramOrders", {}));
   const [showCustomModal, setShowCustomModal] = useState(false);
   // Sidebar: open by default on desktop, closed on mobile
@@ -174,6 +177,22 @@ function App() {
     showToast("Parameter reset to default");
   };
 
+  const handleSavePanelName = (panelId, newName) => {
+    const updated = {
+      ...editedPanelNames,
+      [panelId]: newName,
+    };
+    persist("editedPanelNames", updated, setEditedPanelNames);
+    showToast("Panel name updated");
+  };
+
+  const handleResetPanelName = (panelId) => {
+    const updated = { ...editedPanelNames };
+    delete updated[panelId];
+    persist("editedPanelNames", updated, setEditedPanelNames);
+    showToast("Panel name reset to default");
+  };
+
   const handleSaveOrder = (panelId, orderedIds) => {
     const updated = { ...paramOrders, [panelId]: orderedIds };
     persist("paramOrders", updated, setParamOrders);
@@ -217,6 +236,7 @@ function App() {
               onDeleteAllCustom={handleDeleteAllCustomTests}
               onClose={() => setSidebarOpen(false)}
               sidebarOpen={sidebarOpen}
+              editedPanelNames={editedPanelNames}
             />
           </div>
         </div>
@@ -320,7 +340,10 @@ function App() {
               onResetRange={handleResetRange}
               onSaveParam={handleSaveParam}
               onResetParam={handleResetParam}
+              onSavePanelName={handleSavePanelName}
+              onResetPanelName={handleResetPanelName}
               onSaveOrder={handleSaveOrder}
+              editedPanelNames={editedPanelNames}
             />
 
             <div className="mt-8 flex justify-end max-w-4xl">
@@ -359,6 +382,7 @@ function App() {
         editedParams={editedParams}
         paramOrders={paramOrders}
         additionalPanels={additionalPanels}
+        editedPanelNames={editedPanelNames}
       />
 
       {showCustomModal && (
