@@ -76,6 +76,8 @@ This file provides a concise overview of the Lab Test Generator project for futu
 - **PDF Generation Freeze:** Large reports can lock the UI thread during canvas rendering. Handled via `setTimeout` yielding and "Generating..." states, but still intensive.
 - **Chromium Print Engine Quirks:** Native `thead` repetition is unreliable in some Chromium versions. The project uses a "Fixed Header + Spacer" trick in `ReportTemplate.jsx` to ensure headers repeat on every page without overlapping content.
 - **Scroll Bleed:** Modal scrolling sometimes drifts the underlying page; mitigated by `overflow-hidden` on `body` during modal visibility.
+- **ESM/CJS Native Interop:** The Vite project uses `"type": "module"` (ESM), but `better-sqlite3` is a CommonJS native binding. `database.js` imports it safely using Node's `createRequire(import.meta.url)`. Do not remove this wrapper, or the app will crash on import.
+- **SQLite Native Bindings Match:** If you install new packages that affect native bindings (or update Electron), you may get a `NODE_MODULE_VERSION` mismatch error on launch. This is fixed by running `npx electron-rebuild -f -w better-sqlite3` to recompile the SQLite driver for Electron's specific Node ABI.
 
 ## 6. Local Development
 
