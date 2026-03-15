@@ -62,7 +62,7 @@ This file provides a concise overview of the Lab Test Generator project for futu
 
 - **QR Code:** A placeholder exists in `ReportTemplate.jsx` but no logic is implemented to generate a functional QR link.
 - **Advanced Gender-Specific Ranges:** Support for "Child" or "Other" categories is mentioned in code comments but lacks full backend/schema support in `testTemplates.json`.
-- **Database Persistence:** Currently relies heavily on `localStorage`. No SQLite/External DB integration is present for long-term patient records.
+- **Database Persistence:** Currently relies heavily on `localStorage`. No SQLite/External DB integration is present for long-term patient records (needs `better-sqlite3` installed).
 - **Reporting Date vs Registration Date:** Mostly mirrored currently; complex reporting delay logic isn't fully implemented.
 
 ## 5. Known Bugs & Gotchas
