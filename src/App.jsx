@@ -5,6 +5,7 @@ import TestFields from "./components/TestFields";
 import ReportPreview from "./components/ReportPreview";
 import CustomTestModal from "./components/CustomTestModal";
 import staticTemplates from "./data/testTemplates.json";
+import { dbClient } from "./utils/dbClient";
 
 const load = (key, fallback) => {
   try {
@@ -109,6 +110,29 @@ function App() {
     const t = setTimeout(() => setToast(null), 2500);
     return () => clearTimeout(t);
   }, [toast]);
+
+  // localStorage → SQLite migration (runs once on first launch with DB)
+  useEffect(() => {
+    const runMigrationIfNeeded = async () => {
+      try {
+        const result = await dbClient.checkMigrationPending();
+        if (result && result.success && result.data === true) {
+          const raw = localStorage.getItem("customTests");
+          const customTestsData = raw ? JSON.parse(raw) : [];
+          const priceEntries = customTestsData.map((p) => ({
+            panelId:   p.panel_id,
+            panelName: p.panel_name,
+            price:     0,
+          }));
+          await dbClient.completeMigration(priceEntries);
+          console.log("[Migration] localStorage customTests migrated to SQLite.");
+        }
+      } catch (err) {
+        console.error("[Migration] check failed:", err);
+      }
+    };
+    runMigrationIfNeeded();
+  }, []);
 
   const showToast = (msg, type = "success") => setToast({ msg, type });
 

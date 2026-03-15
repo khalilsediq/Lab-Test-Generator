@@ -28,13 +28,16 @@ This file provides a concise overview of the Lab Test Generator project for futu
 - **Runtime:** Electron (v40.6.0)
 - **Frontend Framework:** React 19 + Vite (Type: module)
 - **Styling:** Tailwind CSS v4 (using `@tailwindcss/postcss`)
+- **Database:** `better-sqlite3` (v11.8.1) — Stored at `app.getPath('userData')/bukhari_lab.db`
 - **PDF/Canvas:** `html2canvas` (v1.4.1), `jspdf` (v4.2.0), `html2pdf.js` (legacy, mostly bypassed).
 - **Barcodes:** `react-barcode` (CODE128).
-- **Communication:** Standard Electron main/renderer IPC (minimal, mostly browser-driven).
+- **Communication:** Standard Electron main/renderer IPC, wrapped client-side via `dbClient`.
 
 ## 3. Folder Structure & Purposes
 
-- `/electron`: Contains the Electron main process entry point (`main.js`).
+- `/electron`: Main process context.
+  - `main.js`: Electron entry point and IPC registration.
+  - `database.js`: Pure SQLite logic for the main process.
 - `/src`: Primary React source code.
   - `/src/components`: UI components. Key files:
     - `ReportTemplate.jsx`: The core A4 print layout.
@@ -42,7 +45,9 @@ This file provides a concise overview of the Lab Test Generator project for futu
     - `ReportPreview.jsx`: Modal that handles PDF generation and print triggering.
     - `CustomTestModal.jsx`: Interface for creating user-defined tests.
   - `/src/data`: Static JSON templates (`testTemplates.json`) for predefined laboratory tests.
-  - `/src/utils`: Utility functions, notably `generatePDF.js` which handles canvas slicing for multi-page PDF generation.
+  - `/src/utils`: Utility functions.
+    - `generatePDF.js`: Handles canvas slicing for multi-page PDF generation.
+    - `dbClient.js`: IPC wrapper for all renderer-to-main database calls.
   - `/src/assets`: Images and static resources (Lab Logo, etc.).
 - `/public`: Static assets served by Vite.
 - `/dist`: Production build output (Vite).
@@ -54,15 +59,15 @@ This file provides a concise overview of the Lab Test Generator project for futu
 - Core patient registration with barcode (Patient No, T/R ID).
 - Dynamic test field generation and abnormal value highlighting.
 - Multi-test composition (stacking panels).
-- Custom panel creation and persistence via `localStorage`.
+- Custom panel creation and persistence.
 - PDF generation with multi-page support and page numbering.
 - Print-optimized CSS (fixed headers/footers on every page).
+- **Database Persistence**: Fully implemented using `better-sqlite3`. Replaced `localStorage`-heavy methods. Local data is securely stored at the `userData` roaming path to survive updates. Includes built-in `localStorage` migration hook.
 
 ### 🚧 Partially Implemented / Inferable Gaps
 
 - **QR Code:** A placeholder exists in `ReportTemplate.jsx` but no logic is implemented to generate a functional QR link.
 - **Advanced Gender-Specific Ranges:** Support for "Child" or "Other" categories is mentioned in code comments but lacks full backend/schema support in `testTemplates.json`.
-- **Database Persistence:** Currently relies heavily on `localStorage`. No SQLite/External DB integration is present for long-term patient records (needs `better-sqlite3` installed).
 - **Reporting Date vs Registration Date:** Mostly mirrored currently; complex reporting delay logic isn't fully implemented.
 
 ## 5. Known Bugs & Gotchas
