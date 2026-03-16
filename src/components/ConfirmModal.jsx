@@ -4,7 +4,7 @@ export default function ConfirmModal({ isOpen, title, message, onConfirm, onCanc
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/40 backdrop-blur-sm px-4">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm px-4">
       <div 
         className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
