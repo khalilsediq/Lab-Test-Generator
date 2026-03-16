@@ -42,6 +42,7 @@ This file provides a concise overview of the Lab Test Generator project for futu
   - `/src/components`: UI components. Key files:
     - `ReportTemplate.jsx`: The core A4 print layout.
     - `TestFields.jsx`: Dynamic form generator for test parameters.
+    - `BillingPanel.jsx`: Persistent right-side billing pane managing panel pricing, discounts, and the final patient registration save transaction.
     - `ReportPreview.jsx`: Modal that handles PDF generation and print triggering.
     - `CustomTestModal.jsx`: Interface for creating user-defined tests.
   - `/src/data`: Static JSON templates (`testTemplates.json`) for predefined laboratory tests.
@@ -62,6 +63,8 @@ This file provides a concise overview of the Lab Test Generator project for futu
 - Custom panel creation and persistence.
 - PDF generation with multi-page support and page numbering.
 - Print-optimized CSS (fixed headers/footers on every page).
+- **Billing & Patient Registration Sequence:** Fully integrated a right-column `BillingPanel.jsx` in the New Report view. Dynamically computes subtotals from active tools/`testPrices`, applies percentage/fixed discounts, tracks Amount Paid/Balance Due, and performs a 3-step atomic SQLite save via `dbClient` (Patient -> Selected Panels -> Transaction).
+- **Auto MR Number Generation:** Sequential MR Numbers are auto-fetched on application mount and automatically incremented after every successful patient registration, eliminating manual data entry.
 - **Database Persistence**: Fully implemented using `better-sqlite3`. Replaced `localStorage`-heavy methods. Local data is securely stored at the `userData` roaming path to survive updates. Includes built-in `localStorage` migration hook.
 - **Top Navigation & Settings:** Introduced a top Tab Bar replacing the static header. Includes a dedicated Settings page with a sub-navigation layout.
 - **Test Price Management:** Prices are centralized in `App.jsx` state (`testPrices`) and fetched once from SQLite on mount via `dbClient.getAllTestPrices()`. A `handleUpdatePrice` handler performs optimistic UI updates and persists to SQLite. `TestPriceManager` (in Settings) reads from this global state via props — no independent DB fetching. Prices can also be set inline in any test panel header within the patient report, and set during custom test creation.
@@ -70,7 +73,7 @@ This file provides a concise overview of the Lab Test Generator project for futu
 - **Custom Gender Reference Ranges:** `CustomTestModal.jsx` allows adding arbitrary custom gender entries (e.g., Child, Infant, Elderly) per parameter, stored as a `custom_ranges: [{gender, min, max}]` array in the parameter's `reference_range`. `TestFields.jsx`'s `isAbnormal()` and `formatRange()` functions check `custom_ranges` first before falling back to standard male/female keys. The `EditRow` component also dynamically supports editing these custom ranges in real-time, enabling full abnormal detection and customization for any defined custom gender.
 - **UI Stability & Defensive Logic:** Implemented comprehensive null checks and reactive state synchronization to prevent UI freezes/crashes when deleting custom test panels that are currently active in the workspace. Native Chromium dialogs (`window.confirm`/`prompt`/`alert`) have been banned and replaced by a pure React `ConfirmModal` and inline toast system to prevent renderer thread locking during reconciliation. Heavy array mutations (`customTests`, `trashedPanels`) are strictly wrapped in React 19's `startTransition()` to yield priority to user input.
 - **Gender Label Synchronization & Branding:** Custom gender labels defined in `custom_ranges` within any test template are dynamically harvested in `App.jsx` and injected into the `PatientForm.jsx` gender dropdown. The `TestFields.jsx` entry UI and `ReportTemplate.jsx` PDF generator have been synchronized to use dynamic labeling badges (e.g., "⚧ Child") and specific reference range logic for non-standard genders, ensuring consistent abnormal detection throughout the report lifecycle.
-- **Sidebar UX Enhancements:** Users can now "Pin" frequently used test panels (creating a dedicated "Pinned" category at the top of the sidebar).
+- **Sidebar UX Enhancements:** Users can now "Pin" frequently used test panels (creating a dedicated "Pinned" category at the top of the sidebar). The sidebar collapse mechanism has been unified into a single full-width layout toggle safely integrated into the bottom footer pane.
 - **Dedicated Trash View:** The application features a dedicated `TrashView.jsx` accessible via a "Trash" tab in the top navigation bar. Any panel (default or custom) removed from the main sidebar is moved here. From the Trash View, panels can be restored, bulk-restored with "Restore All", or permanently deleted (for custom panels) utilizing `ConfirmModal` for safe deletions.
 
 ### 🚧 Partially Implemented / Inferable Gaps

@@ -5,6 +5,7 @@ import TestFields from "./components/TestFields";
 import ReportPreview from "./components/ReportPreview";
 import CustomTestModal from "./components/CustomTestModal";
 import Settings from "./components/Settings";
+import BillingPanel from "./components/BillingPanel";
 import TrashView from "./components/TrashView";
 import staticTemplates from "./data/testTemplates.json";
 import { dbClient } from "./utils/dbClient";
@@ -142,6 +143,23 @@ function App() {
     const t = setTimeout(() => setToast(null), 2500);
     return () => clearTimeout(t);
   }, [toast]);
+
+  // Expose toast to window for non-react generic use
+  useEffect(() => {
+    window.showToast = showToast;
+    return () => { delete window.showToast; };
+  }, []);
+
+  // Auto-fetch MR Number
+  useEffect(() => {
+    let mounted = true;
+    dbClient.getNextMrNo().then((res) => {
+      if (mounted && res?.success && res.data) {
+        setPatientDetails(prev => ({ ...prev, mrNo: res.data }));
+      }
+    }).catch(err => console.error("Failed to auto-fetch MR No:", err));
+    return () => { mounted = false; };
+  }, []);
 
   // localStorage → SQLite migration (runs once on first launch with DB)
   useEffect(() => {
@@ -389,6 +407,25 @@ function App() {
     }
   };
 
+  const handleSaveSuccess = (newMrNo) => {
+    if (newMrNo) {
+      setPatientDetails(prev => ({ ...prev, mrNo: newMrNo }));
+    }
+  };
+
+  const handleRemovePanel = (panelIdToRemove) => {
+    if (selectedTest === panelIdToRemove) {
+      if (additionalPanels.length > 0) {
+        setSelectedTest(additionalPanels[0]);
+        setAdditionalPanels(prev => prev.filter((_, i) => i !== 0));
+      } else {
+        setSelectedTest(null);
+      }
+    } else {
+      setAdditionalPanels(prev => prev.filter(id => id !== panelIdToRemove));
+    }
+  };
+
   // Close sidebar when test selected on mobile
   const handleSelectTest = (id) => {
     setSelectedTest(id);
@@ -408,15 +445,15 @@ function App() {
 
         {/* Sidebar */}
         <div
-          style={{ width: sidebarOpen ? sidebarWidth : 0 }}
+          style={{ width: sidebarOpen ? sidebarWidth : (typeof window !== 'undefined' && window.innerWidth < 768 ? 0 : 64) }}
           className={`
-          fixed inset-y-0 left-0 z-40 transition-[width,opacity,transform] duration-300 ease-in-out
-          md:relative md:z-auto md:shrink-0 h-full overflow-hidden
-          ${sidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-full md:translate-x-0 md:opacity-0 md:pointer-events-none"}
+          fixed inset-y-0 left-0 z-40 transition-[width,transform] duration-300 ease-in-out
+          md:relative md:z-auto md:shrink-0 h-full bg-gray-900 overflow-hidden
+          ${sidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-full md:translate-x-0 opacity-100"}
           ${isResizing ? "transition-none" : ""}
         `}
         >
-          <div className="h-full" style={{ width: sidebarWidth }}>
+          <div className="h-full" style={{ width: sidebarOpen ? sidebarWidth : "100%" }}>
             <Sidebar
               selectedTest={selectedTest}
               setSelectedTest={handleSelectTest}
@@ -432,6 +469,7 @@ function App() {
               onDeleteAllCustom={handleDeleteAllCustomTests}
               onImportCustom={handleImportCustom}
               onClose={() => setSidebarOpen(false)}
+              onToggle={() => setSidebarOpen(!sidebarOpen)}
               sidebarOpen={sidebarOpen}
               editedPanelNames={editedPanelNames}
             />
@@ -516,29 +554,14 @@ function App() {
                 <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 ${activeTab === 'trash' ? 'text-red-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
-                <span>Trash{trashedTemplates.length > 0 && ` (${trashedTemplates.length})`}</span>
-              </button>
-            </div>
-            
-            <button
-              onClick={() => setSidebarOpen((v) => !v)}
-              className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors text-xs font-semibold"
-              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-            >
-              <svg
-                className={`w-4 h-4 transition-transform ${sidebarOpen ? "" : "rotate-180"}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-              <span>{sidebarOpen ? "Hide" : "Show"} Panel</span>
+              <span>Trash{trashedTemplates.length > 0 && ` (${trashedTemplates.length})`}</span>
             </button>
           </div>
+        </div>
 
-          <div className={`flex-1 overflow-y-auto ${activeTab === 'report' ? 'block' : 'hidden'}`}>
-            <div className="p-4 sm:p-6 md:p-10">
+        <div className={`flex-1 overflow-hidden ${activeTab === 'report' ? 'block' : 'hidden'}`}>
+          <div className="flex h-full overflow-hidden">
+            <div className="flex-1 min-w-0 p-4 sm:p-6 md:p-10 overflow-y-auto relative">
               <PatientForm
               patientDetails={patientDetails}
               setPatientDetails={setPatientDetails}
@@ -590,9 +613,23 @@ function App() {
               </button>
             </div>
             </div>
-          </div>
 
-          <div className={`flex-1 overflow-hidden flex flex-col min-h-0 container mx-auto w-full ${activeTab === 'settings' ? 'flex' : 'hidden'}`}>
+            {/* Right Column (Billing Panel) */}
+            <div className="w-80 shrink-0 border-l border-gray-200 bg-white overflow-y-auto hidden lg:block">
+              <BillingPanel 
+                selectedPanels={[...new Set([selectedTest, ...additionalPanels])]}
+                testTemplates={testTemplates}
+                testPrices={testPrices}
+                patientDetails={patientDetails}
+                onSaveSuccess={handleSaveSuccess}
+                onRemovePanel={handleRemovePanel}
+                editedPanelNames={editedPanelNames}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className={`flex-1 overflow-hidden flex flex-col min-h-0 container mx-auto w-full ${activeTab === 'settings' ? 'flex' : 'hidden'}`}>
             <Settings 
               testTemplates={testTemplates} 
               testPrices={testPrices}

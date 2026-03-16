@@ -36,6 +36,8 @@ export default function Sidebar({
   onDeleteAllCustom,
   onImportCustom,
   onClose,
+  sidebarOpen,
+  onToggle,
   editedPanelNames = {},
 }) {
   const [query, setQuery] = useState("");
@@ -206,6 +208,8 @@ export default function Sidebar({
 
   return (
     <div className="w-full bg-gray-900 text-white h-full flex flex-col shadow-2xl select-none">
+      {sidebarOpen && (
+        <>
       {/* Header with logo + close button */}
       <div className="relative flex items-center justify-center pt-5 pb-3 px-5 shrink-0">
         <img
@@ -231,30 +235,6 @@ export default function Sidebar({
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
-        </button>
-      </div>
-
-      {/* Desktop close/collapse button */}
-      <div className="hidden md:flex justify-end px-4 pb-1 shrink-0">
-        <button
-          onClick={onClose}
-          className="text-[10px] font-semibold text-gray-600 hover:text-gray-400 flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-gray-800 transition-colors"
-          title="Collapse sidebar"
-        >
-          <svg
-            className="w-3 h-3"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-            />
-          </svg>
-          <span>Collapse</span>
         </button>
       </div>
 
@@ -451,10 +431,35 @@ export default function Sidebar({
           ))
         )}
       </nav>
+      </>
+      )}
+      
+      {!sidebarOpen && <div className="flex-1"></div>}
 
       {/* Create Custom Test */}
       <div className="p-3 border-t border-gray-800 shrink-0">
         <div className="flex flex-col space-y-1.5">
+          <button
+            onClick={onToggle}
+            className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium py-2 w-full flex items-center justify-center gap-2 transition-colors rounded-lg"
+            title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            {sidebarOpen ? (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                <span>Collapse</span>
+              </>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            )}
+          </button>
+          
+          {sidebarOpen && (
+            <>
           <button
             onClick={onCreateCustom}
             className="w-full flex items-center justify-center space-x-2 px-3 py-1.5 rounded-lg bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 font-semibold text-xs transition-all active:scale-95"
@@ -494,11 +499,15 @@ export default function Sidebar({
               onChange={handleImportCustomPanels} 
             />
           </div>
+            </>
+          )}
         </div>
         
+        {sidebarOpen && (
         <p className="text-center text-[9px] text-gray-700 mt-2 leading-tight">
           Bukhari Lab System • v1.0.0
         </p>
+        )}
       </div>
 
       <ConfirmModal 
