@@ -387,9 +387,11 @@ export default function ReportTemplate({
         const activePanels = [selectedTest, ...(additionalPanels || [])];
 
         return activePanels.map((panelId, idx) => {
-          const panel = testTemplates.find((t) => t.panel_id === panelId);
+          const panel = testTemplates?.find((t) => t.panel_id === panelId);
+          if (!panel) return null;
+
           const rawFields =
-            panel?.parameters.filter(
+            (panel.parameters || []).filter(
               (p) =>
                 p.gender_applicable === "all" ||
                 p.gender_applicable === gender.toLowerCase(),

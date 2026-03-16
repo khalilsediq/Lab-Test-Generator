@@ -121,7 +121,7 @@ export default function CustomTestModal({ onSave, onClose }) {
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-gray-900/70 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col pointer-events-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
           <div className="flex items-center space-x-3">
@@ -426,7 +426,7 @@ export default function CustomTestModal({ onSave, onClose }) {
           </div>
 
           {error && (
-            <div className="flex items-center space-x-2 text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm font-medium">
+            <div className="flex items-center space-x-2 text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm font-medium mt-4">
               <svg
                 className="w-4 h-4 shrink-0"
                 fill="none"

@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, startTransition } from "react";
 import Sidebar from "./components/Sidebar";
 import PatientForm from "./components/PatientForm";
 import TestFields from "./components/TestFields";
 import ReportPreview from "./components/ReportPreview";
 import CustomTestModal from "./components/CustomTestModal";
+import Settings from "./components/Settings";
+import TrashView from "./components/TrashView";
 import staticTemplates from "./data/testTemplates.json";
 import { dbClient } from "./utils/dbClient";
 
@@ -30,13 +32,27 @@ function App() {
     load("editedPanelNames", {}),
   );
   const [paramOrders, setParamOrders] = useState(() => load("paramOrders", {}));
+  const [pinnedPanels, setPinnedPanels] = useState(() => load("pinnedPanels", []));
+  const [trashedPanels, setTrashedPanels] = useState(() => load("trashedPanels", []));
+
   const [showCustomModal, setShowCustomModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('report');
   // Sidebar: open by default on desktop, closed on mobile
   const [sidebarOpen, setSidebarOpen] = useState(() => !isMobileScreen());
   const [sidebarWidth, setSidebarWidth] = useState(() => load("sidebarWidth", 288));
   const [isResizing, setIsResizing] = useState(false);
 
-  const testTemplates = [...staticTemplates, ...customTests];
+  const testTemplates = useMemo(() => {
+    // Merge static and custom, then filter out trashed ones from the main view
+    const combined = [...staticTemplates, ...customTests];
+    return combined.filter((p) => !trashedPanels.includes(p.panel_id));
+  }, [customTests, trashedPanels]);
+
+  // Dedicated array for purely reading trash panels in the sidebar
+  const trashedTemplates = useMemo(() => {
+    const combined = [...staticTemplates, ...customTests];
+    return combined.filter((p) => trashedPanels.includes(p.panel_id));
+  }, [customTests, trashedPanels]);
 
   const [selectedTest, setSelectedTest] = useState(testTemplates[0].panel_id);
   const [patientDetails, setPatientDetails] = useState({
@@ -148,19 +164,110 @@ function App() {
     showToast(`"${newPanel.panel_name}" added to sidebar`);
   };
 
-  const handleDeleteCustomTest = (panelId) => {
-    const panel = customTests.find((t) => t.panel_id === panelId);
-    const updated = customTests.filter((t) => t.panel_id !== panelId);
-    persist("customTests", updated, setCustomTests);
-    if (selectedTest === panelId) setSelectedTest(testTemplates[0].panel_id);
-    showToast(`"${panel?.panel_name}" deleted`, "error");
+  const handleImportCustom = (updatedPanels) => {
+    startTransition(() => {
+      persist("customTests", updatedPanels, setCustomTests);
+    });
+    showToast(`${updatedPanels.length} custom tests imported successfully`);
+  };
+
+  const handleTogglePin = (panelId) => {
+    const isPinned = pinnedPanels.includes(panelId);
+    const updated = isPinned 
+      ? pinnedPanels.filter(id => id !== panelId)
+      : [...pinnedPanels, panelId];
+    
+    persist("pinnedPanels", updated, setPinnedPanels);
+    showToast(isPinned ? "Panel unpinned" : "Panel pinned");
+  };
+
+  const handleTrashPanel = (panelId) => {
+    if (!panelId) return;
+    const updated = [...trashedPanels, panelId];
+    
+    startTransition(() => {
+      persist("trashedPanels", updated, setTrashedPanels);
+      setAdditionalPanels((prev) => (prev || []).filter((id) => id !== panelId));
+      if (selectedTest === panelId) {
+        setSelectedTest(staticTemplates?.[0]?.panel_id || "HEM_001");
+      }
+    });
+
+    // Clean up pins if pinned
+    if (pinnedPanels.includes(panelId)) {
+      setPinnedPanels(p => p.filter(id => id !== panelId));
+      localStorage.setItem("pinnedPanels", JSON.stringify(pinnedPanels.filter(id => id !== panelId)));
+    }
+
+    showToast("Panel moved to Trash", "error");
+  };
+
+  const handleRestorePanel = (panelId) => {
+    if (!panelId) return;
+    const updated = trashedPanels.filter(id => id !== panelId);
+    persist("trashedPanels", updated, setTrashedPanels);
+    showToast("Panel restored from Trash");
+  };
+
+  const handleRestoreAll = () => {
+    startTransition(() => {
+      persist("trashedPanels", [], setTrashedPanels);
+    });
+    showToast("All panels restored");
+  };
+
+  const handlePermanentDelete = (panelId) => {
+    if (!panelId) return;
+    const panelToDelete = customTests?.find((t) => t.panel_id === panelId);
+    if (!panelToDelete) return; // Can only permanently delete custom tests
+
+    const updated = (customTests || []).filter((t) => t.panel_id !== panelId);
+    
+    // Perform all state updates first in a transition
+    startTransition(() => {
+      persist("customTests", updated, setCustomTests);
+      setAdditionalPanels((prev) => (prev || []).filter((id) => id !== panelId));
+      
+      // Remove from trash tracking
+      const updatedTrash = trashedPanels.filter(id => id !== panelId);
+      persist("trashedPanels", updatedTrash, setTrashedPanels);
+
+      if (selectedTest === panelId) {
+        setSelectedTest(staticTemplates?.[0]?.panel_id || "HEM_001");
+      }
+    });
+
+    if (panelToDelete) {
+      showToast(`Custom Test permanently deleted`, "error");
+    }
+  };
+
+  const handleEmptyTrash = () => {
+    const customTrashIds = customTests.filter(t => trashedPanels.includes(t.panel_id)).map(t => t.panel_id);
+    
+    startTransition(() => {
+      // 1. Permanently delete all trashed custom panels
+      const remainingCustoms = customTests.filter(t => !customTrashIds.includes(t.panel_id));
+      persist("customTests", remainingCustoms, setCustomTests);
+
+      // 2. Clear out the trash state completely
+      persist("trashedPanels", [], setTrashedPanels);
+    });
+
+    showToast("Trash emptied", "error");
   };
 
   const handleDeleteAllCustomTests = () => {
-    persist("customTests", [], setCustomTests);
-    if (customTests.some((t) => t.panel_id === selectedTest)) {
-      setSelectedTest(staticTemplates[0].panel_id);
-    }
+    const customIds = customTests.map((t) => t.panel_id);
+    
+    startTransition(() => {
+      persist("customTests", [], setCustomTests);
+      if (customTests.some((t) => t.panel_id === selectedTest)) {
+        setSelectedTest(staticTemplates[0].panel_id);
+      }
+      setAdditionalPanels((prev) => prev.filter((id) => !customIds.includes(id)));
+    });
+    
     showToast("All custom tests deleted", "error");
   };
 
@@ -255,9 +362,16 @@ function App() {
               selectedTest={selectedTest}
               setSelectedTest={handleSelectTest}
               testTemplates={testTemplates}
+              trashedTemplates={trashedTemplates}
+              pinnedPanels={pinnedPanels}
+              onTogglePin={handleTogglePin}
               onCreateCustom={() => setShowCustomModal(true)}
-              onDeleteCustom={handleDeleteCustomTest}
+              onTrashPanel={handleTrashPanel}
+              onRestorePanel={handleRestorePanel}
+              onPermanentDelete={handlePermanentDelete}
+              onEmptyTrash={handleEmptyTrash}
               onDeleteAllCustom={handleDeleteAllCustomTests}
+              onImportCustom={handleImportCustom}
               onClose={() => setSidebarOpen(false)}
               sidebarOpen={sidebarOpen}
               editedPanelNames={editedPanelNames}
@@ -277,9 +391,9 @@ function App() {
         )}
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 overflow-y-auto">
-          {/* Top nav bar */}
-          <div className="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-gray-100 px-4 sm:px-6 py-3 flex items-center justify-between md:hidden">
+        <main className="flex-1 min-w-0 flex flex-col overflow-hidden relative">
+          {/* Top nav bar (Mobile) */}
+          <div className="shrink-0 sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-gray-100 px-4 sm:px-6 py-3 flex items-center justify-between md:hidden">
             <button
               onClick={() => setSidebarOpen(true)}
               className="p-2 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors"
@@ -308,43 +422,65 @@ function App() {
             </button>
           </div>
 
-          <div className="p-4 sm:p-6 md:p-10">
-            <header className="mb-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-                    New Laboratory Report
-                  </h1>
-                  <p className="text-gray-500 mt-1.5 font-medium text-sm sm:text-base">
-                    Fill in patient details and test results to generate a
-                    printable report.
-                  </p>
-                </div>
-                {/* Desktop sidebar toggle */}
-                <button
-                  onClick={() => setSidebarOpen((v) => !v)}
-                  className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors text-xs font-semibold"
-                  title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-                >
-                  <svg
-                    className={`w-4 h-4 transition-transform ${sidebarOpen ? "" : "rotate-180"}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-                    />
-                  </svg>
-                  <span>{sidebarOpen ? "Hide" : "Show"} Panel</span>
-                </button>
-              </div>
-            </header>
+          {/* New Tab Bar */}
+          <div className="shrink-0 bg-white border-b border-gray-200 px-4 sm:px-6 flex items-center justify-between min-h-[48px] z-10 w-full">
+            <div className="flex space-x-2 -mb-px">
+              <button
+                onClick={() => setActiveTab('report')}
+                className={`flex items-center gap-2 px-4 py-3 text-sm transition-colors border-b-2 ${
+                  activeTab === 'report' ? 'text-red-600 font-semibold border-red-600 bg-white' : 'text-gray-500 hover:text-gray-800 border-transparent bg-white cursor-pointer'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 ${activeTab === 'report' ? 'text-red-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span>New Report</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`flex items-center gap-2 px-4 py-3 text-sm transition-colors border-b-2 ${
+                  activeTab === 'settings' ? 'text-red-600 font-semibold border-red-600 bg-white' : 'text-gray-500 hover:text-gray-800 border-transparent bg-white cursor-pointer'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 ${activeTab === 'settings' ? 'text-red-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Settings</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('trash')}
+                className={`flex items-center gap-2 px-4 py-3 text-sm transition-colors border-b-2 ${
+                  activeTab === 'trash' ? 'text-red-600 font-semibold border-red-600 bg-white' : 'text-gray-500 hover:text-gray-800 border-transparent bg-white cursor-pointer'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 ${activeTab === 'trash' ? 'text-red-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Trash{trashedTemplates.length > 0 && ` (${trashedTemplates.length})`}</span>
+              </button>
+            </div>
+            
+            <button
+              onClick={() => setSidebarOpen((v) => !v)}
+              className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors text-xs font-semibold"
+              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+            >
+              <svg
+                className={`w-4 h-4 transition-transform ${sidebarOpen ? "" : "rotate-180"}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+              <span>{sidebarOpen ? "Hide" : "Show"} Panel</span>
+            </button>
+          </div>
 
-            <PatientForm
+          <div className={`flex-1 overflow-y-auto ${activeTab === 'report' ? 'block' : 'hidden'}`}>
+            <div className="p-4 sm:p-6 md:p-10">
+              <PatientForm
               patientDetails={patientDetails}
               setPatientDetails={setPatientDetails}
             />
@@ -391,6 +527,22 @@ function App() {
                 </svg>
               </button>
             </div>
+            </div>
+          </div>
+
+          <div className={`flex-1 overflow-hidden flex flex-col min-h-0 container mx-auto w-full ${activeTab === 'settings' ? 'flex' : 'hidden'}`}>
+            <Settings testTemplates={testTemplates} />
+          </div>
+
+          <div className={`flex-1 overflow-hidden flex flex-col min-h-0 w-full ${activeTab === 'trash' ? 'flex' : 'hidden'}`}>
+            <TrashView 
+              trashedTemplates={trashedTemplates}
+              editedPanelNames={editedPanelNames}
+              onRestorePanel={handleRestorePanel}
+              onRestoreAll={handleRestoreAll}
+              onPermanentDelete={handlePermanentDelete}
+              onEmptyTrash={handleEmptyTrash}
+            />
           </div>
         </main>
       </div>

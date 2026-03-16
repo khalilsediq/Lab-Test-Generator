@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -318,15 +318,18 @@ function PanelFieldsGroup({
   editedPanelNames,
 }) {
   const gender = patientDetails?.gender || "Male";
-  const panel = testTemplates.find((t) => t.panel_id === panelId);
+  const panel = testTemplates?.find((t) => t.panel_id === panelId);
+  if (!panel) return null;
+
   const isBloodBank = panel?.category?.toLowerCase()?.includes("blood");
 
-  const rawFields =
-    panel?.parameters.filter(
+  const rawFields = useMemo(() => {
+    return (panel?.parameters || []).filter(
       (p) =>
-        p.gender_applicable === "all" ||
-        p.gender_applicable === gender.toLowerCase(),
-    ) || [];
+        p && (p.gender_applicable === "all" ||
+        p.gender_applicable === gender.toLowerCase()),
+    );
+  }, [panel, gender]);
 
   // Apply saved order
   function applyOrder(src, order) {
@@ -352,8 +355,8 @@ function PanelFieldsGroup({
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState("");
 
-  const panelName = editedPanelNames[panelId] || panel?.panel_name || panelId;
-  const hasNameOverride = !!editedPanelNames[panelId];
+  const panelName = (editedPanelNames?.[panelId] || panel?.panel_name || panelId || "").toString();
+  const hasNameOverride = !!editedPanelNames?.[panelId];
 
   useEffect(() => {
     // Reset editor state when panel changes
@@ -369,10 +372,8 @@ function PanelFieldsGroup({
   }, [isEditingName, panelName]);
    
   useEffect(() => {
-     
     setFields(applyOrder(rawFields, paramOrders?.[panelId]));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panelId, gender]);
+  }, [panelId, gender, rawFields, paramOrders]);
 
   const handleChange = (key, val) =>
     setTestData((prev) => ({ ...prev, [key]: val }));

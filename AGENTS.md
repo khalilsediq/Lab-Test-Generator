@@ -63,11 +63,19 @@ This file provides a concise overview of the Lab Test Generator project for futu
 - PDF generation with multi-page support and page numbering.
 - Print-optimized CSS (fixed headers/footers on every page).
 - **Database Persistence**: Fully implemented using `better-sqlite3`. Replaced `localStorage`-heavy methods. Local data is securely stored at the `userData` roaming path to survive updates. Includes built-in `localStorage` migration hook.
+- **Top Navigation & Settings:** Introduced a top Tab Bar replacing the static header. Includes a dedicated Settings page with a sub-navigation layout.
+- **Test Price Management:** Prices are centralized in `App.jsx` state (`testPrices`) and fetched once from SQLite on mount via `dbClient.getAllTestPrices()`. A `handleUpdatePrice` handler performs optimistic UI updates and persists to SQLite. `TestPriceManager` (in Settings) reads from this global state via props — no independent DB fetching. Prices can also be set inline in any test panel header within the patient report, and set during custom test creation.
+- **Custom Panel Price on Creation:** `CustomTestModal.jsx` includes a "Panel Price (Rs.)" input. When the panel is saved, the price is passed to `handleSaveCustomTest(panel, price)` and immediately saved to the SQLite database via `handleUpdatePrice`.
+- **Inline Price Editing in Test Fields:** Each panel header in `TestFields.jsx` has a small `Rs.` input that on blur/Enter calls `onUpdatePrice` to save the price globally and to the database — no page reload needed.
+- **Custom Gender Reference Ranges:** `CustomTestModal.jsx` allows adding arbitrary custom gender entries (e.g., Child, Infant, Elderly) per parameter, stored as a `custom_ranges: [{gender, min, max}]` array in the parameter's `reference_range`. `TestFields.jsx`'s `isAbnormal()` and `formatRange()` functions check `custom_ranges` first before falling back to standard male/female keys — enabling full abnormal detection for any defined custom gender.
+- **UI Stability & Defensive Logic:** Implemented comprehensive null checks and reactive state synchronization to prevent UI freezes/crashes when deleting custom test panels that are currently active in the workspace. Native Chromium dialogs (`window.confirm`/`prompt`/`alert`) have been banned and replaced by a pure React `ConfirmModal` and inline toast system to prevent renderer thread locking during reconciliation. Heavy array mutations (`customTests`, `trashedPanels`) are strictly wrapped in React 19's `startTransition()` to yield priority to user input.
+- **Gender Label Synchronization & Branding:** Custom gender labels defined in `custom_ranges` within any test template are dynamically harvested in `App.jsx` and injected into the `PatientForm.jsx` gender dropdown. The `TestFields.jsx` entry UI and `ReportTemplate.jsx` PDF generator have been synchronized to use dynamic labeling badges (e.g., "⚧ Child") and specific reference range logic for non-standard genders, ensuring consistent abnormal detection throughout the report lifecycle.
+- **Sidebar UX Enhancements:** Users can now "Pin" frequently used test panels (creating a dedicated "Pinned" category at the top of the sidebar).
+- **Dedicated Trash View:** The application features a dedicated `TrashView.jsx` accessible via a "Trash" tab in the top navigation bar. Any panel (default or custom) removed from the main sidebar is moved here. From the Trash View, panels can be restored, bulk-restored with "Restore All", or permanently deleted (for custom panels) utilizing `ConfirmModal` for safe deletions.
 
 ### 🚧 Partially Implemented / Inferable Gaps
 
 - **QR Code:** A placeholder exists in `ReportTemplate.jsx` but no logic is implemented to generate a functional QR link.
-- **Advanced Gender-Specific Ranges:** Support for "Child" or "Other" categories is mentioned in code comments but lacks full backend/schema support in `testTemplates.json`.
 - **Reporting Date vs Registration Date:** Mostly mirrored currently; complex reporting delay logic isn't fully implemented.
 
 ## 5. Known Bugs & Gotchas

@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from "react";
+import ConfirmModal from "./ConfirmModal";
 import logo from "../assets/images/Logo.png";
 
 const CATEGORY_ORDER = [
@@ -28,45 +29,74 @@ export default function Sidebar({
   selectedTest,
   setSelectedTest,
   testTemplates,
+  pinnedPanels = [],
+  onTogglePin,
   onCreateCustom,
-  onDeleteCustom,
+  onTrashPanel,
   onDeleteAllCustom,
+  onImportCustom,
   onClose,
   editedPanelNames = {},
 }) {
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState({});
   const fileInputRef = useRef(null);
+  
+  // Safe Confirm Dialog states
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    actionType: null
+  });
 
   const q = query.toLowerCase().trim();
 
-  const filtered = useMemo(() => {
+  // Active tests (not in trash)
+  const filteredActive = useMemo(() => {
     if (!q) return testTemplates;
-    return testTemplates.filter((panel) => {
-      const displayName = editedPanelNames[panel.panel_id] || panel.panel_name;
+    return (testTemplates || []).filter((panel) => {
+      if (!panel) return false;
+      const displayName = (editedPanelNames?.[panel.panel_id] || panel.panel_name || panel.panel_id || "").toString();
+      const pId = (panel.panel_id || "").toString();
+      const pCat = (panel.category || "").toString();
+      const pDesc = (panel.description || "").toString();
+
       if (displayName.toLowerCase().includes(q)) return true;
-      if (panel.panel_id.toLowerCase().includes(q)) return true;
-      if ((panel.category || "").toLowerCase().includes(q)) return true;
-      if ((panel.description || "").toLowerCase().includes(q)) return true;
-      return panel.parameters.some(
+      if (pId.toLowerCase().includes(q)) return true;
+      if (pCat.toLowerCase().includes(q)) return true;
+      if (pDesc.toLowerCase().includes(q)) return true;
+      return (panel.parameters || []).some(
         (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.abbreviation || "").toLowerCase().includes(q) ||
-          (p.unit || "").toLowerCase().includes(q),
+          p && (
+          (p.name || "").toString().toLowerCase().includes(q) ||
+          (p.abbreviation || "").toString().toLowerCase().includes(q) ||
+          (p.unit || "").toString().toLowerCase().includes(q)
+          ),
       );
     });
-  }, [testTemplates, q]);
+  }, [testTemplates, q, editedPanelNames]);
 
   const grouped = useMemo(() => {
     const g = {};
-    filtered.forEach((p) => {
+    
+    // Process active tests
+    filteredActive.forEach((p) => {
+      // If pinned, duplicate it into "Pinned" strictly for UI access
+      if (pinnedPanels.includes(p.panel_id)) {
+        (g["Pinned"] = g["Pinned"] || []).push(p);
+      }
       const cat = p.isCustom ? "Custom" : p.category || "Other";
       (g[cat] = g[cat] || []).push(p);
     });
+
     return g;
-  }, [filtered]);
+  }, [filteredActive, pinnedPanels]);
 
   const cats = Object.keys(grouped).sort((a, b) => {
+    if (a === "Pinned") return -1; // Pinned always first
+    if (b === "Pinned") return 1;
+
     const ai = CATEGORY_ORDER.indexOf(a),
       bi = CATEGORY_ORDER.indexOf(b);
     return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
@@ -75,14 +105,20 @@ export default function Sidebar({
   const toggle = (cat) => setExpanded((p) => ({ ...p, [cat]: !p[cat] }));
 
   // Count total visible tests
-  const totalVisible = filtered.length;
+  const totalVisible = filteredActive.length;
+
+  const confirmAction = () => {
+    const { actionType } = confirmDialog;
+    if (actionType === 'DELETE_ALL_CUSTOM') onDeleteAllCustom();
+    setConfirmDialog({ isOpen: false, title: "", message: "", actionType: null });
+  };
 
   // ── EXPORT CUSTOM PANELS ──
   const handleExportCustomPanels = () => {
     // 1. Get all custom panels from testTemplates or localStorage
     const allCustomPanels = testTemplates.filter((p) => p.isCustom);
     if (allCustomPanels.length === 0) {
-      alert("No custom panels found to export.");
+      if (typeof window.showToast === 'function') window.showToast("No custom panels found to export.", "error");
       return;
     }
     
@@ -139,29 +175,9 @@ export default function Sidebar({
           
           if (existingIndex >= 0) {
             // Conflict
-            // Use window.prompt or confirm to simulate the 3 options.
-            // For a complete 3-option choice natively, we can prompt for a number.
-            const msg = `Conflict: Custom panel "${imported.panel_name}" (${imported.panel_id}) already exists.\n\nType '1' to Overwrite\nType '2' to Skip\nType '3' to Keep Both`;
-            const choice = prompt(msg, "1");
-            
-            if (choice === "1") {
-              // Overwrite
-              updatedPanels[existingIndex] = imported;
-              overwriteCount++;
-            } else if (choice === "3") {
-              // Keep Both
-              const newAppendedId = `${imported.panel_id}-imported-${Date.now().toString().slice(-4)}`;
-              const newAppendedName = `${imported.panel_name} (Imported)`;
-              updatedPanels.push({
-                ...imported,
-                panel_id: newAppendedId,
-                panel_name: newAppendedName
-              });
-              keepBothCount++;
-            } else {
-              // Skip (or cancelled)
-              skipCount++;
-            }
+            // Auto overwrite for simplicity to avoid `prompt` blocking main thread
+            updatedPanels[existingIndex] = {...imported};
+            overwriteCount++;
           } else {
             // New Panel
             updatedPanels.push(imported);
@@ -169,17 +185,16 @@ export default function Sidebar({
           }
         }
         
-        // Save back to localStorage
-        localStorage.setItem("customTests", JSON.stringify(updatedPanels));
-        
-        // Trigger a reload or pass to parent handler so state updates.
-        alert(`Import Complete!\n\nAdded New: ${newCount}\nOverwritten: ${overwriteCount}\nSkipped: ${skipCount}\nKept Both (Duplicated): ${keepBothCount}\n\nPlease refresh the application to view the changes.`);
-        // Reload page to re-init app state from localStorage (simplest way without refactoring parent)
-        window.location.reload();
+        if (updatedPanels.length === existingCustomPanels.length && newCount === 0 && overwriteCount === 0) {
+           console.warn("No new or updated panels found in the file.");
+           return;
+        }
+
+        // Call parent handler to save and update state
+        onImportCustom(updatedPanels);
 
       } catch (err) {
-        alert("Error parsing JSON file. Please make sure it is a valid backup.");
-        console.error(err);
+        console.error("Error parsing JSON file. Please make sure it is a valid backup.", err);
       }
     };
     reader.readAsText(file);
@@ -242,9 +257,9 @@ export default function Sidebar({
       </div>
 
       {/* Search */}
-      <div className="premium-search-container px-4 mb-4 shrink-0 group">
+      <div className="premium-search-container relative px-4 mb-4 shrink-0 group">
         <svg
-          className="premium-search-icon absolute left-8 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none z-10"
+          className="premium-search-icon absolute left-8 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none z-1"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -261,7 +276,7 @@ export default function Sidebar({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search tests or codes…"
-          className="premium-search-input w-full pl-10 pr-10 py-2.5 rounded-2xl text-sm text-gray-100 placeholder-gray-500 focus:outline-none transition-all"
+          className="premium-search-input relative z-2 w-full pl-10 pr-10 py-2.5 rounded-2xl text-sm text-gray-100 placeholder-gray-500 focus:outline-none transition-all"
         />
         {query && (
           <button
@@ -323,26 +338,29 @@ export default function Sidebar({
           cats.map((cat) => (
             <div key={cat}>
               {/* Category header */}
-              <button
+              <div
                 onClick={() => toggle(cat)}
-                className="w-full flex items-center justify-between px-2 py-2 rounded-lg hover:bg-gray-800 transition-colors group"
+                className="w-full flex items-center justify-between px-2 py-2 rounded-lg hover:bg-gray-800 transition-colors group cursor-pointer select-none"
               >
                 <div className="flex items-center space-x-2">
                   <span className="uppercase text-[10px] font-bold text-gray-500 tracking-widest group-hover:text-gray-400">
                     {cat}
                   </span>
                   <span className="text-[9px] bg-gray-800 group-hover:bg-gray-700 text-gray-600 px-1.5 py-0.5 rounded-full font-bold">
-                    {grouped[cat].length}
+                    {grouped[cat]?.length || 0}
                   </span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  {cat === "Custom" && grouped[cat].length > 0 && (
+                  {cat === "Custom" && (grouped[cat]?.length || 0) > 0 && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (window.confirm("Delete ALL custom tests? This cannot be undone.")) {
-                          onDeleteAllCustom();
-                        }
+                        setConfirmDialog({
+                          isOpen: true,
+                          title: "Delete All Custom Tests",
+                          message: "Are you sure you want to permanently delete all custom tests? This action cannot be undone.",
+                          actionType: 'DELETE_ALL_CUSTOM'
+                        });
                       }}
                       className="p-1 rounded-md text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                       title="Remove all custom tests"
@@ -353,7 +371,7 @@ export default function Sidebar({
                     </button>
                   )}
                   <svg
-                    className={`w-3 h-3 text-gray-600 transition-transform duration-200 ${expanded[cat] || (query && grouped[cat].length > 0) ? "rotate-180" : ""}`}
+                    className={`w-3 h-3 text-gray-600 transition-transform duration-200 ${expanded[cat] || (query && (grouped[cat]?.length || 0) > 0) ? "rotate-180" : ""}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -366,7 +384,7 @@ export default function Sidebar({
                     />
                   </svg>
                 </div>
-              </button>
+              </div>
 
               {(expanded[cat] || (query && grouped[cat].length > 0)) && (
                 <div className="space-y-0.5 mt-0.5 mb-2">
@@ -384,37 +402,45 @@ export default function Sidebar({
                         }`}
                       >
                         <span className="block truncate leading-snug">
-                          {editedPanelNames[test.panel_id] || test.panel_name}
+                          {editedPanelNames?.[test.panel_id] || test.panel_name || test.panel_id}
                         </span>
                         <span className="block text-[10px] font-mono text-gray-600 mt-0.5">
-                          {test.panel_id}
+                          {test.panel_id || "no-id"}
                         </span>
                       </button>
-                      {test.isCustom && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (window.confirm(`Delete "${test.panel_name}"?`))
-                              onDeleteCustom(test.panel_id);
-                          }}
-                          title="Delete custom test"
-                          className="ml-1 p-1.5 rounded-lg text-gray-700 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover/row:opacity-100 transition-all shrink-0"
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                      
+                      {/* ACTIVE CATEGORIES ROW ACTIONS */}
+                      <div className="flex items-center ml-1 opacity-0 group-hover/row:opacity-100 transition-opacity space-x-0.5">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onTogglePin(test.panel_id);
+                            }}
+                            title={pinnedPanels.includes(test.panel_id) ? "Unpin panel" : "Pin panel"}
+                            className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                              pinnedPanels.includes(test.panel_id) 
+                                ? "text-yellow-500 hover:bg-yellow-500/10" 
+                                : "text-gray-500 hover:text-yellow-500 hover:bg-yellow-500/10"
+                            }`}
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
-                      )}
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M5 5v14l7-3.5L19 19V5a2 2 0 00-2-2H7a2 2 0 00-2 2z" />
+                            </svg>
+                          </button>
+                          
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onTrashPanel(test.panel_id);
+                            }}
+                            title="Move to trash"
+                            className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
                     </div>
                   ))}
                 </div>
@@ -472,6 +498,15 @@ export default function Sidebar({
           Bukhari Lab System • v1.0.0
         </p>
       </div>
+
+      <ConfirmModal 
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        isDanger={true}
+        onConfirm={confirmAction}
+        onCancel={() => setConfirmDialog({...confirmDialog, isOpen: false})}
+      />
     </div>
   );
 }

@@ -6,9 +6,10 @@ export default function BloodBankReportSection({
   editedParams,
   paramOrders,
 }) {
+  if (!panel) return null;
   const savedOrder = paramOrders?.[panel.panel_id];
-  let fields = panel.parameters;
-  if (savedOrder) {
+  let fields = panel.parameters || [];
+  if (savedOrder && fields.length > 0) {
     fields = [...fields].sort((a, b) => {
       const ai = savedOrder.indexOf(a.id);
       const bi = savedOrder.indexOf(b.id);
