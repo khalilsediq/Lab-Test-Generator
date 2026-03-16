@@ -28,6 +28,21 @@ const effectiveParam = (p, editedParams, panelId) => {
 
 const formatRange = (rr, gender) => {
   if (!rr) return "—";
+  
+  // Check custom_ranges first for non-standard genders
+  if (gender && gender !== "Male" && gender !== "Female" && Array.isArray(rr.custom_ranges)) {
+    const cr = rr.custom_ranges.find(
+      (c) => c.gender?.toLowerCase() === gender.toLowerCase()
+    );
+    if (cr) {
+      const mn = cr.min, mx = cr.max;
+      if (mn === null && mx === null) return rr.general || "—";
+      if (mn !== null && mx === null) return `≥ ${mn}`;
+      if (mn === null && mx !== null) return `< ${mx}`;
+      return `${mn} – ${mx}`;
+    }
+  }
+  
   const [minKey, maxKey] =
     gender === "Male" ? ["male_min", "male_max"] : ["female_min", "female_max"];
   const mn = rr[minKey],
@@ -42,6 +57,21 @@ const isAbnormal = (val, rr, gender, qual) => {
   if (qual || !val || !rr) return false;
   const n = parseFloat(val);
   if (isNaN(n)) return false;
+
+  // Custom gender ranges first
+  if (gender && gender !== "Male" && gender !== "Female" && Array.isArray(rr.custom_ranges)) {
+    const cr = rr.custom_ranges.find(
+      (c) => c.gender?.toLowerCase() === gender.toLowerCase()
+    );
+    if (cr) {
+      const mn = cr.min, mx = cr.max;
+      if (mn !== null && mx === null) return n < mn;
+      if (mn === null && mx !== null) return n > mx;
+      if (mn !== null && mx !== null) return n < mn || n > mx;
+      return false;
+    }
+  }
+
   const [minKey, maxKey] =
     gender === "Male" ? ["male_min", "male_max"] : ["female_min", "female_max"];
   const mn = rr[minKey],
@@ -54,19 +84,36 @@ const isAbnormal = (val, rr, gender, qual) => {
 
 // ── EditRow (reference range editor) ─────────────────────────────────────────
 
-function EditRow({ param, editedRanges, panelId, onSave, onReset, onCancel }) {
+function EditRow({ param, gender, editedRanges, panelId, onSave, onReset, onCancel }) {
   const base = effectiveRange(param, editedRanges, panelId);
   const hasOverride = !!editedRanges?.[panelId]?.[param.id];
   const qual = isQual(param);
+  
+  // Initialize state with standard and custom ranges
   const [vals, setVals] = useState({
     general: base.general ?? "",
     male_min: base.male_min ?? "",
     male_max: base.male_max ?? "",
     female_min: base.female_min ?? "",
     female_max: base.female_max ?? "",
+    custom_ranges: Array.isArray(base.custom_ranges) ? [...base.custom_ranges] : []
   });
+
   const set = (k, v) => setVals((p) => ({ ...p, [k]: v }));
   const toNum = (v) => (v === "" ? null : parseFloat(v));
+
+  // Helper to update specific custom gender range in array
+  const setCustom = (targetGender, key, value) => {
+    const next = [...vals.custom_ranges];
+    const idx = next.findIndex(c => c.gender?.toLowerCase() === targetGender.toLowerCase());
+    const val = toNum(value);
+    if (idx >= 0) {
+      next[idx] = { ...next[idx], [key]: val };
+    } else {
+      next.push({ gender: targetGender, [key]: val });
+    }
+    set("custom_ranges", next);
+  };
 
   const handleSave = () =>
     onSave(param.id, {
@@ -75,6 +122,7 @@ function EditRow({ param, editedRanges, panelId, onSave, onReset, onCancel }) {
       male_max: toNum(vals.male_max),
       female_min: toNum(vals.female_min),
       female_max: toNum(vals.female_max),
+      custom_ranges: vals.custom_ranges.length > 0 ? vals.custom_ranges : null
     });
 
   const inp =
@@ -171,6 +219,36 @@ function EditRow({ param, editedRanges, panelId, onSave, onReset, onCancel }) {
               ))}
             </div>
           </div>
+          
+          {/* Custom Gender Range (Dynamic) */}
+          {gender && gender !== "Male" && gender !== "Female" && (
+            <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
+              <p className="text-xs font-bold text-violet-600 mb-2">
+                ⚧ {gender} Range
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {["min", "max"].map((k) => {
+                  const cr = vals.custom_ranges?.find(c => c.gender?.toLowerCase() === gender.toLowerCase());
+                  const curVal = cr ? (cr[k] ?? "") : "";
+                  return (
+                    <div key={k} className="space-y-1">
+                      <label className="text-[10px] text-gray-500 uppercase">
+                        {k}
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={curVal}
+                        onChange={(e) => setCustom(gender, k, e.target.value)}
+                        className={inp}
+                        placeholder="—"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -316,6 +394,8 @@ function PanelFieldsGroup({
   isRemovable,
   onRemove,
   editedPanelNames,
+  testPrices = {},
+  onUpdatePrice,
 }) {
   const gender = patientDetails?.gender || "Male";
   const panel = testTemplates?.find((t) => t.panel_id === panelId);
@@ -354,6 +434,7 @@ function PanelFieldsGroup({
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState("");
+  const [localPrice, setLocalPrice] = useState(null); // null = not editing
 
   const panelName = (editedPanelNames?.[panelId] || panel?.panel_name || panelId || "").toString();
   const hasNameOverride = !!editedPanelNames?.[panelId];
@@ -503,19 +584,67 @@ function PanelFieldsGroup({
               </div>
             )}
             <span
-              className={`text-[10px] w-fit font-bold px-2 py-0.5 rounded-full ${gender === "Male" ? "bg-blue-100 text-blue-700" : "bg-pink-100 text-pink-700"}`}
+              className={`text-[10px] w-fit font-bold px-2 py-0.5 rounded-full ${
+                gender === "Male" 
+                  ? "bg-blue-100 text-blue-700" 
+                  : gender === "Female" 
+                    ? "bg-pink-100 text-pink-700" 
+                    : "bg-violet-100 text-violet-700"
+              }`}
             >
-              {gender === "Male" ? "♂ Male" : "♀ Female"} ranges shown
+              {gender === "Male" ? "♂ Male" : gender === "Female" ? "♀ Female" : `⚧ ${gender}`} ranges shown
             </span>
           </div>
-          {isRemovable && onRemove && (
-            <button
-              onClick={() => onRemove(panelId)}
-              className="px-3 py-1.5 text-xs font-bold rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-            >
-              ✕ Remove
-            </button>
-          )}
+          
+          {/* Inline Price Editor */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="relative flex items-center gap-1 group/price">
+              <span className="text-xs font-semibold text-gray-400">Rs.</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={localPrice !== null ? localPrice : (testPrices[panelId] ?? "")}
+                onChange={(e) => setLocalPrice(e.target.value)}
+                onFocus={(e) => {
+                  if (localPrice === null) setLocalPrice(testPrices[panelId] ?? "");
+                }}
+                onBlur={() => {
+                  if (localPrice !== null && onUpdatePrice) {
+                    onUpdatePrice(panelId, panel?.panel_name || panelId, localPrice);
+                    setLocalPrice(null);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && localPrice !== null && onUpdatePrice) {
+                    onUpdatePrice(panelId, panel?.panel_name || panelId, localPrice);
+                    setLocalPrice(null);
+                    e.target.blur();
+                  }
+                  if (e.key === 'Escape') {
+                    setLocalPrice(null);
+                    e.target.blur();
+                  }
+                }}
+                placeholder="Price"
+                className="w-24 px-2 py-1 text-xs border border-gray-200 rounded-lg text-right font-mono focus:outline-none focus:ring-2 focus:ring-green-400/30 focus:border-green-400 bg-gray-50 hover:bg-white transition-colors"
+                title="Set panel price (Rs.)"
+              />
+              {(testPrices[panelId] > 0 || localPrice > 0) && (
+                <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-200 whitespace-nowrap">
+                  ✓ Priced
+                </span>
+              )}
+            </div>
+            {isRemovable && onRemove && (
+              <button
+                onClick={() => onRemove(panelId)}
+                className="px-3 py-1.5 text-xs font-bold rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+              >
+                ✕ Remove
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -554,6 +683,7 @@ function PanelFieldsGroup({
                   <EditRow
                     key={rawField.id}
                     param={rawField}
+                    gender={gender}
                     editedRanges={editedRanges}
                     panelId={panelId}
                     onSave={(id, range) => {
@@ -783,9 +913,17 @@ export default function TestFields({
   onResetPanelName,
   onSaveOrder,
   editedPanelNames = {},
+  testPrices = {},
+  onUpdatePrice,
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerValue, setPickerValue] = useState("");
+  const [inlineAlert, setInlineAlert] = useState(null);
+
+  const showAlert = (msg) => {
+    setInlineAlert(msg);
+    setTimeout(() => setInlineAlert(null), 3000);
+  };
 
   // Clear data when main selectedTest changes (but do not clear when adding secondary panels)
   useEffect(() => {
@@ -796,11 +934,11 @@ export default function TestFields({
   const handleAddPanel = () => {
     if (!pickerValue) return;
     if (pickerValue === selectedTest) {
-      alert("This panel is already the primary test.");
+      showAlert("This panel is already the primary test.");
       return;
     }
     if (additionalPanels.includes(pickerValue)) {
-      alert("This panel is already added.");
+      showAlert("This panel is already added.");
       return;
     }
     setAdditionalPanels([...additionalPanels, pickerValue]);
@@ -815,7 +953,8 @@ export default function TestFields({
   const activePanels = [selectedTest, ...additionalPanels];
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
       {activePanels.map((panelId, index) => (
         <PanelFieldsGroup
           key={panelId + index}
@@ -837,6 +976,8 @@ export default function TestFields({
           isRemovable={index > 0}
           onRemove={handleRemovePanel}
           editedPanelNames={editedPanelNames}
+          testPrices={testPrices}
+          onUpdatePrice={onUpdatePrice}
         />
       ))}
 
@@ -887,5 +1028,14 @@ export default function TestFields({
         )}
       </div>
     </div>
+
+      {/* Inline alert toast */}
+      {inlineAlert && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-9999 bg-gray-900/90 backdrop-blur-sm text-white text-sm px-5 py-3 rounded-xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-200 flex items-center gap-2 border border-white/10">
+          <svg className="w-4 h-4 text-yellow-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M12 4a8 8 0 100 16 8 8 0 000-16z"/></svg>
+          {inlineAlert}
+        </div>
+      )}
+    </>
   );
 }

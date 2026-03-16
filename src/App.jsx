@@ -34,6 +34,7 @@ function App() {
   const [paramOrders, setParamOrders] = useState(() => load("paramOrders", {}));
   const [pinnedPanels, setPinnedPanels] = useState(() => load("pinnedPanels", []));
   const [trashedPanels, setTrashedPanels] = useState(() => load("trashedPanels", []));
+  const [testPrices, setTestPrices] = useState({});
 
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [activeTab, setActiveTab] = useState('report');
@@ -53,6 +54,21 @@ function App() {
     const combined = [...staticTemplates, ...customTests];
     return combined.filter((p) => trashedPanels.includes(p.panel_id));
   }, [customTests, trashedPanels]);
+
+  // Derive all custom gender labels defined in custom test templates
+  const templateGenders = useMemo(() => {
+    const genders = new Set();
+    [...staticTemplates, ...customTests].forEach((panel) => {
+      (panel.parameters || []).forEach((param) => {
+        if (param.reference_range?.custom_ranges) {
+          param.reference_range.custom_ranges.forEach((cr) => {
+            if (cr.gender) genders.add(cr.gender);
+          });
+        }
+      });
+    });
+    return Array.from(genders).sort();
+  }, [customTests]);
 
   const [selectedTest, setSelectedTest] = useState(testTemplates[0].panel_id);
   const [patientDetails, setPatientDetails] = useState({
@@ -150,6 +166,27 @@ function App() {
     runMigrationIfNeeded();
   }, []);
 
+  // Load Test Prices from SQLite
+  useEffect(() => {
+    let mounted = true;
+    const fetchPrices = async () => {
+      try {
+        const res = await dbClient.getAllTestPrices();
+        if (res?.success && Array.isArray(res.data)) {
+          const priceMap = {};
+          res.data.forEach(item => {
+            if (item?.panelId) priceMap[item.panelId] = item.price ?? 0;
+          });
+          if (mounted) setTestPrices(priceMap);
+        }
+      } catch (err) {
+        console.error("Failed to load global test prices", err);
+      }
+    };
+    fetchPrices();
+    return () => { mounted = false; };
+  }, []);
+
   const showToast = (msg, type = "success") => setToast({ msg, type });
 
   const persist = (key, value, setter) => {
@@ -157,9 +194,14 @@ function App() {
     localStorage.setItem(key, JSON.stringify(value));
   };
 
-  const handleSaveCustomTest = (newPanel) => {
+  const handleSaveCustomTest = (newPanel, customPrice) => {
     const updated = [...customTests, newPanel];
     persist("customTests", updated, setCustomTests);
+    
+    if (customPrice !== undefined && customPrice !== null && customPrice !== "") {
+      handleUpdatePrice(newPanel.panel_id, newPanel.panel_name, customPrice);
+    }
+    
     setSelectedTest(newPanel.panel_id);
     showToast(`"${newPanel.panel_name}" added to sidebar`);
   };
@@ -330,6 +372,23 @@ function App() {
     showToast("Row order saved");
   };
 
+  const handleUpdatePrice = async (panelId, panelName, price) => {
+    const numPrice = parseFloat(price) || 0;
+    
+    // Optimistic UI update
+    startTransition(() => {
+      setTestPrices(prev => ({...prev, [panelId]: numPrice}));
+    });
+    
+    try {
+      const res = await dbClient.setTestPrice(panelId, panelName, numPrice);
+      if (!res?.success) throw new Error("DB saving failed");
+    } catch (err) {
+      console.error("Failed to save price", err);
+      showToast("Error saving price to database", "error");
+    }
+  };
+
   // Close sidebar when test selected on mobile
   const handleSelectTest = (id) => {
     setSelectedTest(id);
@@ -483,6 +542,7 @@ function App() {
               <PatientForm
               patientDetails={patientDetails}
               setPatientDetails={setPatientDetails}
+              templateGenders={templateGenders}
             />
 
             <TestFields
@@ -504,6 +564,8 @@ function App() {
               onResetPanelName={handleResetPanelName}
               onSaveOrder={handleSaveOrder}
               editedPanelNames={editedPanelNames}
+              testPrices={testPrices}
+              onUpdatePrice={handleUpdatePrice}
             />
 
             <div className="mt-8 flex justify-end max-w-4xl">
@@ -531,7 +593,11 @@ function App() {
           </div>
 
           <div className={`flex-1 overflow-hidden flex flex-col min-h-0 container mx-auto w-full ${activeTab === 'settings' ? 'flex' : 'hidden'}`}>
-            <Settings testTemplates={testTemplates} />
+            <Settings 
+              testTemplates={testTemplates} 
+              testPrices={testPrices}
+              onUpdatePrice={handleUpdatePrice}
+            />
           </div>
 
           <div className={`flex-1 overflow-hidden flex flex-col min-h-0 w-full ${activeTab === 'trash' ? 'flex' : 'hidden'}`}>

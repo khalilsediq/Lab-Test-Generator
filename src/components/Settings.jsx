@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import TestPriceManager from './TestPriceManager';
 
-export default function Settings({ testTemplates }) {
+export default function Settings({ testTemplates, testPrices, onUpdatePrice }) {
   const [activeSection, setActiveSection] = useState('testPrices');
 
   return (
@@ -30,7 +30,11 @@ export default function Settings({ testTemplates }) {
       {/* Right content */}
       <div className="flex-1 bg-white flex flex-col min-w-0 md:m-4 md:rounded-xl md:shadow-sm border border-gray-100 overflow-hidden">
         {activeSection === 'testPrices' && (
-          <TestPriceManager testTemplates={testTemplates} />
+          <TestPriceManager 
+            testTemplates={testTemplates}
+            testPrices={testPrices}
+            onUpdatePrice={onUpdatePrice}
+          />
         )}
       </div>
     </div>

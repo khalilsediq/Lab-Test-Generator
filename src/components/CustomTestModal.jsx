@@ -31,12 +31,14 @@ const emptyParam = () => ({
     male_max: "",
     female_min: "",
     female_max: "",
+    custom_ranges: [], // [{gender: "Child", min: "", max: ""}]
   },
 });
 
 export default function CustomTestModal({ onSave, onClose }) {
   const [category, setCategory] = useState("");
   const [panelName, setPanelName] = useState("");
+  const [panelPrice, setPanelPrice] = useState("");
   const [params, setParams] = useState([emptyParam()]);
   const [error, setError] = useState("");
 
@@ -44,6 +46,12 @@ export default function CustomTestModal({ onSave, onClose }) {
     setParams((prev) =>
       prev.map((p) => {
         if (p._key !== key) return p;
+        if (field === "rr_custom_ranges") {
+          return {
+            ...p,
+            reference_range: { ...p.reference_range, custom_ranges: val },
+          };
+        }
         if (field.startsWith("rr_")) {
           return {
             ...p,
@@ -87,6 +95,15 @@ export default function CustomTestModal({ onSave, onClose }) {
         rr.general = p.options?.trim() || "A Positive, B Positive, AB Positive, O Positive, A Negative, B Negative, AB Negative, O Negative";
       }
 
+      // Filter out empty custom_ranges entries
+      const custom_ranges = (rr.custom_ranges || []).filter(
+        (cr) => cr.gender?.trim() && (cr.min !== "" || cr.max !== "")
+      ).map(cr => ({
+        gender: cr.gender.trim(),
+        min: cr.min !== "" && cr.min != null ? parseFloat(cr.min) : null,
+        max: cr.max !== "" && cr.max != null ? parseFloat(cr.max) : null,
+      }));
+
       return {
         id: pId,
         name: p.name.trim(),
@@ -99,6 +116,7 @@ export default function CustomTestModal({ onSave, onClose }) {
           male_max: toNum(rr.male_max),
           female_min: toNum(rr.female_min),
           female_max: toNum(rr.female_max),
+          custom_ranges: custom_ranges.length > 0 ? custom_ranges : undefined,
         },
       };
     });
@@ -110,7 +128,7 @@ export default function CustomTestModal({ onSave, onClose }) {
       description: "Custom test created in-app.",
       isCustom: true,
       parameters: finalParams,
-    });
+    }, panelPrice !== "" ? parseFloat(panelPrice) : undefined);
     
     onClose();
   };
@@ -214,6 +232,24 @@ export default function CustomTestModal({ onSave, onClose }) {
                 className={inp}
               />
             </div>
+          </div>
+
+          {/* Panel Price */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+              Panel Price (Rs.) <span className="text-gray-400 font-normal text-xs">— optional</span>
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={panelPrice}
+              onChange={(e) => setPanelPrice(e.target.value)}
+              placeholder="e.g. 500"
+              className={numInp + " w-48"}
+            />
+            <p className="text-[10px] text-gray-400 leading-relaxed">This price will be saved to the Test Prices database immediately upon creating the panel.</p>
           </div>
 
           {/* Parameters */}
@@ -417,6 +453,81 @@ export default function CustomTestModal({ onSave, onClose }) {
                             </div>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Custom Gender Ranges */}
+                      <div className="mt-4 pt-3 border-t border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">⊕ Custom Gender Ranges</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const existing = param.reference_range.custom_ranges || [];
+                              updateParam(param._key, "rr_custom_ranges", [
+                                ...existing,
+                                { _k: Math.random().toString(36).slice(2), gender: "", min: "", max: "" }
+                              ]);
+                            }}
+                            className="text-[10px] font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1 px-2 py-1 rounded-md hover:bg-purple-50 transition-colors"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
+                            Add Custom Gender
+                          </button>
+                        </div>
+                        {(param.reference_range.custom_ranges || []).length === 0 ? (
+                          <p className="text-[10px] text-gray-400 italic">No custom gender ranges. Click "Add Custom Gender" to add ranges for e.g. Child, Infant, Elderly.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {(param.reference_range.custom_ranges || []).map((cr, crIdx) => (
+                              <div key={cr._k || crIdx} className="flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-lg p-2">
+                                <input
+                                  type="text"
+                                  value={cr.gender}
+                                  onChange={(e) => {
+                                    const updated = [...(param.reference_range.custom_ranges || [])];
+                                    updated[crIdx] = { ...updated[crIdx], gender: e.target.value };
+                                    updateParam(param._key, "rr_custom_ranges", updated);
+                                  }}
+                                  placeholder="Gender (e.g. Child)"
+                                  className="flex-1 px-2 py-1.5 text-xs rounded-lg border border-purple-200 bg-white focus:outline-none focus:ring-1 focus:ring-purple-400"
+                                />
+                                <input
+                                  type="number" step="any"
+                                  value={cr.min}
+                                  onChange={(e) => {
+                                    const updated = [...(param.reference_range.custom_ranges || [])];
+                                    updated[crIdx] = { ...updated[crIdx], min: e.target.value };
+                                    updateParam(param._key, "rr_custom_ranges", updated);
+                                  }}
+                                  placeholder="Min"
+                                  className="w-20 px-2 py-1.5 text-xs rounded-lg border border-purple-200 bg-white focus:outline-none focus:ring-1 focus:ring-purple-400 font-mono text-right"
+                                />
+                                <span className="text-xs text-gray-400">to</span>
+                                <input
+                                  type="number" step="any"
+                                  value={cr.max}
+                                  onChange={(e) => {
+                                    const updated = [...(param.reference_range.custom_ranges || [])];
+                                    updated[crIdx] = { ...updated[crIdx], max: e.target.value };
+                                    updateParam(param._key, "rr_custom_ranges", updated);
+                                  }}
+                                  placeholder="Max"
+                                  className="w-20 px-2 py-1.5 text-xs rounded-lg border border-purple-200 bg-white focus:outline-none focus:ring-1 focus:ring-purple-400 font-mono text-right"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = (param.reference_range.custom_ranges || []).filter((_, i) => i !== crIdx);
+                                    updateParam(param._key, "rr_custom_ranges", updated);
+                                  }}
+                                  className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </>
                   )}

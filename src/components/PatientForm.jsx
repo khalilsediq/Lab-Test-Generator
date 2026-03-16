@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-export default function PatientForm({ patientDetails, setPatientDetails }) {
+export default function PatientForm({ patientDetails, setPatientDetails, templateGenders = [] }) {
   const [customGenders, setCustomGenders] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("customGenders") || "[]");
@@ -157,42 +157,61 @@ export default function PatientForm({ patientDetails, setPatientDetails }) {
                     />
                   </div>
                   <div className="overflow-y-auto flex-1 p-1">
-                    {["Male", "Female", "Other"].map((g) => (
-                      <div
-                        key={g}
-                        onClick={() => {
-                          setPatientDetails((prev) => ({ ...prev, gender: g }));
-                          setIsGenderOpen(false);
-                        }}
-                        className={`px-3 py-2 text-sm rounded-lg hover:bg-gray-50 cursor-pointer ${patientDetails.gender === g ? "bg-red-50 text-red-700 font-medium" : "text-gray-700"}`}
-                      >
-                        {g}
-                      </div>
-                    ))}
-                    {customGenders.length > 0 && (
-                      <div className="my-1 border-t border-gray-100"></div>
-                    )}
-                    {customGenders.map((g) => (
-                      <div
-                        key={g}
-                        onClick={() => {
-                          setPatientDetails((prev) => ({ ...prev, gender: g }));
-                          setIsGenderOpen(false);
-                        }}
-                        className={`group px-3 py-2 text-sm rounded-lg hover:bg-gray-50 cursor-pointer flex items-center justify-between ${patientDetails.gender === g ? "bg-red-50 text-red-700 font-medium" : "text-gray-700"}`}
-                      >
-                        <span className="truncate pr-2">{g}</span>
-                        <button
-                          onClick={(e) => handleDeleteCustomGender(e, g)}
-                          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-all focus:outline-none"
-                          title="Remove custom gender"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
+                    {/* Merge standard, local, and template genders */}
+                    {(() => {
+                      const standard = ["Male", "Female", "Other"];
+                      // All unique custom labels (from props + local storage)
+                      const combinedExtra = Array.from(new Set([...customGenders, ...templateGenders]))
+                        .filter(g => !standard.includes(g));
+
+                      return (
+                        <>
+                          {standard.map((g) => (
+                            <div
+                              key={g}
+                              onClick={() => {
+                                setPatientDetails((prev) => ({ ...prev, gender: g }));
+                                setIsGenderOpen(false);
+                              }}
+                              className={`px-3 py-2 text-sm rounded-lg hover:bg-gray-50 cursor-pointer ${patientDetails.gender === g ? "bg-red-50 text-red-700 font-medium" : "text-gray-700"}`}
+                            >
+                              {g}
+                            </div>
+                          ))}
+                          
+                          {combinedExtra.length > 0 && (
+                            <div className="my-1 border-t border-gray-100"></div>
+                          )}
+
+                          {combinedExtra.map((g) => {
+                            const isPersistent = customGenders.includes(g);
+                            return (
+                              <div
+                                key={g}
+                                onClick={() => {
+                                  setPatientDetails((prev) => ({ ...prev, gender: g }));
+                                  setIsGenderOpen(false);
+                                }}
+                                className={`group px-3 py-2 text-sm rounded-lg hover:bg-gray-50 cursor-pointer flex items-center justify-between ${patientDetails.gender === g ? "bg-red-50 text-red-700 font-medium" : "text-gray-700"}`}
+                              >
+                                <span className="truncate pr-2">{g}</span>
+                                {isPersistent && (
+                                  <button
+                                    onClick={(e) => handleDeleteCustomGender(e, g)}
+                                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-all focus:outline-none"
+                                    title="Remove custom gender"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               )}

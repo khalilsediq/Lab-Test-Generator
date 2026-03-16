@@ -30,25 +30,24 @@ const effectiveParam = (field, pOverrides, pId) => {
 const formatRange = (rr, gender) => {
   if (!rr) return "—";
   
-  // Custom gender fallback logic
-  let mn = null;
-  let mx = null;
-  if (gender === "Male") {
-    mn = rr.male_min; mx = rr.male_max;
-  } else if (gender === "Female") {
-    mn = rr.female_min; mx = rr.female_max;
-  } else {
-    // For custom genders like "Child" or "Other", check if they have specific
-    // ranges (though backend currently doesn't support this via schema).
-    // Fallback: If both male/female exist and are identical, use it.
-    // Otherwise fallback to general string, or show a generic message.
-    if (rr.male_min !== null && rr.male_max !== null && rr.male_min === rr.female_min && rr.male_max === rr.female_max) {
-      mn = rr.male_min; mx = rr.male_max;
-    } else {
-      return rr.general || "—";
+  // Custom gender ranges logic
+  if (gender && gender !== "Male" && gender !== "Female" && Array.isArray(rr.custom_ranges)) {
+    const cr = rr.custom_ranges.find(
+      (c) => c.gender?.toLowerCase() === gender.toLowerCase()
+    );
+    if (cr) {
+      const mn = cr.min, mx = cr.max;
+      if (mn === null && mx === null) return rr.general || "—";
+      if (mn !== null && mx === null) return `≥ ${mn}`;
+      if (mn === null && mx !== null) return `< ${mx}`;
+      return `${mn} – ${mx}`;
     }
   }
-
+  
+  const [minKey, maxKey] =
+    gender === "Male" ? ["male_min", "male_max"] : ["female_min", "female_max"];
+  const mn = rr[minKey],
+    mx = rr[maxKey];
   if (mn === null && mx === null) return rr.general || "—";
   if (mn !== null && mx === null) return `≥ ${mn}`;
   if (mn === null && mx !== null) return `< ${mx}`;
@@ -59,21 +58,25 @@ const isAbnormal = (val, rr, gender, qual) => {
   if (qual || !val || !rr) return false;
   const n = parseFloat(val);
   if (isNaN(n)) return false;
-  
-  let mn = null;
-  let mx = null;
-  if (gender === "Male") {
-    mn = rr.male_min; mx = rr.male_max;
-  } else if (gender === "Female") {
-    mn = rr.female_min; mx = rr.female_max;
-  } else {
-    if (rr.male_min !== null && rr.male_max !== null && rr.male_min === rr.female_min && rr.male_max === rr.female_max) {
-      mn = rr.male_min; mx = rr.male_max;
-    } else {
-      return false; // Safely ignore abnormal flag if we can't determine numeric range for custom gender
+
+  // Custom gender ranges first
+  if (gender && gender !== "Male" && gender !== "Female" && Array.isArray(rr.custom_ranges)) {
+    const cr = rr.custom_ranges.find(
+      (c) => c.gender?.toLowerCase() === gender.toLowerCase()
+    );
+    if (cr) {
+      const mn = cr.min, mx = cr.max;
+      if (mn !== null && mx === null) return n < mn;
+      if (mn === null && mx !== null) return n > mx;
+      if (mn !== null && mx !== null) return n < mn || n > mx;
+      return false;
     }
   }
 
+  const [minKey, maxKey] =
+    gender === "Male" ? ["male_min", "male_max"] : ["female_min", "female_max"];
+  const mn = rr[minKey],
+    mx = rr[maxKey];
   if (mn !== null && mx === null) return n < mn;
   if (mn === null && mx !== null) return n > mx;
   if (mn !== null && mx !== null) return n < mn || n > mx;
