@@ -7,6 +7,7 @@ import CustomTestModal from "./components/CustomTestModal";
 import Settings from "./components/Settings";
 import BillingPanel from "./components/BillingPanel";
 import TrashView from "./components/TrashView";
+import PatientHistory from "./components/PatientHistory";
 import staticTemplates from "./data/testTemplates.json";
 import { dbClient } from "./utils/dbClient";
 
@@ -71,7 +72,19 @@ function App() {
     return Array.from(genders).sort();
   }, [customTests]);
 
-  const [selectedTest, setSelectedTest] = useState(testTemplates[0].panel_id);
+  const [selectedTest, setSelectedTest] = useState(null);
+
+  // Synchronize selectedTest with available templates
+  useEffect(() => {
+    // 1. If we have a selection but it's no longer in the active templates, switch
+    if (selectedTest && !testTemplates.find(t => t.panel_id === selectedTest)) {
+      setSelectedTest(testTemplates?.[0]?.panel_id || null);
+    }
+    // 2. If we have no selection but templates just became available, auto-select first
+    if (!selectedTest && testTemplates.length > 0) {
+      setSelectedTest(testTemplates[0].panel_id);
+    }
+  }, [testTemplates, selectedTest]);
   const [patientDetails, setPatientDetails] = useState({
     name: "",
     age: "",
@@ -99,9 +112,29 @@ function App() {
       .replace(",", ""),
   });
 
+  const handleOpenPatientInReport = (patientData) => {
+    setPatientDetails(prev => ({
+      ...prev,
+      mrNo:               patientData.mrNo        || '',
+      trId:               patientData.trId        || '',
+      trNo:               patientData.trNo        || '',
+      name:               patientData.name        || '',
+      fatherHusbandName:  patientData.fatherHusbandName || '',
+      age:                patientData.age         || '',
+      gender:             patientData.gender      || 'Male',
+      contactNo:          patientData.contactNo   || '',
+      address:            patientData.address     || '',
+      consultant:         patientData.consultant  || '',
+      sampleLocation:     patientData.sampleLocation || 'Collected In Lab',
+      registrationDate:   patientData.registrationDate || '',
+    }));
+    setActiveTab('report');
+  };
+
   const [testData, setTestData] = useState({});
   const [additionalPanels, setAdditionalPanels] = useState([]); // [{panelId, testData}]
   const [showPreview, setShowPreview] = useState(false);
+  const [previewPayload, setPreviewPayload] = useState(null);
   const [toast, setToast] = useState(null); // { msg, type }
 
   // Close sidebar on resize to mobile
@@ -144,10 +177,17 @@ function App() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  // Expose toast to window for non-react generic use
+  // Expose toast and preview handler to window for non-react generic use
   useEffect(() => {
     window.showToast = showToast;
-    return () => { delete window.showToast; };
+    window.showPreviewReport = (payload) => {
+      setPreviewPayload(payload);
+      setShowPreview(true);
+    };
+    return () => { 
+      delete window.showToast; 
+      delete window.showPreviewReport;
+    };
   }, []);
 
   // Auto-fetch MR Number
@@ -193,7 +233,7 @@ function App() {
         if (res?.success && Array.isArray(res.data)) {
           const priceMap = {};
           res.data.forEach(item => {
-            if (item?.panelId) priceMap[item.panelId] = item.price ?? 0;
+            if (item?.panelId) priceMap[item.panelId] = item.defaultPrice ?? 0;
           });
           if (mounted) setTestPrices(priceMap);
         }
@@ -249,7 +289,7 @@ function App() {
       persist("trashedPanels", updated, setTrashedPanels);
       setAdditionalPanels((prev) => (prev || []).filter((id) => id !== panelId));
       if (selectedTest === panelId) {
-        setSelectedTest(staticTemplates?.[0]?.panel_id || "HEM_001");
+        setSelectedTest(null);
       }
     });
 
@@ -293,7 +333,7 @@ function App() {
       persist("trashedPanels", updatedTrash, setTrashedPanels);
 
       if (selectedTest === panelId) {
-        setSelectedTest(staticTemplates?.[0]?.panel_id || "HEM_001");
+        setSelectedTest(null);
       }
     });
 
@@ -323,7 +363,7 @@ function App() {
     startTransition(() => {
       persist("customTests", [], setCustomTests);
       if (customTests.some((t) => t.panel_id === selectedTest)) {
-        setSelectedTest(staticTemplates[0].panel_id);
+        setSelectedTest(null);
       }
       setAdditionalPanels((prev) => prev.filter((id) => !customIds.includes(id)));
     });
@@ -534,6 +574,17 @@ function App() {
                 <span>New Report</span>
               </button>
               <button
+                onClick={() => setActiveTab('patients')}
+                className={`flex items-center gap-2 px-4 py-3 text-sm transition-colors border-b-2 ${
+                  activeTab === 'patients' ? 'text-red-600 font-semibold border-red-600 bg-white' : 'text-gray-500 hover:text-gray-800 border-transparent bg-white cursor-pointer'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 ${activeTab === 'patients' ? 'text-red-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>Patients</span>
+              </button>
+              <button
                 onClick={() => setActiveTab('settings')}
                 className={`flex items-center gap-2 px-4 py-3 text-sm transition-colors border-b-2 ${
                   activeTab === 'settings' ? 'text-red-600 font-semibold border-red-600 bg-white' : 'text-gray-500 hover:text-gray-800 border-transparent bg-white cursor-pointer'
@@ -621,6 +672,7 @@ function App() {
                 testTemplates={testTemplates}
                 testPrices={testPrices}
                 patientDetails={patientDetails}
+                testData={testData}
                 onSaveSuccess={handleSaveSuccess}
                 onRemovePanel={handleRemovePanel}
                 editedPanelNames={editedPanelNames}
@@ -635,6 +687,10 @@ function App() {
               testPrices={testPrices}
               onUpdatePrice={handleUpdatePrice}
             />
+          </div>
+
+          <div className={`flex-1 overflow-hidden flex flex-col min-h-0 w-full ${activeTab === 'patients' ? 'flex' : 'hidden'}`}>
+            <PatientHistory onOpenInReport={handleOpenPatientInReport} />
           </div>
 
           <div className={`flex-1 overflow-hidden flex flex-col min-h-0 w-full ${activeTab === 'trash' ? 'flex' : 'hidden'}`}>
@@ -652,15 +708,18 @@ function App() {
 
       <ReportPreview
         show={showPreview}
-        onClose={() => setShowPreview(false)}
-        patientDetails={patientDetails}
-        selectedTest={selectedTest}
-        testData={testData}
-        testTemplates={testTemplates}
+        onClose={() => {
+          setShowPreview(false);
+          setPreviewPayload(null);
+        }}
+        patientDetails={previewPayload?.patientDetails || patientDetails}
+        selectedTest={previewPayload?.panels?.[0]?.panelId || selectedTest}
+        testData={previewPayload?.testData || testData}
+        testTemplates={[...staticTemplates, ...customTests]} // Include all for historical rendering
         editedRanges={editedRanges}
         editedParams={editedParams}
         paramOrders={paramOrders}
-        additionalPanels={additionalPanels}
+        additionalPanels={previewPayload?.panels?.slice(1).map(p => p.panelId) || additionalPanels}
         editedPanelNames={editedPanelNames}
       />
 

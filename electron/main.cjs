@@ -1,12 +1,12 @@
-/* global process */
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
-import * as db from "./database.js";
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const path = require("path");
+const fs = require("fs");
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Use dynamic import for the ESM database module
+let db;
+async function loadDB() {
+  db = await import("./database.mjs");
+}
 
 let mainWindow;
 
@@ -34,8 +34,9 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Initialize database before the window opens
+  await loadDB();
   db.initialize();
 
   createWindow();
@@ -82,15 +83,38 @@ ipcMain.handle("print-to-pdf", async (event, { filename, pageSize, margins }) =>
 ipcMain.handle("db:save-patient",         (_, args)                    => db.savePatient(args));
 ipcMain.handle("db:get-patient-by-mrno",  (_, mrNo)                    => db.getPatientByMrNo(mrNo));
 ipcMain.handle("db:search-patients",      (_, query)                   => db.searchPatients(query));
-ipcMain.handle("db:get-all-patients",     (_, { limit, offset } = {})  => db.getAllPatients(limit, offset));
+ipcMain.handle('db:get-all-patients',     (event, args)                => db.getAllPatients(args.limit, args.offset));
 ipcMain.handle("db:get-next-mrno",        ()                           => db.getNextMrNo());
+ipcMain.handle("db:soft-delete-patient",  (_, patientId)               => db.softDeletePatient(patientId));
+ipcMain.handle("db:restore-patient",      (_, patientId)               => db.restorePatient(patientId));
+ipcMain.handle("db:permanent-delete-patient", (_, patientId)           => db.permanentlyDeletePatient(patientId));
+ipcMain.handle("db:get-trashed-patients", ()                           => db.getTrashedPatients());
+ipcMain.handle("db:restore-all-patients", () => {
+  console.log("IPC: db:restore-all-patients called");
+  return db.restoreAllPatients();
+});
+ipcMain.handle("db:empty-patient-trash", () => {
+  console.log("IPC: db:empty-patient-trash called");
+  return db.emptyPatientTrash();
+});
 
-// Panels
+// Panels & Results
 ipcMain.handle("db:save-patient-panels",  (_, { patientId, panels })   => db.savePatientPanels(patientId, panels));
+ipcMain.handle("db:get-patient-panels",   (_, patientId)               => db.getPatientPanels(patientId));
+ipcMain.handle("db:save-test-results",    (_, { patientId, testData }) => db.saveTestResults(patientId, testData));
+ipcMain.handle("db:get-test-results",     (_, patientId)               => db.getTestResults(patientId));
+ipcMain.handle("db:ping",                 ()                           => {
+  console.log("IPC: db:ping called");
+  return "pong";
+});
 
 // Transactions
 ipcMain.handle("db:save-transaction",     (_, args)                    => db.saveTransaction(args));
 ipcMain.handle("db:get-transaction",      (_, patientId)               => db.getTransactionByPatientId(patientId));
+ipcMain.handle("db:update-transaction",   (_, { id, updates })         => db.updateTransaction(id, updates));
+ipcMain.handle('db:get-total-stats', () => {
+  return db.getTotalStats();
+});
 
 // Test Prices
 ipcMain.handle("db:set-test-price",       (_, { panelId, panelName, price }) => db.setTestPrice(panelId, panelName, price));

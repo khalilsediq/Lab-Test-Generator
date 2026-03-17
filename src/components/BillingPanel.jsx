@@ -6,6 +6,7 @@ export default function BillingPanel({
   testTemplates,
   testPrices,
   patientDetails,
+  testData,
   onSaveSuccess,
   onRemovePanel,
   editedPanelNames
@@ -98,6 +99,14 @@ export default function BillingPanel({
       };
       const transResult = await dbClient.saveTransaction(transactionData);
       if (!transResult?.success) throw new Error("Failed to save transaction");
+
+      // Step 4: Save Test Results
+      if (testData && Object.keys(testData).length > 0) {
+        const resultsRes = await dbClient.saveTestResults(patientId, testData);
+        if (!resultsRes?.success) {
+          console.warn("Failed to save some test results");
+        }
+      }
 
       // On Success
       if (window.showToast) window.showToast("Patient registered successfully!", "success");
@@ -220,7 +229,7 @@ export default function BillingPanel({
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-5 text-white shadow-xl flex flex-col space-y-2 mt-4">
+        <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl p-5 text-white shadow-xl flex flex-col space-y-2 mt-4">
           <div className="flex justify-between items-center text-sm opacity-80">
             <span>Subtotal</span>
             <span>Rs. {subtotal.toLocaleString()}</span>

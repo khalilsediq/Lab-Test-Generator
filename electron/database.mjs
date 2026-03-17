@@ -3,7 +3,6 @@
 // Uses createRequire to import the CJS better-sqlite3 from an ESM module context.
 
 import { createRequire } from 'module';
-import { app } from 'electron';
 import path from 'path';
 
 const require = createRequire(import.meta.url);
@@ -14,6 +13,7 @@ let db = null;
 // ─── Open / Initialize ───────────────────────────────────────────────────────
 
 export function initialize() {
+  const { app } = require('electron');
   const userDataPath = app.getPath('userData');
   const dbPath = path.join(userDataPath, 'bukhari_lab.db');
 
@@ -22,6 +22,7 @@ export function initialize() {
 
   createTables();
   seedMeta();
+  runMigrations();
   checkMigrationOnInit();
 
   console.log('[DB] Initialized at:', dbPath);
@@ -34,6 +35,15 @@ function createTables() {
     CREATE TABLE IF NOT EXISTS app_meta (
       key   TEXT PRIMARY KEY,
       value TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS test_results (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      patientId INTEGER NOT NULL,
+      parameterId TEXT NOT NULL,
+      value TEXT,
+      createdAt TEXT DEFAULT (datetime('now','localtime')),
+      FOREIGN KEY (patientId) REFERENCES patients(id)
     );
 
     CREATE TABLE IF NOT EXISTS patients (
@@ -111,6 +121,32 @@ function checkMigrationOnInit() {
   }
 }
 
+function runMigrations() {
+  let version = parseInt(db.prepare(`SELECT value FROM app_meta WHERE key='db_version'`).get()?.value || '1');
+
+  if (version < 2) {
+    try {
+      db.prepare(`ALTER TABLE transactions ADD COLUMN updatedAt TEXT;`).run();
+    } catch (err) {
+      if (!err.message.includes('duplicate column name')) throw err;
+    }
+    db.prepare(`UPDATE app_meta SET value = '2' WHERE key = 'db_version'`).run();
+    console.log('[DB] Migrated to db_version 2 (added updatedAt to transactions)');
+    version = 2;
+  }
+
+  if (version < 3) {
+    try {
+      db.prepare(`ALTER TABLE patients ADD COLUMN deletedAt TEXT DEFAULT NULL`).run();
+    } catch (err) {
+      if (!err.message.includes('duplicate column name')) throw err;
+    }
+    db.prepare(`UPDATE app_meta SET value='3' WHERE key='db_version'`).run();
+    console.log('[DB] Migrated to db_version 3 (added deletedAt to patients)');
+    version = 3;
+  }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function wrap(fn) {
@@ -149,18 +185,35 @@ export function getPatientByMrNo(mrNo) {
 export function searchPatients(query) {
   return wrap(() => {
     const like = `%${query}%`;
-    return db.prepare(`
-      SELECT * FROM patients
-      WHERE name LIKE ? OR mrNo LIKE ? OR contactNo LIKE ?
-      ORDER BY createdAt DESC
+    const rows = db.prepare(`
+      SELECT p.*,
+        (SELECT GROUP_CONCAT(panelName, ', ') FROM patient_panels WHERE patientId = p.id) as panelNames,
+        (SELECT discountedTotal FROM transactions WHERE patientId = p.id ORDER BY id DESC LIMIT 1) as netTotal,
+        (SELECT paymentStatus FROM transactions WHERE patientId = p.id ORDER BY id DESC LIMIT 1) as paymentStatus
+      FROM patients p
+      WHERE (p.name LIKE ? OR p.mrNo LIKE ? OR p.contactNo LIKE ?)
+        AND p.deletedAt IS NULL
+      ORDER BY p.createdAt DESC
       LIMIT 50
     `).all(like, like, like);
+    return { rows, totalCount: rows.length };
   });
 }
 
 export function getAllPatients(limit = 50, offset = 0) {
   return wrap(() => {
-    return db.prepare(`SELECT * FROM patients ORDER BY createdAt DESC LIMIT ? OFFSET ?`).all(limit, offset);
+    const totalRow = db.prepare(`SELECT COUNT(*) as count FROM patients`).get();
+    const rows = db.prepare(`
+      SELECT p.*,
+        (SELECT GROUP_CONCAT(panelName, ', ') FROM patient_panels WHERE patientId = p.id) as panelNames,
+        (SELECT discountedTotal FROM transactions WHERE patientId = p.id ORDER BY id DESC LIMIT 1) as netTotal,
+        (SELECT paymentStatus FROM transactions WHERE patientId = p.id ORDER BY id DESC LIMIT 1) as paymentStatus
+      FROM patients p
+      WHERE p.deletedAt IS NULL
+      ORDER BY p.createdAt DESC
+      LIMIT ? OFFSET ?
+    `).all(limit, offset);
+    return { rows, totalCount: totalRow.count };
   });
 }
 
@@ -174,7 +227,125 @@ export function getNextMrNo() {
   });
 }
 
+export function softDeletePatient(patientId) {
+  return wrap(() => {
+    db.prepare(`UPDATE patients SET deletedAt = datetime('now','localtime') WHERE id = ?`).run(patientId);
+    return true;
+  });
+}
+
+export function restorePatient(patientId) {
+  return wrap(() => {
+    db.prepare(`UPDATE patients SET deletedAt = NULL WHERE id = ?`).run(patientId);
+    return true;
+  });
+}
+
+export function permanentlyDeletePatient(patientId) {
+  return wrap(() => {
+    const deleteTx = db.transaction((id) => {
+      db.prepare(`DELETE FROM test_results WHERE patientId = ?`).run(id);
+      db.prepare(`DELETE FROM patient_panels WHERE patientId = ?`).run(id);
+      db.prepare(`DELETE FROM transactions WHERE patientId = ?`).run(id);
+      db.prepare(`DELETE FROM patients WHERE id = ?`).run(id);
+    });
+    deleteTx(patientId);
+    return true;
+  });
+}
+
+export function restoreAllPatients() {
+  return wrap(() => {
+    db.prepare(`UPDATE patients SET deletedAt = NULL WHERE deletedAt IS NOT NULL`).run();
+    return true;
+  });
+}
+
+export function emptyPatientTrash() {
+  return wrap(() => {
+    const trashedIds = db.prepare(`SELECT id FROM patients WHERE deletedAt IS NOT NULL`).all().map(p => p.id);
+    if (trashedIds.length === 0) return true;
+
+    const deleteTx = db.transaction((ids) => {
+      const resultsStmt = db.prepare(`DELETE FROM test_results WHERE patientId = ?`);
+      const panelsStmt = db.prepare(`DELETE FROM patient_panels WHERE patientId = ?`);
+      const transStmt = db.prepare(`DELETE FROM transactions WHERE patientId = ?`);
+      const patientsStmt = db.prepare(`DELETE FROM patients WHERE id = ?`);
+
+      for (const id of ids) {
+        resultsStmt.run(id);
+        panelsStmt.run(id);
+        transStmt.run(id);
+        patientsStmt.run(id);
+      }
+    });
+
+    deleteTx(trashedIds);
+    return true;
+  });
+}
+
+export function getTrashedPatients() {
+  return wrap(() => {
+    return db.prepare(`
+      SELECT p.*,
+        (SELECT GROUP_CONCAT(panelName, ', ') FROM patient_panels WHERE patientId = p.id) as panelNames,
+        (SELECT discountedTotal FROM transactions WHERE patientId = p.id ORDER BY id DESC LIMIT 1) as netTotal,
+        (SELECT paymentStatus FROM transactions WHERE patientId = p.id ORDER BY id DESC LIMIT 1) as paymentStatus
+      FROM patients p
+      WHERE p.deletedAt IS NOT NULL
+      ORDER BY p.deletedAt DESC
+    `).all();
+  });
+}
+
 // ─── PANEL FUNCTIONS ──────────────────────────────────────────────────────────
+
+export function getPatientPanels(patientId) {
+  return wrap(() => {
+    return db.prepare(`SELECT * FROM patient_panels WHERE patientId = ?`).all(patientId);
+  });
+}
+
+export function saveTestResults(patientId, testData) {
+  return wrap(() => {
+    if (!testData || typeof testData !== 'object') return 0;
+    
+    const entries = [];
+    for (const [parameterId, value] of Object.entries(testData)) {
+      if (value !== null && value !== undefined && value !== '') {
+        entries.push({ patientId, parameterId, value: String(value) });
+      }
+    }
+    
+    if (entries.length === 0) return 0;
+    
+    const stmt = db.prepare(`
+      INSERT INTO test_results (patientId, parameterId, value)
+      VALUES (?, ?, ?)
+    `);
+    
+    const insertMany = db.transaction((items) => {
+      for (const item of items) {
+        stmt.run(item.patientId, item.parameterId, item.value);
+      }
+    });
+    
+    insertMany(entries);
+    return entries.length;
+  });
+}
+
+export function getTestResults(patientId) {
+  return wrap(() => {
+    const rows = db.prepare(`SELECT parameterId, value FROM test_results WHERE patientId = ?`).all(patientId);
+    const testData = {};
+    rows.forEach(r => { 
+      testData[r.parameterId] = r.value; 
+    });
+    return testData;
+  });
+}
 
 export function savePatientPanels(patientId, panelsArray) {
   return wrap(() => {
@@ -214,6 +385,43 @@ export function getTransactionByPatientId(patientId) {
     return db.prepare(`
       SELECT * FROM transactions WHERE patientId = ? ORDER BY createdAt DESC LIMIT 1
     `).get(patientId);
+  });
+}
+
+export function updateTransaction(transactionId, updates) {
+  return wrap(() => {
+    const stmt = db.prepare(`
+      UPDATE transactions SET 
+        amountPaid = @amountPaid, 
+        balanceDue = @balanceDue, 
+        paymentStatus = @paymentStatus,
+        updatedAt = datetime('now','localtime')
+      WHERE id = @id
+    `);
+    stmt.run({
+      id: transactionId,
+      amountPaid: updates.amountPaid,
+      balanceDue: updates.balanceDue,
+      paymentStatus: updates.paymentStatus
+    });
+    return true;
+  });
+}
+
+export function getTotalStats() {
+  return wrap(() => {
+    const row = db.prepare(`
+      SELECT 
+        (SELECT COUNT(*) FROM patients) as totalPatients,
+        (SELECT SUM(amountPaid) FROM transactions) as totalRevenue,
+        (SELECT SUM(balanceDue) FROM transactions WHERE balanceDue > 0) as totalOutstanding
+    `).get();
+    
+    return {
+      totalPatients: row.totalPatients || 0,
+      totalRevenue: row.totalRevenue || 0,
+      totalOutstanding: row.totalOutstanding || 0
+    };
   });
 }
 

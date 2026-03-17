@@ -9,15 +9,27 @@ export const dbClient = {
   savePatient:       (data)                 => ipcRenderer.invoke('db:save-patient', data),
   getPatientByMrNo:  (mrNo)                 => ipcRenderer.invoke('db:get-patient-by-mrno', mrNo),
   searchPatients:    (query)                => ipcRenderer.invoke('db:search-patients', query),
-  getAllPatients:     (limit, offset)        => ipcRenderer.invoke('db:get-all-patients', { limit, offset }),
+  getAllPatients:    (limit, offset)        => ipcRenderer.invoke('db:get-all-patients', { limit, offset }),
   getNextMrNo:       ()                     => ipcRenderer.invoke('db:get-next-mrno'),
+  softDeletePatient: (patientId)            => ipcRenderer.invoke('db:soft-delete-patient', patientId),
+  restorePatient:    (patientId)            => ipcRenderer.invoke('db:restore-patient', patientId),
+  permanentlyDeletePatient: (patientId)     => ipcRenderer.invoke('db:permanent-delete-patient', patientId),
+  getTrashedPatients:()                     => ipcRenderer.invoke('db:get-trashed-patients'),
+  restoreAllPatients:()                     => ipcRenderer.invoke('db:restore-all-patients'),
+  emptyPatientTrash: ()                     => ipcRenderer.invoke('db:empty-patient-trash'),
 
-  // ── Panels ───────────────────────────────────────────────────────────────
+  // ── Panels & Results ─────────────────────────────────────────────────────
   savePatientPanels: (patientId, panels)    => ipcRenderer.invoke('db:save-patient-panels', { patientId, panels }),
+  getPatientPanels:  (patientId)            => ipcRenderer.invoke('db:get-patient-panels', patientId),
+  saveTestResults:   (patientId, testData)  => ipcRenderer.invoke('db:save-test-results', { patientId, testData }),
+  getTestResults:    (patientId)            => ipcRenderer.invoke('db:get-test-results', patientId),
+  ping:              ()                     => ipcRenderer.invoke('db:ping'),
 
   // ── Transactions ─────────────────────────────────────────────────────────
   saveTransaction:   (data)                 => ipcRenderer.invoke('db:save-transaction', data),
   getTransaction:    (patientId)            => ipcRenderer.invoke('db:get-transaction', patientId),
+  updateTransaction: (id, updates)          => ipcRenderer.invoke('db:update-transaction', { id, updates }),
+  getTotalStats:     ()                     => ipcRenderer.invoke('db:get-total-stats'),
 
   // ── Test Prices ──────────────────────────────────────────────────────────
   setTestPrice:      (panelId, name, price) => ipcRenderer.invoke('db:set-test-price', { panelId, panelName: name, price }),
