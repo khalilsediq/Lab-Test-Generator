@@ -78,8 +78,14 @@ This file provides a concise overview of the Lab Test Generator project for futu
 - **Invoice Generator:** A5 financial invoice/receipt generation system (Step 4.5) with dedicated printing isolation and history support.
 - **Custom Application Branding:** Official application logo integration in the Electron window icon, report headers, watermarks, and favicon.
 - **Empty Startup Screen:** Application now launches with an empty "New Report" view, preventing unnecessary auto-selection of the first test panel.
-- **Layout Responsiveness:** Improved Test Entry layout with adaptive grid breakpoints (`lg:`/`xl:`), fluid column widths, and refined stacked layouts for superior usability on tablets and small desktops even with side panels open.
-- **Sidebar UX:** Refined sidebar toggle to keep a smaller version of the application logo visible even in the collapsed state, and synchronized the resize handle transition to eliminate visual lag during expansion.
+- **Advanced Layout Responsiveness:** Improved Test Entry layout with adaptive grid breakpoints (`lg:`/`xl:`), fluid column widths, and smart-stacking strategies for tablets and small desktops. Provides superior usability even when side panels (Billing/Sidebar) are open.
+- **Premium Sidebar UX:** 
+  - **Launch Stability:** Integrated a reactive `windowWidth` state to ensure the sidebar is correctly visible on fresh launch, solving the issue where static `window.innerWidth` checks would fail during the initial render stabilization.
+  - **Mounting Protection:** Uses a `hasMounted` state to prevent transient viewport size fluctuations (e.g., 0px reports during app load) from triggering the sidebar's mobile auto-close logic, eliminating launch-time clipping.
+  - **Persistent Branding:** Laboratory logo scales dynamically but remains visible in both expanded and collapsed states.
+  - **Centered Alignment:** Logo is perfectly centered in both 64px (collapsed) and expanded states.
+  - **Synchronized Transitions:** All internal components (Search bar, navigation list, resize handle, and version footer) share a 300ms transition with the sidebar container, eliminating all visual lag and "popping."
+  - **Stable Footer:** Fixed-height collapse button and controlled-height version reveal to prevent upward "jumping" animations during expansion.
 - **Diagnostic Infrastructure:** Integrated `db:ping` and verbose console logging in the Main Process to definitively verify IPC connectivity and handler registration.
 
 ## 5. Architectural Patterns & Lessons

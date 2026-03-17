@@ -21,7 +21,12 @@ const load = (key, fallback) => {
 };
 
 // Detect if screen is mobile initially
-const isMobileScreen = () => window.innerWidth < 768;
+// Detect if screen is mobile initially - assumes desktop if width is unknown (0) to prevent missing sidebar on launch
+const isMobileScreen = () => {
+  if (typeof window === 'undefined') return false;
+  const width = window.innerWidth;
+  return width > 0 && width < 768;
+};
 
 function App() {
   const [customTests, setCustomTests] = useState(() => load("customTests", []));
@@ -44,6 +49,8 @@ function App() {
   // Sidebar: open by default on desktop, closed on mobile
   const [sidebarOpen, setSidebarOpen] = useState(() => !isMobileScreen());
   const [sidebarWidth, setSidebarWidth] = useState(() => load("sidebarWidth", 288));
+  const [windowWidth, setWindowWidth] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 1200));
+  const [hasMounted, setHasMounted] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
 
   const testTemplates = useMemo(() => {
@@ -137,14 +144,30 @@ function App() {
   const [showInvoice, setShowInvoice] = useState(false);
   const [toast, setToast] = useState(null); // { msg, type }
 
-  // Close sidebar on resize to mobile
+  // Synchronize window width and handle mobile sidebar closure
   useEffect(() => {
     const onResize = () => {
-      if (window.innerWidth < 768) setSidebarOpen(false);
+      const width = window.innerWidth;
+      setWindowWidth(width);
+      // Only auto-close on mobile if we have fully mounted and width is stable
+      if (hasMounted && width > 0 && width < 768) setSidebarOpen(false);
     };
     window.addEventListener("resize", onResize);
+    
+    // Initial stabilization
+    if (window.innerWidth > 0) {
+      setWindowWidth(window.innerWidth);
+      setHasMounted(true);
+    } else {
+      // Fallback if it's still 0
+      setTimeout(() => {
+        setWindowWidth(window.innerWidth);
+        setHasMounted(true);
+      }, 50);
+    }
+    
     return () => window.removeEventListener("resize", onResize);
-  }, []);
+  }, [hasMounted]);
 
   // Sidebar Resizing Logic
   useEffect(() => {
@@ -548,7 +571,11 @@ function App() {
 
         {/* Sidebar */}
         <div
-          style={{ width: sidebarOpen ? sidebarWidth : (typeof window !== 'undefined' && window.innerWidth < 768 ? 0 : 64) }}
+          style={{ 
+            width: !hasMounted 
+              ? sidebarWidth 
+              : (sidebarOpen ? sidebarWidth : (windowWidth > 0 && windowWidth < 768 ? 0 : 64)) 
+          }}
           className={`
           fixed inset-y-0 left-0 z-40 transition-[width,transform] duration-300 ease-in-out
           md:relative md:z-auto md:shrink-0 h-full bg-gray-900 overflow-hidden
@@ -558,7 +585,11 @@ function App() {
         >
           <div 
             className={`h-full transition-[width] duration-300 ease-in-out ${isResizing ? "transition-none" : ""}`}
-            style={{ width: typeof window !== 'undefined' && window.innerWidth < 768 ? (sidebarOpen ? "100%" : 0) : (sidebarOpen ? sidebarWidth : 64) }}
+            style={{ 
+              width: !hasMounted 
+                ? sidebarWidth 
+                : (windowWidth > 0 && windowWidth < 768 ? (sidebarOpen ? "100%" : 0) : (sidebarOpen ? sidebarWidth : 64)) 
+            }}
           >
             <Sidebar
               selectedTest={selectedTest}
@@ -591,7 +622,7 @@ function App() {
           style={{ 
             left: sidebarOpen 
               ? (sidebarWidth - 4) 
-              : (typeof window !== 'undefined' && window.innerWidth < 768 ? -4 : 60) 
+              : (windowWidth > 0 && windowWidth < 768 ? -4 : 60) 
           }}
         >
           <div className="h-full w-[2px] mx-auto bg-gray-800/50 group-hover:bg-red-500/50 transition-colors" />
