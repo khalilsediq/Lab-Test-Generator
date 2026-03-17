@@ -499,7 +499,7 @@ function PanelFieldsGroup({
   };
 
   return (
-    <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-4xl transition-all duration-300 hover:shadow-md">
+    <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-2xl shadow-sm border border-gray-100 max-w-4xl transition-all duration-300 hover:shadow-md">
       {/* Header */}
       <div className="flex flex-col space-y-1 mb-6">
         <div className="flex items-center justify-between border-b pb-3 mb-3">
@@ -659,7 +659,7 @@ function PanelFieldsGroup({
       ) : (
         <>
           {/* Column headers */}
-          <div className="hidden sm:grid grid-cols-[24px_1fr_180px_180px_64px] gap-2 px-3 pb-2 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          <div className="hidden xl:grid xl:grid-cols-[24px_1fr_120px_140px_64px] gap-2 px-3 pb-2 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
             <div />
             <div>Parameter</div>
             <div className="text-center">Result</div>
@@ -727,7 +727,7 @@ function PanelFieldsGroup({
                   onDragOver={(e) => onDragOver(e, idx)}
                   onDrop={() => onDrop(idx)}
                   onDragEnd={onDragEnd}
-                  className={`grid grid-cols-[24px_1fr_64px] sm:grid-cols-[24px_1fr_180px_180px_64px] gap-2 items-center px-3 py-2.5 rounded-xl border transition-all ${
+                  className={`grid grid-cols-[24px_1fr_auto] xl:grid-cols-[24px_1fr_120px_140px_64px] gap-x-2 gap-y-3 items-start xl:items-center px-3 py-3 rounded-xl border transition-all ${
                     isDragTarget
                       ? "border-red-400 bg-red-50 scale-[1.01]"
                       : isDragging
@@ -747,9 +747,9 @@ function PanelFieldsGroup({
                   </div>
 
                   {/* Name + Input + Range (Responsive Layout) */}
-                  <div className="flex flex-col sm:contents min-w-0">
+                  <div className="flex flex-col md:grid md:grid-cols-[1fr_auto] xl:contents gap-y-2 gap-x-4 min-w-0">
                     {/* Name */}
-                    <div className="min-w-0 mb-1 sm:mb-0">
+                    <div className="min-w-0 wrap-break-word">
                       <span className="text-sm font-semibold text-gray-700">
                         {field.name}
                       </span>
@@ -766,7 +766,7 @@ function PanelFieldsGroup({
                     </div>
 
                     {/* Input */}
-                    <div className="flex items-center space-x-2 mb-1 sm:mb-0">
+                    <div className="flex items-center space-x-2 xl:mb-0">
                       {qual ? (
                         <input
                           type="text"
@@ -786,7 +786,7 @@ function PanelFieldsGroup({
                             onChange={(e) =>
                               handleChange(rawField.id, e.target.value)
                             }
-                            className={`w-full sm:w-24 px-3 py-2 text-center rounded-lg bg-white border transition-all outline-none font-mono font-medium text-sm ${
+                            className={`w-full md:w-28 xl:w-24 px-3 py-2 text-center rounded-lg bg-white border transition-all outline-none font-mono font-medium text-sm ${
                               abn
                                 ? "border-red-400 text-red-700 bg-red-50 focus:ring-red-500/20"
                                 : "border-gray-300 focus:border-red-500 focus:ring-red-500/10"
@@ -800,7 +800,7 @@ function PanelFieldsGroup({
                     </div>
 
                     {/* Range */}
-                    <div className="text-left sm:text-right">
+                    <div className="md:col-span-2 xl:col-span-1 text-left xl:text-right border-t border-gray-50 xl:border-none pt-2 xl:pt-0">
                       <div
                         className={`text-[10px] font-bold ${gender === "Male" ? "text-blue-500" : "text-pink-500"}`}
                       >

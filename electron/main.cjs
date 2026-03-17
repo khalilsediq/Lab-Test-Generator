@@ -14,6 +14,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    icon: path.join(__dirname, "../src/assets/images/Logo.png"),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -82,8 +83,8 @@ ipcMain.handle("print-to-pdf", async (event, { filename, pageSize, margins }) =>
 // Patient
 ipcMain.handle("db:save-patient",         (_, args)                    => db.savePatient(args));
 ipcMain.handle("db:get-patient-by-mrno",  (_, mrNo)                    => db.getPatientByMrNo(mrNo));
-ipcMain.handle("db:search-patients",      (_, query)                   => db.searchPatients(query));
-ipcMain.handle('db:get-all-patients',     (event, args)                => db.getAllPatients(args.limit, args.offset));
+ipcMain.handle("db:search-patients",      (_, { query, statusFilter }) => db.searchPatients(query, statusFilter));
+ipcMain.handle('db:get-all-patients',     (event, args)                => db.getAllPatients(args.limit, args.offset, args.statusFilter));
 ipcMain.handle("db:get-next-mrno",        ()                           => db.getNextMrNo());
 ipcMain.handle("db:soft-delete-patient",  (_, patientId)               => db.softDeletePatient(patientId));
 ipcMain.handle("db:restore-patient",      (_, patientId)               => db.restorePatient(patientId));

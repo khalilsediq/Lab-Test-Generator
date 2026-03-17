@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { dbClient } from '../utils/dbClient';
 import ConfirmModal from './ConfirmModal';
 
-export default function PatientHistory({ onOpenInReport }) {
+export default function PatientHistory({ onOpenInReport, onPrintInvoice }) {
   const [patients, setPatients] = useState([]);
   const [totalPatientsCount, setTotalPatientsCount] = useState(0);
   const [stats, setStats] = useState({ totalPatients: 0, totalRevenue: 0, totalOutstanding: 0 });
@@ -11,6 +11,7 @@ export default function PatientHistory({ onOpenInReport }) {
   const [searchQuery, setSearchQuery] = useState('');
   
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState('ALL'); // 'ALL', 'PAID', 'UNPAID', 'PARTIAL'
   const itemsPerPage = 20;
 
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -36,18 +37,18 @@ export default function PatientHistory({ onOpenInReport }) {
     }
   };
 
-  const fetchPatients = useCallback(async (query, page) => {
+  const fetchPatients = useCallback(async (query, page, status) => {
     setIsLoading(true);
     try {
       if (query.length >= 2) {
-        const res = await dbClient.searchPatients(query);
+        const res = await dbClient.searchPatients(query, status);
         if (res?.success) {
           setPatients(res.data.rows || []);
           setTotalPatientsCount(res.data.totalCount || 0);
         }
       } else {
         const offset = (page - 1) * itemsPerPage;
-        const res = await dbClient.getAllPatients(itemsPerPage, offset);
+        const res = await dbClient.getAllPatients(itemsPerPage, offset, status);
         if (res?.success) {
           setPatients(res.data.rows || []);
           setTotalPatientsCount(res.data.totalCount || 0);
@@ -67,14 +68,14 @@ export default function PatientHistory({ onOpenInReport }) {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchPatients(searchQuery, currentPage);
+      fetchPatients(searchQuery, currentPage, activeTab);
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, currentPage, fetchPatients]);
+  }, [searchQuery, currentPage, activeTab, fetchPatients]);
 
   const handleRefresh = () => {
     fetchStats();
-    fetchPatients(searchQuery, currentPage);
+    fetchPatients(searchQuery, currentPage, activeTab);
   };
 
   const openModal = async (patient) => {
@@ -228,6 +229,34 @@ export default function PatientHistory({ onOpenInReport }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Payment Status Tabs */}
+        <div className="flex border-b border-gray-100">
+          {[
+            { id: 'ALL', label: 'All Patients', color: 'gray' },
+            { id: 'PAID', label: 'Payment Cleared', color: 'green' },
+            { id: 'UNPAID', label: 'Unpaid', color: 'red' },
+            { id: 'PARTIAL', label: 'Partially Paid', color: 'yellow' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setCurrentPage(1);
+              }}
+              className={`pb-3 px-6 text-sm font-semibold transition-all relative ${
+                activeTab === tab.id 
+                  ? `text-${tab.color === 'yellow' ? 'yellow-600' : tab.color + '-600'}` 
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${tab.color === 'yellow' ? 'yellow-500' : tab.color + '-600'} rounded-t-full transition-all`} />
+              )}
+            </button>
+          ))}
+        </div>
+
         {/* Search Bar */}
         <div className="relative">
           <svg className="w-5 h-5 absolute left-3.5 top-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -559,6 +588,37 @@ export default function PatientHistory({ onOpenInReport }) {
                 className="px-5 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed mx-2"
               >
                 Preview Report
+              </button>
+              <button 
+                onClick={() => onPrintInvoice({
+                  patientName:   selectedPatient.name || '—',
+                  mrNo:          selectedPatient.mrNo || '—',
+                  age:           selectedPatient.age || '—',
+                  gender:        selectedPatient.gender || '—',
+                  contactNo:     selectedPatient.contactNo || '—',
+                  consultant:    selectedPatient.consultant || '—',
+                  invoiceDate:   new Date(selectedPatient.registrationDate).toLocaleString('en-GB', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', hour12: true
+                  }),
+                  tests: patientPanels.map(p => ({
+                    name: p.panelName,
+                    price: p.price ?? 0
+                  })),
+                  subtotal:      transaction.totalAmount,
+                  discountType:  transaction.discountType,
+                  discountValue: transaction.discountValue,
+                  discountAmount: transaction.totalAmount - transaction.discountedTotal,
+                  netTotal:      transaction.discountedTotal,
+                  amountPaid:    transaction.amountPaid,
+                  balanceDue:    transaction.balanceDue,
+                  paymentMethod: transaction.paymentMethod,
+                  paymentStatus: transaction.paymentStatus.toLowerCase(),
+                })}
+                disabled={!transaction}
+                className="px-5 py-2 text-sm font-bold text-red-600 bg-white border border-red-600 hover:bg-red-50 rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed mx-2"
+              >
+                Print Invoice
               </button>
               <button 
                 onClick={handleOpenInReport}

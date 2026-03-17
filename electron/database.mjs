@@ -182,37 +182,79 @@ export function getPatientByMrNo(mrNo) {
   });
 }
 
-export function searchPatients(query) {
+export function searchPatients(query, statusFilter = 'ALL') {
   return wrap(() => {
     const like = `%${query}%`;
+    let statusClause = '';
+    const params = [like, like, like];
+
+    if (statusFilter !== 'ALL') {
+      statusClause = `AND (t.paymentStatus = ?)`;
+      params.push(statusFilter.toUpperCase());
+    }
+
     const rows = db.prepare(`
       SELECT p.*,
         (SELECT GROUP_CONCAT(panelName, ', ') FROM patient_panels WHERE patientId = p.id) as panelNames,
-        (SELECT discountedTotal FROM transactions WHERE patientId = p.id ORDER BY id DESC LIMIT 1) as netTotal,
-        (SELECT paymentStatus FROM transactions WHERE patientId = p.id ORDER BY id DESC LIMIT 1) as paymentStatus
+        t.discountedTotal as netTotal,
+        t.paymentStatus
       FROM patients p
+      LEFT JOIN (
+        SELECT * FROM transactions t1 
+        WHERE id = (SELECT MAX(id) FROM transactions WHERE patientId = t1.patientId)
+      ) t ON p.id = t.patientId
       WHERE (p.name LIKE ? OR p.mrNo LIKE ? OR p.contactNo LIKE ?)
         AND p.deletedAt IS NULL
+        ${statusClause}
       ORDER BY p.createdAt DESC
       LIMIT 50
-    `).all(like, like, like);
+    `).all(...params);
     return { rows, totalCount: rows.length };
   });
 }
 
-export function getAllPatients(limit = 50, offset = 0) {
+export function getAllPatients(limit = 50, offset = 0, statusFilter = 'ALL') {
   return wrap(() => {
-    const totalRow = db.prepare(`SELECT COUNT(*) as count FROM patients`).get();
+    let statusClause = '';
+    const params = [];
+
+    if (statusFilter !== 'ALL') {
+      statusClause = `WHERE (t.paymentStatus = ?)`;
+      params.push(statusFilter.toUpperCase());
+    }
+
+    const totalParams = [];
+    if (statusFilter !== 'ALL') {
+      totalParams.push(statusFilter.toUpperCase());
+    }
+
+    const totalRow = db.prepare(`
+      SELECT COUNT(*) as count 
+      FROM patients p
+      LEFT JOIN (
+        SELECT * FROM transactions t1 
+        WHERE id = (SELECT MAX(id) FROM transactions WHERE patientId = t1.patientId)
+      ) t ON p.id = t.patientId
+      WHERE p.deletedAt IS NULL
+      ${statusFilter !== 'ALL' ? `AND t.paymentStatus = ?` : ''}
+    `).get(...totalParams);
+
     const rows = db.prepare(`
       SELECT p.*,
         (SELECT GROUP_CONCAT(panelName, ', ') FROM patient_panels WHERE patientId = p.id) as panelNames,
-        (SELECT discountedTotal FROM transactions WHERE patientId = p.id ORDER BY id DESC LIMIT 1) as netTotal,
-        (SELECT paymentStatus FROM transactions WHERE patientId = p.id ORDER BY id DESC LIMIT 1) as paymentStatus
+        t.discountedTotal as netTotal,
+        t.paymentStatus
       FROM patients p
+      LEFT JOIN (
+        SELECT * FROM transactions t1 
+        WHERE id = (SELECT MAX(id) FROM transactions WHERE patientId = t1.patientId)
+      ) t ON p.id = t.patientId
       WHERE p.deletedAt IS NULL
+      ${statusClause ? `AND t.paymentStatus = ?` : ''}
       ORDER BY p.createdAt DESC
       LIMIT ? OFFSET ?
-    `).all(limit, offset);
+    `).all(...(statusClause ? [statusFilter.toUpperCase(), limit, offset] : [limit, offset]));
+    
     return { rows, totalCount: totalRow.count };
   });
 }

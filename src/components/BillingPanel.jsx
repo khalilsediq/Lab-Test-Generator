@@ -9,13 +9,20 @@ export default function BillingPanel({
   testData,
   onSaveSuccess,
   onRemovePanel,
-  editedPanelNames
+  editedPanelNames,
+  onPrintInvoice
 }) {
   const [discountType, setDiscountType] = useState('none'); // 'none' | 'percentage' | 'fixed'
   const [discountValue, setDiscountValue] = useState('');
   const [amountPaid, setAmountPaid] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'online'
   const [isSaving, setIsSaving] = useState(false);
+  const [showPrintInvoiceBtn, setShowPrintInvoiceBtn] = useState(false);
+
+  // Reset print button when panels change (starting a new patient/report)
+  React.useEffect(() => {
+    setShowPrintInvoiceBtn(false);
+  }, [selectedPanels.join(',')]);
 
   // Filter out any null/undefined panels
   const activePanels = selectedPanels.filter(Boolean).map(id => {
@@ -115,6 +122,7 @@ export default function BillingPanel({
       if (mrNoResult?.success && mrNoResult.data) {
         onSaveSuccess(mrNoResult.data);
       }
+      setShowPrintInvoiceBtn(true);
     } catch (err) {
       console.error(err);
       if (window.showToast) window.showToast("Registration failed. Please try again.", "error");
@@ -289,6 +297,42 @@ export default function BillingPanel({
             'Save & Register Patient'
           )}
         </button>
+
+        {showPrintInvoiceBtn && (
+          <button 
+            onClick={() => onPrintInvoice({
+              patientName:    patientDetails.name || '—',
+              mrNo:           patientDetails.mrNo || '—',
+              age:            patientDetails.age || '—',
+              gender:         patientDetails.gender || '—',
+              contactNo:      patientDetails.contactNo || '—',
+              consultant:     patientDetails.consultant || '—',
+              invoiceDate:    new Date().toLocaleString('en-GB', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', hour12: true
+              }),
+              tests: activePanels.map(p => ({
+                name: p.panelName,
+                price: p.price
+              })),
+              subtotal:       subtotal,
+              discountType:   discountType,
+              discountValue:  numDiscountVal,
+              discountAmount: Math.round(discountAmt),
+              netTotal:       Math.round(netTotal),
+              amountPaid:     Math.round(numAmountPaid),
+              balanceDue:     Math.round(balanceDue),
+              paymentMethod:  paymentMethod,
+              paymentStatus:  paymentStatus.toLowerCase(),
+            })}
+            className="w-full border-2 border-red-600 text-red-600 hover:bg-red-50 font-semibold py-2.5 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 mt-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Print Invoice
+          </button>
+        )}
       </div>
     </div>
   );

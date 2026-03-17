@@ -8,8 +8,8 @@ export const dbClient = {
   // ── Patient ──────────────────────────────────────────────────────────────
   savePatient:       (data)                 => ipcRenderer.invoke('db:save-patient', data),
   getPatientByMrNo:  (mrNo)                 => ipcRenderer.invoke('db:get-patient-by-mrno', mrNo),
-  searchPatients:    (query)                => ipcRenderer.invoke('db:search-patients', query),
-  getAllPatients:    (limit, offset)        => ipcRenderer.invoke('db:get-all-patients', { limit, offset }),
+  searchPatients:    (query, statusFilter)  => ipcRenderer.invoke('db:search-patients', { query, statusFilter }),
+  getAllPatients:    (limit, offset, statusFilter) => ipcRenderer.invoke('db:get-all-patients', { limit, offset, statusFilter }),
   getNextMrNo:       ()                     => ipcRenderer.invoke('db:get-next-mrno'),
   softDeletePatient: (patientId)            => ipcRenderer.invoke('db:soft-delete-patient', patientId),
   restorePatient:    (patientId)            => ipcRenderer.invoke('db:restore-patient', patientId),

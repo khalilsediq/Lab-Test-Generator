@@ -8,6 +8,7 @@ import Settings from "./components/Settings";
 import BillingPanel from "./components/BillingPanel";
 import TrashView from "./components/TrashView";
 import PatientHistory from "./components/PatientHistory";
+import InvoiceModal from "./components/InvoiceModal";
 import staticTemplates from "./data/testTemplates.json";
 import { dbClient } from "./utils/dbClient";
 
@@ -80,10 +81,7 @@ function App() {
     if (selectedTest && !testTemplates.find(t => t.panel_id === selectedTest)) {
       setSelectedTest(testTemplates?.[0]?.panel_id || null);
     }
-    // 2. If we have no selection but templates just became available, auto-select first
-    if (!selectedTest && testTemplates.length > 0) {
-      setSelectedTest(testTemplates[0].panel_id);
-    }
+    // 2. Removed auto-selection logic to keep startup screen empty as per user request
   }, [testTemplates, selectedTest]);
   const [patientDetails, setPatientDetails] = useState({
     name: "",
@@ -135,6 +133,8 @@ function App() {
   const [additionalPanels, setAdditionalPanels] = useState([]); // [{panelId, testData}]
   const [showPreview, setShowPreview] = useState(false);
   const [previewPayload, setPreviewPayload] = useState(null);
+  const [invoiceData, setInvoiceData] = useState(null);
+  const [showInvoice, setShowInvoice] = useState(false);
   const [toast, setToast] = useState(null); // { msg, type }
 
   // Close sidebar on resize to mobile
@@ -268,7 +268,65 @@ function App() {
     startTransition(() => {
       persist("customTests", updatedPanels, setCustomTests);
     });
-    showToast(`${updatedPanels.length} custom tests imported successfully`);
+    if (typeof window.showToast === 'function') {
+      window.showToast(`${updatedPanels.length} custom tests imported successfully`);
+    }
+  };
+
+  const handleExportCustomPanels = () => {
+    const allCustomPanels = testTemplates.filter((p) => p.isCustom);
+    if (allCustomPanels.length === 0) {
+      if (typeof window.showToast === 'function') window.showToast("No custom panels found to export.", "error");
+      return;
+    }
+    const dataStr = JSON.stringify(allCustomPanels, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const dateStr = new Date().toISOString().split("T")[0];
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `custom-panels-backup-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportCustomPanels = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedData = JSON.parse(event.target.result);
+        if (!Array.isArray(importedData)) {
+          if (typeof window.showToast === 'function') window.showToast("Invalid file format", "error");
+          return;
+        }
+        const existingCustomPanels = testTemplates.filter((p) => p.isCustom);
+        let newCount = 0;
+        let overwriteCount = 0;
+        const updatedPanels = [...existingCustomPanels];
+        for (const imported of importedData) {
+          if (!imported.panel_id || !imported.panel_name || !imported.parameters) continue;
+          imported.isCustom = true;
+          const existingIndex = updatedPanels.findIndex(p => p.panel_id === imported.panel_id);
+          if (existingIndex >= 0) {
+            updatedPanels[existingIndex] = {...imported};
+            overwriteCount++;
+          } else {
+            updatedPanels.push(imported);
+            newCount++;
+          }
+        }
+        if (updatedPanels.length === existingCustomPanels.length && newCount === 0 && overwriteCount === 0) return;
+        handleImportCustom(updatedPanels);
+      } catch (err) {
+        console.error("Error parsing JSON file", err);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = null;
   };
 
   const handleTogglePin = (panelId) => {
@@ -453,6 +511,11 @@ function App() {
     }
   };
 
+  const handlePrintInvoice = (data) => {
+    setInvoiceData(data);
+    setShowInvoice(true);
+  };
+
   const handleRemovePanel = (panelIdToRemove) => {
     if (selectedTest === panelIdToRemove) {
       if (additionalPanels.length > 0) {
@@ -493,7 +556,10 @@ function App() {
           ${isResizing ? "transition-none" : ""}
         `}
         >
-          <div className="h-full" style={{ width: sidebarOpen ? sidebarWidth : "100%" }}>
+          <div 
+            className={`h-full transition-[width] duration-300 ease-in-out ${isResizing ? "transition-none" : ""}`}
+            style={{ width: typeof window !== 'undefined' && window.innerWidth < 768 ? (sidebarOpen ? "100%" : 0) : (sidebarOpen ? sidebarWidth : 64) }}
+          >
             <Sidebar
               selectedTest={selectedTest}
               setSelectedTest={handleSelectTest}
@@ -501,13 +567,11 @@ function App() {
               trashedTemplates={trashedTemplates}
               pinnedPanels={pinnedPanels}
               onTogglePin={handleTogglePin}
-              onCreateCustom={() => setShowCustomModal(true)}
               onTrashPanel={handleTrashPanel}
               onRestorePanel={handleRestorePanel}
               onPermanentDelete={handlePermanentDelete}
               onEmptyTrash={handleEmptyTrash}
               onDeleteAllCustom={handleDeleteAllCustomTests}
-              onImportCustom={handleImportCustom}
               onClose={() => setSidebarOpen(false)}
               onToggle={() => setSidebarOpen(!sidebarOpen)}
               sidebarOpen={sidebarOpen}
@@ -517,15 +581,21 @@ function App() {
         </div>
 
         {/* Resize Handle */}
-        {sidebarOpen && (
-          <div
-            onMouseDown={() => setIsResizing(true)}
-            className="hidden md:block absolute top-0 bottom-0 z-50 w-2 cursor-col-resize group transition-colors"
-            style={{ left: sidebarWidth - 4 }}
-          >
-            <div className="h-full w-[2px] mx-auto bg-gray-800/50 group-hover:bg-red-500/50 transition-colors" />
-          </div>
-        )}
+        <div
+          onMouseDown={() => setIsResizing(true)}
+          className={`hidden md:block absolute top-0 bottom-0 z-50 w-2 cursor-col-resize group 
+            ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}
+            transition-[left,opacity] duration-300 ease-in-out
+            ${isResizing ? "transition-none" : ""}
+          `}
+          style={{ 
+            left: sidebarOpen 
+              ? (sidebarWidth - 4) 
+              : (typeof window !== 'undefined' && window.innerWidth < 768 ? -4 : 60) 
+          }}
+        >
+          <div className="h-full w-[2px] mx-auto bg-gray-800/50 group-hover:bg-red-500/50 transition-colors" />
+        </div>
 
         {/* Main content */}
         <main className="flex-1 min-w-0 flex flex-col overflow-hidden relative">
@@ -612,7 +682,7 @@ function App() {
 
         <div className={`flex-1 overflow-hidden ${activeTab === 'report' ? 'block' : 'hidden'}`}>
           <div className="flex h-full overflow-hidden">
-            <div className="flex-1 min-w-0 p-4 sm:p-6 md:p-10 overflow-y-auto relative">
+            <div className="flex-1 min-w-0 p-4 sm:p-5 md:p-6 lg:p-8 overflow-y-auto relative">
               <PatientForm
               patientDetails={patientDetails}
               setPatientDetails={setPatientDetails}
@@ -668,7 +738,7 @@ function App() {
             {/* Right Column (Billing Panel) */}
             <div className="w-80 shrink-0 border-l border-gray-200 bg-white overflow-y-auto hidden lg:block">
               <BillingPanel 
-                selectedPanels={[...new Set([selectedTest, ...additionalPanels])]}
+                selectedPanels={useMemo(() => [...new Set([selectedTest, ...additionalPanels])], [selectedTest, additionalPanels])}
                 testTemplates={testTemplates}
                 testPrices={testPrices}
                 patientDetails={patientDetails}
@@ -676,6 +746,7 @@ function App() {
                 onSaveSuccess={handleSaveSuccess}
                 onRemovePanel={handleRemovePanel}
                 editedPanelNames={editedPanelNames}
+                onPrintInvoice={handlePrintInvoice}
               />
             </div>
           </div>
@@ -686,11 +757,18 @@ function App() {
               testTemplates={testTemplates} 
               testPrices={testPrices}
               onUpdatePrice={handleUpdatePrice}
+              onCreateCustom={() => setShowCustomModal(true)}
+              onExportCustom={handleExportCustomPanels}
+              onImportCustom={handleImportCustomPanels}
+              onDeleteAllCustom={handleDeleteAllCustomTests}
             />
           </div>
 
           <div className={`flex-1 overflow-hidden flex flex-col min-h-0 w-full ${activeTab === 'patients' ? 'flex' : 'hidden'}`}>
-            <PatientHistory onOpenInReport={handleOpenPatientInReport} />
+            <PatientHistory 
+              onOpenInReport={handleOpenPatientInReport} 
+              onPrintInvoice={handlePrintInvoice}
+            />
           </div>
 
           <div className={`flex-1 overflow-hidden flex flex-col min-h-0 w-full ${activeTab === 'trash' ? 'flex' : 'hidden'}`}>
@@ -727,6 +805,16 @@ function App() {
         <CustomTestModal
           onSave={handleSaveCustomTest}
           onClose={() => setShowCustomModal(false)}
+        />
+      )}
+
+      {showInvoice && invoiceData && (
+        <InvoiceModal
+          data={invoiceData}
+          onClose={() => {
+            setShowInvoice(false);
+            setInvoiceData(null);
+          }}
         />
       )}
 

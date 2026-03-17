@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import ConfirmModal from "./ConfirmModal";
 import logo from "../assets/images/Logo.png";
 
@@ -31,10 +31,8 @@ export default function Sidebar({
   testTemplates,
   pinnedPanels = [],
   onTogglePin,
-  onCreateCustom,
   onTrashPanel,
   onDeleteAllCustom,
-  onImportCustom,
   onClose,
   sidebarOpen,
   onToggle,
@@ -42,10 +40,6 @@ export default function Sidebar({
 }) {
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState({});
-  const [sidebarAlert, setSidebarAlert] = useState(null);
-  const fileInputRef = useRef(null);
-  
-  // Safe Confirm Dialog states
   const [confirmDialog, setConfirmDialog] = useState({
     isOpen: false,
     title: "",
@@ -116,127 +110,42 @@ export default function Sidebar({
     setConfirmDialog({ isOpen: false, title: "", message: "", actionType: null });
   };
 
-  // ── EXPORT CUSTOM PANELS ──
-  const handleExportCustomPanels = () => {
-    // 1. Get all custom panels from testTemplates or localStorage
-    const allCustomPanels = testTemplates.filter((p) => p.isCustom);
-    if (allCustomPanels.length === 0) {
-      if (typeof window.showToast === 'function') window.showToast("No custom panels found to export.", "error");
-      return;
-    }
-    
-    // 2. Serialize to JSON
-    const dataStr = JSON.stringify(allCustomPanels, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    
-    // 3. Download
-    const dateStr = new Date().toISOString().split("T")[0];
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `custom-panels-backup-${dateStr}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  // ── IMPORT CUSTOM PANELS ──
-  const handleImportCustomPanels = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const importedData = JSON.parse(event.target.result);
-        
-        if (!Array.isArray(importedData)) {
-          setSidebarAlert("Invalid file format: Expected an array of panels.");
-          setTimeout(() => setSidebarAlert(null), 3000);
-          return;
-        }
-
-        const existingCustomPanels = testTemplates.filter((p) => p.isCustom);
-        
-        let newCount = 0;
-        let overwriteCount = 0;
-        let skipCount = 0;
-        let keepBothCount = 0;
-
-        const updatedPanels = [...existingCustomPanels];
-
-        for (const imported of importedData) {
-          // Validate structure (basic check)
-          if (!imported.panel_id || !imported.panel_name || !imported.parameters) {
-            console.warn("Skipping invalid panel data:", imported);
-            continue;
-          }
-          
-          imported.isCustom = true; // Ensure it's marked as custom
-
-          const existingIndex = updatedPanels.findIndex(p => p.panel_id === imported.panel_id);
-          
-          if (existingIndex >= 0) {
-            // Conflict
-            // Auto overwrite for simplicity to avoid `prompt` blocking main thread
-            updatedPanels[existingIndex] = {...imported};
-            overwriteCount++;
-          } else {
-            // New Panel
-            updatedPanels.push(imported);
-            newCount++;
-          }
-        }
-        
-        if (updatedPanels.length === existingCustomPanels.length && newCount === 0 && overwriteCount === 0) {
-           console.warn("No new or updated panels found in the file.");
-           return;
-        }
-
-        // Call parent handler to save and update state
-        onImportCustom(updatedPanels);
-
-      } catch (err) {
-        console.error("Error parsing JSON file. Please make sure it is a valid backup.", err);
-      }
-    };
-    reader.readAsText(file);
-    // Reset input so the same file can be selected again
-    e.target.value = null;
-  };
 
   return (
     <div className="w-full bg-gray-900 text-white h-full flex flex-col shadow-2xl select-none">
-      {sidebarOpen && (
-        <>
       {/* Header with logo + close button */}
-      <div className="relative flex items-center justify-center pt-5 pb-3 px-5 shrink-0">
+      <div className={`relative flex items-center justify-center ${sidebarOpen ? "pt-5 pb-3 px-5" : "pt-4 pb-2 px-2"} shrink-0 transition-all duration-300`}>
         <img
           src={logo}
           alt="Bukhari Lab Logo"
-          className="w-40 h-auto object-contain mix-blend-screen"
+          className={`${sidebarOpen ? "w-40" : "w-10"} h-auto object-contain mix-blend-screen transition-all duration-300`}
         />
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 p-1.5 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors md:hidden"
-          title="Close sidebar"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {sidebarOpen && (
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 p-1.5 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors md:hidden"
+            title="Close sidebar"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        )}
       </div>
+
+      {/* Main Content Wrapper (Search + List) */}
+      <div className={`flex-1 flex flex-col min-h-0 transition duration-300 ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+        {/* Search */}
 
       {/* Search */}
       <div className="premium-search-container relative px-4 mb-4 shrink-0 group">
@@ -324,8 +233,8 @@ export default function Sidebar({
                 onClick={() => toggle(cat)}
                 className="w-full flex items-center justify-between px-2 py-2 rounded-lg hover:bg-gray-800 transition-colors group cursor-pointer select-none"
               >
-                <div className="flex items-center space-x-2">
-                  <span className="uppercase text-[10px] font-bold text-gray-500 tracking-widest group-hover:text-gray-400">
+                <div className="flex items-center space-x-2 min-w-0">
+                  <span className="uppercase text-[10px] font-bold text-gray-500 tracking-widest group-hover:text-gray-400 whitespace-nowrap">
                     {cat}
                   </span>
                   <span className="text-[9px] bg-gray-800 group-hover:bg-gray-700 text-gray-600 px-1.5 py-0.5 rounded-full font-bold">
@@ -383,7 +292,7 @@ export default function Sidebar({
                             : "text-gray-400 hover:bg-gray-800 hover:text-white border-l-4 border-transparent"
                         }`}
                       >
-                        <span className="block truncate leading-snug">
+                        <span className="block truncate leading-snug whitespace-nowrap">
                           {editedPanelNames?.[test.panel_id] || test.panel_name || test.panel_id}
                         </span>
                         <span className="block text-[10px] font-mono text-gray-600 mt-0.5">
@@ -431,83 +340,38 @@ export default function Sidebar({
           ))
         )}
       </nav>
-      </>
-      )}
+      </div>
       
-      {!sidebarOpen && <div className="flex-1"></div>}
+      {!sidebarOpen && <div className="flex-1 min-h-0"></div>}
 
-      {/* Create Custom Test */}
-      <div className="p-3 border-t border-gray-800 shrink-0">
-        <div className="flex flex-col space-y-1.5">
-          <button
-            onClick={onToggle}
-            className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium py-2 w-full flex items-center justify-center gap-2 transition-colors rounded-lg"
-            title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-          >
-            {sidebarOpen ? (
-              <>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-                <span>Collapse</span>
-              </>
-            ) : (
+      {/* Collapse/Expand Toggle */}
+      <div className="p-3 border-t border-gray-800 shrink-0 flex flex-col items-center">
+        <button
+          onClick={onToggle}
+          className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium h-9 w-full flex items-center justify-center transition-colors rounded-lg"
+          title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+        >
+          {sidebarOpen ? (
+            <div className="flex items-center justify-center gap-2 animate-in fade-in duration-300">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="whitespace-nowrap transition-all">Collapse</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-start pl-[6.5px] w-full">
+              <svg className="w-4 h-4 scale-110 active:scale-95 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
-            )}
-          </button>
-          
-          {sidebarOpen && (
-            <>
-          <button
-            onClick={onCreateCustom}
-            className="w-full flex items-center justify-center space-x-2 px-3 py-1.5 rounded-lg bg-red-600/10 hover:bg-red-600/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 font-semibold text-xs transition-all active:scale-95"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Create Custom Test</span>
-          </button>
-          
-          <div className="flex space-x-1.5">
-            <button
-              onClick={handleExportCustomPanels}
-              title="Export Custom Panels"
-              className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-[10px] font-semibold transition-all active:scale-95"
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4 4m0 0l-4-4m4 4V4"/>
-              </svg>
-              <span>Export</span>
-            </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              title="Import Custom Panels"
-              className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-[10px] font-semibold transition-all active:scale-95"
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4V4"/>
-              </svg>
-              <span>Import</span>
-            </button>
-            <input 
-              type="file" 
-              accept=".json" 
-              ref={fileInputRef} 
-              style={{ display: "none" }} 
-              onChange={handleImportCustomPanels} 
-            />
-          </div>
-            </>
+            </div>
           )}
-        </div>
+        </button>
         
-        {sidebarOpen && (
-        <p className="text-center text-[9px] text-gray-700 mt-2 leading-tight">
-          Bukhari Lab System • v1.0.0
-        </p>
-        )}
+        <div className={`transition-all duration-300 w-full flex flex-col items-center overflow-hidden ${sidebarOpen ? "opacity-100 h-5 mt-2" : "opacity-0 h-0"}`}>
+          <p className="text-center text-[9px] text-gray-700 leading-tight whitespace-nowrap">
+            Bukhari Lab System • v1.0.0
+          </p>
+        </div>
       </div>
 
       <ConfirmModal 
@@ -518,13 +382,6 @@ export default function Sidebar({
         onConfirm={confirmAction}
         onCancel={() => setConfirmDialog({...confirmDialog, isOpen: false})}
       />
-
-      {sidebarAlert && (
-        <div className="absolute bottom-16 left-2 right-2 z-50 bg-red-900 text-red-100 text-xs font-medium px-3 py-2 rounded-xl shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
-          <svg className="w-4 h-4 shrink-0 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M12 4a8 8 0 100 16 8 8 0 000-16z" /></svg>
-          {sidebarAlert}
-        </div>
-      )}
     </div>
   );
 }
