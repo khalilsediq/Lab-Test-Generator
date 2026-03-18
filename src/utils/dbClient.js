@@ -5,6 +5,16 @@
 const { ipcRenderer } = window.require('electron');
 
 export const dbClient = {
+  // ── Auth ─────────────────────────────────────────────────────────────────
+  getAuthData:           () => ipcRenderer.invoke('auth:get-auth-data'),
+  setInitialAuth:        (password, recoveryKey, securityQuestion, securityAnswer) => ipcRenderer.invoke('auth:set-initial-auth', { password, recoveryKey, securityQuestion, securityAnswer }),
+  verifyPassword:        (password) => ipcRenderer.invoke('auth:verify-password', password),
+  verifyRecoveryKey:     (key) => ipcRenderer.invoke('auth:verify-recovery-key', key),
+  verifySecurityAnswer:  (answer) => ipcRenderer.invoke('auth:verify-security-answer', answer),
+  resetPassword:         (newPassword) => ipcRenderer.invoke('auth:reset-password', newPassword),
+  updateSecurityQuestion:(question, answer) => ipcRenderer.invoke('auth:update-security-question', { question, answer }),
+  setSecurityEnabled:    (enabled) => ipcRenderer.invoke('auth:set-security-enabled', enabled),
+
   // ── Patient ──────────────────────────────────────────────────────────────
   savePatient:       (data)                 => ipcRenderer.invoke('db:save-patient', data),
   getPatientByMrNo:  (mrNo)                 => ipcRenderer.invoke('db:get-patient-by-mrno', mrNo),

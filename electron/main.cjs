@@ -80,6 +80,16 @@ ipcMain.handle("print-to-pdf", async (event, { filename, pageSize, margins }) =>
 
 // ── Database IPC Handlers ────────────────────────────────────────────────────
 
+// Auth
+ipcMain.handle("auth:get-auth-data",          () => db.getAuthData());
+ipcMain.handle("auth:set-initial-auth",       (_, args) => db.setInitialAuth(args.password, args.recoveryKey, args.securityQuestion, args.securityAnswer));
+ipcMain.handle("auth:verify-password",        (_, password) => db.verifyPassword(password));
+ipcMain.handle("auth:verify-recovery-key",    (_, key) => db.verifyRecoveryKey(key));
+ipcMain.handle("auth:verify-security-answer", (_, answer) => db.verifySecurityAnswer(answer));
+ipcMain.handle("auth:reset-password",         (_, newPassword) => db.resetPassword(newPassword));
+ipcMain.handle("auth:update-security-question", (_, args) => db.updateSecurityQuestion(args.question, args.answer));
+ipcMain.handle("auth:set-security-enabled",   (_, enabled) => db.setSecurityEnabled(enabled));
+
 // Patient
 ipcMain.handle("db:save-patient",         (_, args)                    => db.savePatient(args));
 ipcMain.handle("db:get-patient-by-mrno",  (_, mrNo)                    => db.getPatientByMrNo(mrNo));

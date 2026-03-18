@@ -3,6 +3,7 @@ import Sidebar from "./components/Sidebar";
 import PatientForm from "./components/PatientForm";
 import TestFields from "./components/TestFields";
 import ReportPreview from "./components/ReportPreview";
+import LockScreen from "./components/LockScreen";
 import CustomTestModal from "./components/CustomTestModal";
 import Settings from "./components/Settings";
 import BillingPanel from "./components/BillingPanel";
@@ -29,6 +30,45 @@ const isMobileScreen = () => {
 };
 
 function App() {
+  const [authState, setAuthState] = useState('checking');
+  const [authData, setAuthData] = useState(null);
+  // 'checking' | 'setup' | 'login' | 'unlocked'
+
+  useEffect(() => {
+    let mounted = true;
+    const checkAuth = async () => {
+      try {
+        const result = await dbClient.getAuthData();
+        if (mounted) {
+          if (result.success) {
+            setAuthData(result.data);
+            // Only force an authState transition if we are initializing
+            if (authState === 'checking') {
+              if (result.data.isSecurityEnabled === false) {
+                setAuthState('unlocked');
+              } else if (result.data.hasPassword) {
+                setAuthState('login');
+              } else {
+                setAuthState('setup');
+              }
+            }
+          } else if (authState === 'checking') {
+            setAuthState('setup');
+          }
+        }
+      } catch {
+        if (mounted && authState === 'checking') setAuthState('setup');
+      }
+    };
+    checkAuth();
+    return () => { mounted = false; };
+  }, [authState]);
+
+  const refreshAuthData = async () => {
+    const result = await dbClient.getAuthData();
+    if (result.success) setAuthData(result.data);
+  };
+
   const [customTests, setCustomTests] = useState(() => load("customTests", []));
   const [editedRanges, setEditedRanges] = useState(() =>
     load("editedRanges", {}),
@@ -558,6 +598,24 @@ function App() {
     if (isMobileScreen()) setSidebarOpen(false);
   };
 
+  const selectedPanelsMemo = useMemo(() => [...new Set([selectedTest, ...additionalPanels])], [selectedTest, additionalPanels]);
+
+  if (authState === 'checking') {
+    return (
+      <div className="fixed inset-0 z-9999 bg-linear-to-br from-gray-900 via-gray-800 to-red-950 flex items-center justify-center">
+        <div className="text-white text-sm animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  if (authState !== 'unlocked') {
+    return (
+      <div className="fixed inset-0 z-9999 bg-linear-to-br from-gray-900 via-gray-800 to-red-950 flex items-center justify-center p-4">
+        <LockScreen initialMode={authState} onUnlock={() => setAuthState('unlocked')} />
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex h-screen bg-gray-50 font-sans print:hidden relative overflow-hidden">
@@ -607,6 +665,7 @@ function App() {
               onToggle={() => setSidebarOpen(!sidebarOpen)}
               sidebarOpen={sidebarOpen}
               editedPanelNames={editedPanelNames}
+              onLogout={authData?.isSecurityEnabled !== false ? () => setAuthState('login') : null}
             />
           </div>
         </div>
@@ -652,12 +711,25 @@ function App() {
               </svg>
             </button>
             <span className="font-bold text-gray-800 text-sm">Bukhari Lab</span>
-            <button
-              onClick={() => setShowPreview(true)}
-              className="text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors"
-            >
-              Preview
-            </button>
+            <div className="flex items-center gap-2">
+              {authData?.isSecurityEnabled !== false && (
+                <button
+                  onClick={() => setAuthState('login')}
+                  className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors"
+                  title="Logout"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
+              )}
+              <button
+                onClick={() => setShowPreview(true)}
+                className="text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Preview
+              </button>
+            </div>
           </div>
 
           {/* New Tab Bar */}
@@ -769,7 +841,7 @@ function App() {
             {/* Right Column (Billing Panel) */}
             <div className="w-80 shrink-0 border-l border-gray-200 bg-white overflow-y-auto hidden lg:block">
               <BillingPanel 
-                selectedPanels={useMemo(() => [...new Set([selectedTest, ...additionalPanels])], [selectedTest, additionalPanels])}
+                selectedPanels={selectedPanelsMemo}
                 testTemplates={testTemplates}
                 testPrices={testPrices}
                 patientDetails={patientDetails}
@@ -792,6 +864,8 @@ function App() {
               onExportCustom={handleExportCustomPanels}
               onImportCustom={handleImportCustomPanels}
               onDeleteAllCustom={handleDeleteAllCustomTests}
+              onEnableSecurity={() => setAuthState('setup')}
+              onSecurityChanged={refreshAuthData}
             />
           </div>
 

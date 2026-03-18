@@ -20,9 +20,10 @@ export default function BillingPanel({
   const [showPrintInvoiceBtn, setShowPrintInvoiceBtn] = useState(false);
 
   // Reset print button when panels change (starting a new patient/report)
+  const panelsKey = selectedPanels.join(',');
   React.useEffect(() => {
     setShowPrintInvoiceBtn(false);
-  }, [selectedPanels.join(',')]);
+  }, [panelsKey]);
 
   // Filter out any null/undefined panels
   const activePanels = selectedPanels.filter(Boolean).map(id => {
@@ -61,6 +62,13 @@ export default function BillingPanel({
 
   const handleSave = async () => {
     if (activePanels.length === 0) return;
+    
+    // Validate Patient Name
+    if (!patientDetails.name || !patientDetails.name.trim()) {
+      if (window.showToast) window.showToast("Patient Name is required!", "error");
+      return;
+    }
+
     setIsSaving(true);
     try {
       // Step 1: Save Patient

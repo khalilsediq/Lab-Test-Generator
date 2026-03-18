@@ -7,6 +7,7 @@ import path from 'path';
 
 const require = createRequire(import.meta.url);
 const Database = require('better-sqlite3');
+const bcrypt = require('bcryptjs');
 
 let db = null;
 
@@ -33,6 +34,11 @@ export function initialize() {
 function createTables() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS app_meta (
+      key   TEXT PRIMARY KEY,
+      value TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS app_settings (
       key   TEXT PRIMARY KEY,
       value TEXT
     );
@@ -599,3 +605,103 @@ export function completeMigration(entries) {
     return true;
   });
 }
+
+// ─── AUTH FUNCTIONS ──────────────────────────────────────────────────────────
+
+export function hasPasswordSet() {
+  return wrap(() => {
+    const row = db.prepare(`SELECT value FROM app_settings WHERE key = 'password_hash'`).get();
+    return row && row.value !== null;
+  });
+}
+
+export function getAuthData() {
+  return wrap(() => {
+    const rows = db.prepare(`SELECT key, value FROM app_settings WHERE key IN ('password_hash', 'recovery_key_hash', 'security_question', 'security_answer_hash', 'security_enabled')`).all();
+    const map = {};
+    for (const r of rows) map[r.key] = r.value;
+    return {
+      isSecurityEnabled: map.security_enabled !== 'false',
+      hasPassword: !!map.password_hash,
+      hasRecoveryKey: !!map.recovery_key_hash,
+      hasSecurityQuestion: !!map.security_question,
+      securityQuestion: map.security_question || null
+    };
+  });
+}
+
+export function setSecurityEnabled(enabled) {
+  return wrap(() => {
+    db.prepare(`INSERT OR REPLACE INTO app_settings (key, value) VALUES ('security_enabled', ?)`).run(enabled ? 'true' : 'false');
+    return true;
+  });
+}
+
+export function setInitialAuth(password, recoveryKey, securityQuestion, securityAnswer) {
+  return wrap(() => {
+    const passwordHash = bcrypt.hashSync(password, 12);
+    const recoveryKeyHash = bcrypt.hashSync(recoveryKey, 10);
+    let securityAnswerHash = null;
+    if (securityQuestion && securityAnswer) {
+      securityAnswerHash = bcrypt.hashSync(securityAnswer.toLowerCase().trim(), 10);
+    }
+    
+    const tx = db.transaction(() => {
+      const stmt = db.prepare(`INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)`);
+      stmt.run('password_hash', passwordHash);
+      stmt.run('recovery_key_hash', recoveryKeyHash);
+      if (securityQuestion) {
+        stmt.run('security_question', securityQuestion);
+        stmt.run('security_answer_hash', securityAnswerHash);
+      }
+    });
+    tx();
+    return true;
+  });
+}
+
+export function verifyPassword(inputPassword) {
+  return wrap(() => {
+    const row = db.prepare(`SELECT value FROM app_settings WHERE key = 'password_hash'`).get();
+    if (!row || !row.value) return false;
+    return bcrypt.compareSync(inputPassword, row.value);
+  });
+}
+
+export function verifyRecoveryKey(inputKey) {
+  return wrap(() => {
+    const row = db.prepare(`SELECT value FROM app_settings WHERE key = 'recovery_key_hash'`).get();
+    if (!row || !row.value) return false;
+    return bcrypt.compareSync(inputKey.trim(), row.value);
+  });
+}
+
+export function verifySecurityAnswer(inputAnswer) {
+  return wrap(() => {
+    const row = db.prepare(`SELECT value FROM app_settings WHERE key = 'security_answer_hash'`).get();
+    if (!row || !row.value) return false;
+    return bcrypt.compareSync(inputAnswer.toLowerCase().trim(), row.value);
+  });
+}
+
+export function resetPassword(newPassword) {
+  return wrap(() => {
+    const hash = bcrypt.hashSync(newPassword, 12);
+    db.prepare(`UPDATE app_settings SET value = ? WHERE key = 'password_hash'`).run(hash);
+    return true;
+  });
+}
+
+export function updateSecurityQuestion(question, answer) {
+  return wrap(() => {
+    const hash = bcrypt.hashSync(answer.toLowerCase().trim(), 10);
+    const tx = db.transaction(() => {
+      const stmt = db.prepare(`INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)`);
+      stmt.run('security_question', question);
+      stmt.run('security_answer_hash', hash);
+    });
+    tx();
+    return true;
+  });
+}
+

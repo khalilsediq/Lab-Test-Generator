@@ -37,6 +37,7 @@ export default function Sidebar({
   sidebarOpen,
   onToggle,
   editedPanelNames = {},
+  onLogout,
 }) {
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState({});
@@ -343,6 +344,39 @@ export default function Sidebar({
       </div>
       
       {!sidebarOpen && <div className="flex-1 min-h-0"></div>}
+
+      {/* Logout Button */}
+      {onLogout && (
+        <div className={`p-3 border-t border-gray-800 shrink-0 flex flex-col items-center overflow-visible transition-all duration-300 ${sidebarOpen ? 'mb-0 pb-0' : 'mb-0 pb-0'}`}>
+          <button
+            onClick={onLogout}
+            className="group relative h-10 w-full flex items-center justify-center rounded-xl bg-gray-900 border border-red-900/40 hover:border-red-500/60 hover:shadow-[0_0_20px_rgba(239,68,68,0.25)] transition-all duration-500 overflow-hidden"
+            title="Secure Logout"
+          >
+            {/* Futuristic Sweep Edge Effect */}
+            <div className="absolute inset-0 w-full h-full bg-linear-to-r from-transparent via-red-500/20 to-transparent -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 pointer-events-none"></div>
+            
+            {sidebarOpen ? (
+              <div className="flex items-center justify-center gap-2 relative z-10 w-full">
+                <div className="bg-red-500/10 p-1 rounded-md text-red-500 group-hover:bg-red-500 group-hover:text-white transition-colors duration-300">
+                  <svg className="w-4 h-4 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </div>
+                <span className="tracking-[0.2em] font-semibold text-xs text-gray-400 group-hover:text-red-100 uppercase transition-colors duration-300">Logout</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center w-full relative z-10">
+                <div className="text-red-500/70 group-hover:text-red-400 transition-colors duration-300 transform group-hover:-translate-x-0.5">
+                  <svg className="w-5 h-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </div>
+              </div>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Collapse/Expand Toggle */}
       <div className="p-3 border-t border-gray-800 shrink-0 flex flex-col items-center">

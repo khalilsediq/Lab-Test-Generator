@@ -84,7 +84,7 @@ export default function PatientForm({ patientDetails, setPatientDetails, templat
             Patient Information
           </h2>
           <p className="text-xs text-gray-400 mt-0.5 hidden sm:block">
-            All fields are optional but improve report quality
+            Patient Name is required; other fields improve report quality
           </p>
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function PatientForm({ patientDetails, setPatientDetails, templat
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-3">
         {/* Patient Name */}
         <div className="space-y-1">
-          <label className={labelStyle}>Patient Name</label>
+          <label className={labelStyle}>Patient Name <span className="text-red-500">*</span></label>
           <input
             type="text"
             name="name"

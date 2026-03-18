@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import TestPriceManager from './TestPriceManager';
 import ConfirmModal from './ConfirmModal';
+import SecuritySettings from './SecuritySettings';
 
 export default function Settings({ 
   testTemplates, 
@@ -9,7 +10,9 @@ export default function Settings({
   onCreateCustom,
   onExportCustom,
   onImportCustom,
-  onDeleteAllCustom
+  onDeleteAllCustom,
+  onEnableSecurity,
+  onSecurityChanged
 }) {
   const [activeSection, setActiveSection] = useState('testPrices');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -55,11 +58,29 @@ export default function Settings({
               <span>Manage Tests</span>
             </button>
           </li>
+          <li>
+            <button
+              onClick={() => setActiveSection('security')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+                activeSection === 'security'
+                  ? 'bg-red-50 text-red-600 font-medium'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span>Security</span>
+            </button>
+          </li>
         </ul>
       </div>
 
       {/* Right content */}
-      <div className="flex-1 bg-white flex flex-col min-w-0 md:m-4 md:rounded-xl md:shadow-sm border border-gray-100 overflow-hidden">
+      <div className="flex-1 bg-white flex flex-col min-w-0 md:m-4 md:rounded-xl md:shadow-sm border border-gray-100 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+        {activeSection === 'security' && (
+          <SecuritySettings onEnableSecurity={onEnableSecurity} onSecurityChanged={onSecurityChanged} />
+        )}
         {activeSection === 'testPrices' && (
           <TestPriceManager 
             testTemplates={testTemplates}

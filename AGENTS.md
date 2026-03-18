@@ -61,6 +61,7 @@ This file provides a concise overview of the Lab Test Generator project for futu
 
 ### ✅ Implemented
 
+- **App Security & Authentication:** Complete locked-screen application system with `bcryptjs` hashed SQLite persistence. Includes first-run Setup, Lockout logic, Security Question / Recovery Key password recovery flows, and dynamic "Remove/Bypass Security" controls. A futuristic animated secure Logout button is integrated into the collapsible Sidebar and Mobile Navbar. State seamlessly updates across components via `onSecurityChanged` callbacks without forcing hard reloads. The Security Settings UI is fully responsive with vertical scrolling support for all screen sizes.
 - **Core Demographics:** Patient registration with automated barcode generation (CODE128) and sequential MR Number tracking.
 - **Dynamic Test Engine:** Adaptive entry fields for complex test panels with real-time abnormal value detection based on age/gender-specific ranges.
 - **Specialized Fields:** Dedicated UI logic for `BloodBankFields.jsx` (Cross-matching) and `qualitative_select` parameters.
@@ -87,6 +88,7 @@ This file provides a concise overview of the Lab Test Generator project for futu
   - **Synchronized Transitions:** All internal components (Search bar, navigation list, resize handle, and version footer) share a 300ms transition with the sidebar container, eliminating all visual lag and "popping."
   - **Stable Footer:** Fixed-height collapse button and controlled-height version reveal to prevent upward "jumping" animations during expansion.
 - **Diagnostic Infrastructure:** Integrated `db:ping` and verbose console logging in the Main Process to definitively verify IPC connectivity and handler registration.
+- **Patient Validation:** Mandatory Patient Name check in `BillingPanel.jsx` before registration, with clear UI feedback and red asterisk indicators in `PatientForm.jsx`.
 
 ## 5. Architectural Patterns & Lessons
 
