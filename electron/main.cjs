@@ -138,6 +138,30 @@ ipcMain.handle("db:get-expenses-by-date", (_, date)                    => db.get
 ipcMain.handle("db:get-daily-summary",    (_, date)                    => db.getDailySummary(date));
 ipcMain.handle("db:get-monthly-summary",  (_, { year, month })         => db.getMonthlySummary(year, month));
 
+// Expenses — exp: namespace (Expense Manager Dashboard)
+ipcMain.handle("exp:get-categories",      ()                           => db.getExpenseCategories());
+ipcMain.handle("exp:get-daily-report",    (_, date)                    => db.getDailyReport(date));
+ipcMain.handle("exp:get-monthly-report",  (_, { year, month })         => db.getMonthlyReport(year, month));
+ipcMain.handle("exp:get-expenses-range",  (_, { startDate, endDate })  => db.getExpensesByDateRange(startDate, endDate));
+ipcMain.handle("exp:save-expense",        (_, { date, category, description, amount }) => db.saveExpense(date, category, description, amount));
+ipcMain.handle("exp:delete-expense",      (_, id)                      => db.deleteExpense(id));
+ipcMain.handle("exp:export-text",         async (_, { content, defaultFilename }) => {
+  try {
+    const result = await dialog.showSaveDialog({
+      defaultPath: path.join(app.getPath('downloads'), defaultFilename),
+      filters: [{ name: 'Text Files', extensions: ['txt'] }],
+    });
+    if (!result.canceled && result.filePath) {
+      fs.writeFileSync(result.filePath, content, 'utf8');
+      return { success: true };
+    }
+    return { success: false, canceled: true };
+  } catch (err) {
+    console.error('exp:export-text error:', err);
+    return { success: false, error: err.message };
+  }
+});
+
 // Migration
 ipcMain.handle("db:check-migration-pending",          ()               => db.checkMigrationPending());
 ipcMain.handle("db:complete-localStorage-migration",  (_, entries)     => db.completeMigration(entries));

@@ -47,6 +47,7 @@ This file provides a concise overview of the Lab Test Generator project for futu
     - `ReportPreview.jsx`: Modal that handles PDF generation and print triggering.
     - `InvoiceModal.jsx`: Modal for A5 financial invoice generation.
     - `CustomTestModal.jsx`: Interface for creating user-defined tests.
+    - `ExpenseManager.jsx`: Full-page Expense Management Dashboard with daily/monthly financial views, expense logging, category bar charts, and `.txt` export.
   - `/src/data`: Static JSON templates (`testTemplates.json`) for predefined laboratory tests.
   - `/src/utils`: Utility functions.
     - `generatePDF.js`: Handles canvas slicing for multi-page PDF generation.
@@ -94,6 +95,21 @@ This file provides a concise overview of the Lab Test Generator project for futu
 - **Unified Test Removal:** Standardized the deletion of any test panel from the central "Test Entry" view. Regardless of whether a test is added from the Sidebar (primary) or the internal dropdown (secondary), every panel now consistently features a "Remove" button, enabling full control over the report composition without reloading or clearing the entire form.
 - **React Stability & Performance:** Optimized `TestFields.jsx` by resolving React Hook rule violations and replacing cascading render effects (synchronous `useEffect` calls) with a more efficient `key`-based reset strategy.
 - **Controlled Input Reliability:** Implemented comprehensive state reset logic in `App.jsx` and added defensive `|| ""` guards to all `PatientForm.jsx` inputs, eliminating React "controlled to uncontrolled" warnings during patient registration.
+- **Expense Management Dashboard (Step 5 — FINAL FEATURE):** Full financial management screen accessible via the **Expenses** top-nav tab (inserted between Patients and Settings). Implements:
+  - **Dashboard Tab** with Daily and Monthly views: stat cards (Total Revenue, Total Expenses, Net Profit/Loss, Total Patients), expense category bar-chart breakdown, patient revenue breakdown table, and a daily trend table for monthly view.
+  - **Real-Time Refresh:** Dashboard auto-refreshes whenever the user navigates to the Expenses tab (via `isActive` prop + `useRef` transition detection in `ExpenseManager`). A manual **Refresh** button is also shown in the Dashboard toolbar, implemented in `DashboardTab` via an `onRefresh` callback prop.
+  - **Expenses Tab**: Add Expense form (date, category dropdown with custom category support, description, integer amount), date-range filtered Expense Log table with delete functionality via `ConfirmModal`.
+  - **Export**: Formatted `.txt` export via Electron `dialog.showSaveDialog` + `fs.writeFileSync`, triggered from both Daily and Monthly dashboard views.
+  - **Database**: 5 new functions in `database.mjs`: `getExpenseCategories()`, `getDailyReport()`, `getMonthlyReport()`, `getExpensesByDateRange()`, `deleteExpense()`. These join with patients/transactions for accurate revenue accounting, excluding soft-deleted patients.
+  - **IPC**: 7 new handlers in `main.cjs` under the `exp:` namespace: `exp:get-categories`, `exp:get-daily-report`, `exp:get-monthly-report`, `exp:get-expenses-range`, `exp:save-expense`, `exp:delete-expense`, `exp:export-text`.
+  - **Client**: 7 new wrappers added to `dbClient.js` under the `exp:` namespace.
+
+---
+
+> ### 🏁 PROJECT STATUS: FEATURE COMPLETE
+> All five planned feature steps have been implemented and verified. The Bukhari Lab Test Generator is now a fully-featured desktop application.
+
+
 
 ## 5. Architectural Patterns & Lessons
 

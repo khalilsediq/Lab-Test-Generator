@@ -541,6 +541,151 @@ export function getExpensesByDate(date) {
   });
 }
 
+export function getExpenseCategories() {
+  return wrap(() => {
+    const rows = db.prepare(`SELECT DISTINCT category FROM expenses WHERE category IS NOT NULL AND category != ''`).all();
+    const dbCategories = rows.map(r => r.category);
+    const defaults = ['Chemicals & Reagents', 'Equipment', 'Utilities', 'Staff', 'Rent', 'Maintenance', 'Other'];
+    const merged = [...new Set([...defaults, ...dbCategories])];
+    return merged;
+  });
+}
+
+export function getDailyReport(dateStr) {
+  return wrap(() => {
+    const revenueRow = db.prepare(`
+      SELECT COALESCE(SUM(t.amountPaid), 0) AS totalRevenue,
+             COUNT(DISTINCT t.patientId) AS patientCount
+      FROM transactions t
+      INNER JOIN patients p ON t.patientId = p.id
+      WHERE DATE(t.createdAt) = ? AND p.deletedAt IS NULL
+    `).get(dateStr);
+
+    const expenseRow = db.prepare(`
+      SELECT COALESCE(SUM(amount), 0) AS totalExpenses,
+             COUNT(*) AS expenseCount
+      FROM expenses
+      WHERE date = ?
+    `).get(dateStr);
+
+    const expenseBreakdown = db.prepare(`
+      SELECT category, COALESCE(SUM(amount), 0) AS total
+      FROM expenses
+      WHERE date = ?
+      GROUP BY category
+      ORDER BY total DESC
+    `).all(dateStr);
+
+    const revenueBreakdown = db.prepare(`
+      SELECT p.name AS patientName, p.mrNo,
+             t.amountPaid, t.paymentStatus,
+             (SELECT GROUP_CONCAT(pp.panelName, ', ') FROM patient_panels pp WHERE pp.patientId = p.id) AS panels
+      FROM transactions t
+      INNER JOIN patients p ON t.patientId = p.id
+      WHERE DATE(t.createdAt) = ? AND p.deletedAt IS NULL
+      ORDER BY t.createdAt DESC
+    `).all(dateStr);
+
+    const totalRevenue   = revenueRow.totalRevenue   || 0;
+    const totalExpenses  = expenseRow.totalExpenses  || 0;
+    const patientCount   = revenueRow.patientCount   || 0;
+    const expenseCount   = expenseRow.expenseCount   || 0;
+
+    return {
+      date: dateStr,
+      totalRevenue,
+      totalExpenses,
+      netProfit: totalRevenue - totalExpenses,
+      expenseBreakdown,
+      revenueBreakdown,
+      expenseCount,
+      patientCount,
+    };
+  });
+}
+
+export function getMonthlyReport(year, month) {
+  return wrap(() => {
+    const m = String(month).padStart(2, '0');
+    const prefix = `${year}-${m}`;
+
+    // Revenue rows per day
+    const revenueRows = db.prepare(`
+      SELECT DATE(t.createdAt) AS date,
+             COALESCE(SUM(t.amountPaid), 0) AS revenue,
+             COUNT(DISTINCT t.patientId) AS patientCount
+      FROM transactions t
+      INNER JOIN patients p ON t.patientId = p.id
+      WHERE strftime('%Y-%m', t.createdAt) = ? AND p.deletedAt IS NULL
+      GROUP BY DATE(t.createdAt)
+    `).all(prefix);
+
+    // Expense rows per day
+    const expenseRows = db.prepare(`
+      SELECT date, COALESCE(SUM(amount), 0) AS expenses
+      FROM expenses
+      WHERE strftime('%Y-%m', date) = ?
+      GROUP BY date
+    `).all(prefix);
+
+    // Top expense categories for the whole month
+    const topExpenseCategories = db.prepare(`
+      SELECT category, COALESCE(SUM(amount), 0) AS total
+      FROM expenses
+      WHERE strftime('%Y-%m', date) = ?
+      GROUP BY category
+      ORDER BY total DESC
+    `).all(prefix);
+
+    // Merge daily data
+    const revenueMap = {};
+    let totalPatients = 0;
+    for (const r of revenueRows) {
+      revenueMap[r.date] = { revenue: r.revenue, patientCount: r.patientCount };
+      totalPatients += r.patientCount;
+    }
+    const expenseMap = {};
+    for (const r of expenseRows) expenseMap[r.date] = r.expenses;
+
+    // Union of all days with any data
+    const allDates = [...new Set([...Object.keys(revenueMap), ...Object.keys(expenseMap)])];
+    allDates.sort((a, b) => b.localeCompare(a)); // DESC
+
+    const dailyData = allDates.map(date => {
+      const revenue   = revenueMap[date]?.revenue   || 0;
+      const expenses  = expenseMap[date]             || 0;
+      return { date, revenue, expenses, netProfit: revenue - expenses };
+    });
+
+    const totalRevenue  = dailyData.reduce((s, d) => s + d.revenue,  0);
+    const totalExpenses = dailyData.reduce((s, d) => s + d.expenses, 0);
+
+    return {
+      year, month,
+      totalRevenue, totalExpenses,
+      netProfit: totalRevenue - totalExpenses,
+      dailyData, topExpenseCategories, totalPatients,
+    };
+  });
+}
+
+export function getExpensesByDateRange(startDate, endDate) {
+  return wrap(() => {
+    return db.prepare(`
+      SELECT * FROM expenses
+      WHERE date BETWEEN ? AND ?
+      ORDER BY date DESC, createdAt DESC
+    `).all(startDate, endDate);
+  });
+}
+
+export function deleteExpense(id) {
+  return wrap(() => {
+    db.prepare(`DELETE FROM expenses WHERE id = ?`).run(id);
+    return true;
+  });
+}
+
 export function getDailySummary(date) {
   return wrap(() => {
     const salesRow = db.prepare(`

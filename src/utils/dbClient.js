@@ -52,6 +52,15 @@ export const dbClient = {
   getDailySummary:   (date)                 => ipcRenderer.invoke('db:get-daily-summary', date),
   getMonthlySummary: (year, month)          => ipcRenderer.invoke('db:get-monthly-summary', { year, month }),
 
+  // ── Expense Manager (exp: namespace) ──────────────────────────────
+  getExpenseCategories: ()                            => ipcRenderer.invoke('exp:get-categories'),
+  getDailyReport:    (date)                           => ipcRenderer.invoke('exp:get-daily-report', date),
+  getMonthlyReport:  (year, month)                    => ipcRenderer.invoke('exp:get-monthly-report', { year, month }),
+  getExpensesByRange:(startDate, endDate)              => ipcRenderer.invoke('exp:get-expenses-range', { startDate, endDate }),
+  saveExpenseEntry:  (date, category, description, amount) => ipcRenderer.invoke('exp:save-expense', { date, category, description, amount }),
+  deleteExpense:     (id)                             => ipcRenderer.invoke('exp:delete-expense', id),
+  exportText:        (content, defaultFilename)       => ipcRenderer.invoke('exp:export-text', { content, defaultFilename }),
+
   // ── Migration ────────────────────────────────────────────────────────────
   checkMigrationPending: ()                 => ipcRenderer.invoke('db:check-migration-pending'),
   completeMigration:     (customTests)      => ipcRenderer.invoke('db:complete-localStorage-migration', customTests),
