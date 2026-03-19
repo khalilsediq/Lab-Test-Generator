@@ -61,6 +61,8 @@ This file provides a concise overview of the Lab Test Generator project for futu
 
 ### ✅ Implemented
 
+- **Patient Stats & ID Reliability:** Fixed the `getTotalStats` query to exclude soft-deleted (trashed) patients so the UI accurately reflects active totals. Also overhauled the MR number counter to be independent of the `patients` table by seeding and persisting the highest MR number in `app_settings` via SQLite transactions, guaranteeing it never decrements when patients are trashed or permanently deleted.
+- **Workflow Efficiency:** Added a prominent "New Patient" button to the New Report tab. This instantly clears the patient form, tests, and billing panel (via `resetKey`), while auto-fetching the next sequential MR number, drastically reducing friction between patient registrations.
 - **App Security & Authentication:** Complete locked-screen application system with `bcryptjs` hashed SQLite persistence. Includes first-run Setup, Lockout logic, Security Question / Recovery Key password recovery flows, and dynamic "Remove/Bypass Security" controls. A futuristic animated secure Logout button is integrated into the collapsible Sidebar and Mobile Navbar. State seamlessly updates across components via `onSecurityChanged` callbacks without forcing hard reloads. The Security Settings UI is fully responsive with vertical scrolling support for all screen sizes.
 - **Core Demographics:** Patient registration with automated barcode generation (CODE128) and sequential MR Number tracking.
 - **Dynamic Test Engine:** Adaptive entry fields for complex test panels with real-time abnormal value detection based on age/gender-specific ranges.
@@ -89,6 +91,7 @@ This file provides a concise overview of the Lab Test Generator project for futu
   - **Stable Footer:** Fixed-height collapse button and controlled-height version reveal to prevent upward "jumping" animations during expansion.
 - **Diagnostic Infrastructure:** Integrated `db:ping` and verbose console logging in the Main Process to definitively verify IPC connectivity and handler registration.
 - **Patient Validation:** Mandatory Patient Name check in `BillingPanel.jsx` before registration, with clear UI feedback and red asterisk indicators in `PatientForm.jsx`.
+- **Unified Test Removal:** Standardized the deletion of any test panel from the central "Test Entry" view. Regardless of whether a test is added from the Sidebar (primary) or the internal dropdown (secondary), every panel now consistently features a "Remove" button, enabling full control over the report composition without reloading or clearing the entire form.
 
 ## 5. Architectural Patterns & Lessons
 

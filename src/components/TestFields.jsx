@@ -399,7 +399,6 @@ function PanelFieldsGroup({
 }) {
   const gender = patientDetails?.gender || "Male";
   const panel = testTemplates?.find((t) => t.panel_id === panelId);
-  if (!panel) return null;
 
   const isBloodBank = panel?.category?.toLowerCase()?.includes("blood");
 
@@ -439,22 +438,7 @@ function PanelFieldsGroup({
   const panelName = (editedPanelNames?.[panelId] || panel?.panel_name || panelId || "").toString();
   const hasNameOverride = !!editedPanelNames?.[panelId];
 
-  useEffect(() => {
-    // Reset editor state when panel changes
-     
-    setEditingId(null);
-     
-    setEditingMode(null);
-    setIsEditingName(false); // Reset name editor state
-  }, [panelId]);
 
-  useEffect(() => {
-    if (isEditingName) setNewName(panelName);
-  }, [isEditingName, panelName]);
-   
-  useEffect(() => {
-    setFields(applyOrder(rawFields, paramOrders?.[panelId]));
-  }, [panelId, gender, rawFields, paramOrders]);
 
   const handleChange = (key, val) =>
     setTestData((prev) => ({ ...prev, [key]: val }));
@@ -497,6 +481,8 @@ function PanelFieldsGroup({
     setDragFrom(null);
     setDragOver(null);
   };
+
+  if (!panel) return null;
 
   return (
     <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-2xl shadow-sm border border-gray-100 max-w-4xl transition-all duration-300 hover:shadow-md">
@@ -573,7 +559,10 @@ function PanelFieldsGroup({
                   {panelName}
                 </p>
                 <button
-                  onClick={() => setIsEditingName(true)}
+                  onClick={() => {
+                    setNewName(panelName);
+                    setIsEditingName(true);
+                  }}
                   className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover/name:opacity-100 transition-all rounded-md hover:bg-red-50"
                   title="Edit panel name"
                 >
@@ -606,7 +595,7 @@ function PanelFieldsGroup({
                 step="1"
                 value={localPrice !== null ? localPrice : (testPrices[panelId] ?? "")}
                 onChange={(e) => setLocalPrice(e.target.value)}
-                onFocus={(e) => {
+                onFocus={() => {
                   if (localPrice === null) setLocalPrice(testPrices[panelId] ?? "");
                 }}
                 onBlur={() => {
@@ -915,6 +904,7 @@ export default function TestFields({
   editedPanelNames = {},
   testPrices = {},
   onUpdatePrice,
+  onRemovePanel,
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerValue, setPickerValue] = useState("");
@@ -957,7 +947,7 @@ export default function TestFields({
       <div className="space-y-6">
       {activePanels.map((panelId, index) => (
         <PanelFieldsGroup
-          key={panelId + index}
+          key={`${panelId}_${index}_${patientDetails.gender}`}
           panelId={panelId}
           testData={testData}
           setTestData={setTestData}
@@ -973,8 +963,8 @@ export default function TestFields({
           onSavePanelName={onSavePanelName}
           onResetPanelName={onResetPanelName}
           onSaveOrder={onSaveOrder}
-          isRemovable={index > 0}
-          onRemove={handleRemovePanel}
+          isRemovable={true}
+          onRemove={onRemovePanel || handleRemovePanel}
           editedPanelNames={editedPanelNames}
           testPrices={testPrices}
           onUpdatePrice={onUpdatePrice}

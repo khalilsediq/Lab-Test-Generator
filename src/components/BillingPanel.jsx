@@ -10,7 +10,8 @@ export default function BillingPanel({
   onSaveSuccess,
   onRemovePanel,
   editedPanelNames,
-  onPrintInvoice
+  onPrintInvoice,
+  resetKey
 }) {
   const [discountType, setDiscountType] = useState('none'); // 'none' | 'percentage' | 'fixed'
   const [discountValue, setDiscountValue] = useState('');
@@ -24,6 +25,16 @@ export default function BillingPanel({
   React.useEffect(() => {
     setShowPrintInvoiceBtn(false);
   }, [panelsKey]);
+
+  React.useEffect(() => {
+    setDiscountType('none');
+    setDiscountValue(0);
+    setAmountPaid(0);
+    setPaymentMethod('cash');
+    if (typeof setShowPrintInvoiceBtn === 'function') {
+      setShowPrintInvoiceBtn(false);
+    }
+  }, [resetKey]);
 
   // Filter out any null/undefined panels
   const activePanels = selectedPanels.filter(Boolean).map(id => {

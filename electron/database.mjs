@@ -151,6 +151,13 @@ function runMigrations() {
     console.log('[DB] Migrated to db_version 3 (added deletedAt to patients)');
     version = 3;
   }
+
+  const mrSeedCheck = db.prepare(`SELECT value FROM app_settings WHERE key = 'last_mr_number'`).get();
+  if (!mrSeedCheck) {
+    const rowAll = db.prepare(`SELECT MAX(CAST(mrNo AS INTEGER)) AS maxMr FROM patients`).get();
+    const max = rowAll && rowAll.maxMr != null ? rowAll.maxMr : 1000;
+    db.prepare(`INSERT INTO app_settings (key, value) VALUES ('last_mr_number', ?)`).run(max.toString());
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -169,16 +176,21 @@ function wrap(fn) {
 
 export function savePatient(patientData) {
   return wrap(() => {
-    const stmt = db.prepare(`
-      INSERT INTO patients
-        (mrNo, trId, trNo, name, fatherHusbandName, age, gender,
-         contactNo, address, consultant, sampleLocation, registrationDate)
-      VALUES
-        (@mrNo, @trId, @trNo, @name, @fatherHusbandName, @age, @gender,
-         @contactNo, @address, @consultant, @sampleLocation, @registrationDate)
-    `);
-    const result = stmt.run(patientData);
-    return result.lastInsertRowid;
+    return db.transaction(() => {
+      const stmt = db.prepare(`
+        INSERT INTO patients
+          (mrNo, trId, trNo, name, fatherHusbandName, age, gender,
+           contactNo, address, consultant, sampleLocation, registrationDate)
+        VALUES
+          (@mrNo, @trId, @trNo, @name, @fatherHusbandName, @age, @gender,
+           @contactNo, @address, @consultant, @sampleLocation, @registrationDate)
+      `);
+      const result = stmt.run(patientData);
+      
+      db.prepare(`INSERT OR REPLACE INTO app_settings (key, value) VALUES ('last_mr_number', @mrNo)`).run({ mrNo: patientData.mrNo });
+      
+      return result.lastInsertRowid;
+    })();
   });
 }
 
@@ -267,11 +279,11 @@ export function getAllPatients(limit = 50, offset = 0, statusFilter = 'ALL') {
 
 export function getNextMrNo() {
   return wrap(() => {
-    const row = db.prepare(`
-      SELECT MAX(CAST(mrNo AS INTEGER)) AS maxMr FROM patients WHERE mrNo GLOB '[0-9]*'
-    `).get();
-    const max = row && row.maxMr != null ? row.maxMr : 1000;
-    return String(max + 1);
+    const row = db.prepare(`SELECT value FROM app_settings WHERE key = 'last_mr_number'`).get();
+    if (row && row.value) {
+      return (parseInt(row.value) + 1).toString();
+    }
+    return '1001';
   });
 }
 
@@ -460,9 +472,22 @@ export function getTotalStats() {
   return wrap(() => {
     const row = db.prepare(`
       SELECT 
-        (SELECT COUNT(*) FROM patients) as totalPatients,
-        (SELECT SUM(amountPaid) FROM transactions) as totalRevenue,
-        (SELECT SUM(balanceDue) FROM transactions WHERE balanceDue > 0) as totalOutstanding
+        (SELECT COUNT(*) FROM patients WHERE deletedAt IS NULL) as totalPatients,
+        
+        COALESCE((
+          SELECT SUM(t.amountPaid) 
+          FROM transactions t
+          INNER JOIN patients p ON t.patientId = p.id
+          WHERE p.deletedAt IS NULL
+        ), 0) as totalRevenue,
+        
+        COALESCE((
+          SELECT SUM(t.balanceDue) 
+          FROM transactions t
+          INNER JOIN patients p ON t.patientId = p.id
+          WHERE p.deletedAt IS NULL 
+          AND t.balanceDue > 0
+        ), 0) as totalOutstanding
     `).get();
     
     return {

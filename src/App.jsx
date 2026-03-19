@@ -12,6 +12,7 @@ import PatientHistory from "./components/PatientHistory";
 import InvoiceModal from "./components/InvoiceModal";
 import staticTemplates from "./data/testTemplates.json";
 import { dbClient } from "./utils/dbClient";
+import ConfirmModal from "./components/ConfirmModal";
 
 const load = (key, fallback) => {
   try {
@@ -183,6 +184,46 @@ function App() {
   const [invoiceData, setInvoiceData] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [toast, setToast] = useState(null); // { msg, type }
+
+  const [showConfirmNewPatient, setShowConfirmNewPatient] = useState(false);
+  const [billingResetKey, setBillingResetKey] = useState(0);
+
+  const handleNewPatient = () => {
+    dbClient.getNextMrNo().then((res) => {
+      if (res?.success && res.data) {
+        setPatientDetails({
+          mrNo: res.data,
+          trId: '',
+          trNo: '',
+          name: '',
+          fatherHusbandName: '',
+          age: '',
+          gender: 'Male',
+          contactNo: '',
+          address: '',
+          consultant: '',
+          reference: '',
+          sampleLocation: 'Collected In Lab',
+          registrationLocation: 'Lab data_Main',
+          specimen: 'Taken in lab',
+          registrationDate: new Date()
+            .toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })
+            .replace(",", ""),
+        });
+      }
+    });
+    setTestData({});
+    setSelectedTest(null);
+    setAdditionalPanels([]);
+    setBillingResetKey(prev => prev + 1);
+  };
 
   // Synchronize window width and handle mobile sidebar closure
   useEffect(() => {
@@ -780,6 +821,30 @@ function App() {
                 </svg>
               <span>Trash{trashedTemplates.length > 0 && ` (${trashedTemplates.length})`}</span>
             </button>
+            {activeTab === 'report' && (
+              <button
+                onClick={() => {
+                  const formIsEmpty =
+                    !patientDetails.name &&
+                    !patientDetails.contactNo &&
+                    (!selectedPanelsMemo || selectedPanelsMemo.filter(Boolean).length === 0) &&
+                    Object.values(testData || {}).every(v => !v);
+
+                  if (formIsEmpty) {
+                    handleNewPatient();
+                    if (typeof window.showToast === 'function') window.showToast("Ready for new patient.");
+                  } else {
+                    setShowConfirmNewPatient(true);
+                  }
+                }}
+                className="border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                New Patient
+              </button>
+            )}
           </div>
         </div>
 
@@ -813,6 +878,7 @@ function App() {
               editedPanelNames={editedPanelNames}
               testPrices={testPrices}
               onUpdatePrice={handleUpdatePrice}
+              onRemovePanel={handleRemovePanel}
             />
 
             <div className="mt-8 flex justify-end max-w-4xl">
@@ -850,6 +916,7 @@ function App() {
                 onRemovePanel={handleRemovePanel}
                 editedPanelNames={editedPanelNames}
                 onPrintInvoice={handlePrintInvoice}
+                resetKey={billingResetKey}
               />
             </div>
           </div>
@@ -912,6 +979,21 @@ function App() {
           onClose={() => setShowCustomModal(false)}
         />
       )}
+
+      <ConfirmModal
+        isOpen={showConfirmNewPatient}
+        title="Start New Patient?"
+        message="Any unsaved data in the current form will be cleared. This cannot be undone."
+        confirmText="Confirm"
+        cancelText="Cancel"
+        onConfirm={() => {
+          handleNewPatient();
+          setShowConfirmNewPatient(false);
+          if (typeof window.showToast === 'function') window.showToast("Ready for new patient.");
+        }}
+        onCancel={() => setShowConfirmNewPatient(false)}
+        type="danger"
+      />
 
       {showInvoice && invoiceData && (
         <InvoiceModal

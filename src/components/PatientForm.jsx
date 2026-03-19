@@ -96,7 +96,7 @@ export default function PatientForm({ patientDetails, setPatientDetails, templat
           <input
             type="text"
             name="name"
-            value={patientDetails.name}
+            value={patientDetails.name || ""}
             onChange={handleChange}
             placeholder="Full Name"
             autoComplete="off"
@@ -110,7 +110,7 @@ export default function PatientForm({ patientDetails, setPatientDetails, templat
           <input
             type="text"
             name="fatherHusbandName"
-            value={patientDetails.fatherHusbandName}
+            value={patientDetails.fatherHusbandName || ""}
             onChange={handleChange}
             placeholder="Guardian Name"
             autoComplete="off"
@@ -125,7 +125,7 @@ export default function PatientForm({ patientDetails, setPatientDetails, templat
             <input
               type="number"
               name="age"
-              value={patientDetails.age}
+              value={patientDetails.age || ""}
               onChange={handleChange}
               placeholder="Age"
               className={`w-16 text-center ${inp} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
@@ -246,7 +246,7 @@ export default function PatientForm({ patientDetails, setPatientDetails, templat
           <input
             type="text"
             name="mrNo"
-            value={patientDetails.mrNo}
+            value={patientDetails.mrNo || ""}
             onChange={handleChange}
             placeholder="MRN-12345"
             className={`${inp} font-mono uppercase text-[11px] tracking-wider`}
@@ -285,7 +285,7 @@ export default function PatientForm({ patientDetails, setPatientDetails, templat
           <input
             type="text"
             name="consultant"
-            value={patientDetails.consultant}
+            value={patientDetails.consultant || ""}
             onChange={handleChange}
             placeholder="Dr. Name"
             className={inp}
@@ -298,7 +298,7 @@ export default function PatientForm({ patientDetails, setPatientDetails, templat
           <input
             type="tel"
             name="contactNo"
-            value={patientDetails.contactNo}
+            value={patientDetails.contactNo || ""}
             onChange={handleChange}
             placeholder="+92 XXX XXXXXXX"
             className={inp}
@@ -324,7 +324,7 @@ export default function PatientForm({ patientDetails, setPatientDetails, templat
           <input
             type="text"
             name="address"
-            value={patientDetails.address}
+            value={patientDetails.address || ""}
             onChange={handleChange}
             placeholder="Street Address, City"
             className={inp}
@@ -337,7 +337,7 @@ export default function PatientForm({ patientDetails, setPatientDetails, templat
           <input
             type="text"
             name="reference"
-            value={patientDetails.reference}
+            value={patientDetails.reference || ""}
             onChange={handleChange}
             placeholder="Reference/Walk-in"
             className={inp}
@@ -350,7 +350,7 @@ export default function PatientForm({ patientDetails, setPatientDetails, templat
           <input
             type="text"
             name="sampleLocation"
-            value={patientDetails.sampleLocation}
+            value={patientDetails.sampleLocation || ""}
             onChange={handleChange}
             placeholder="Location"
             className={inp}
