@@ -82,7 +82,7 @@ This file provides a concise overview of the Lab Test Generator project for futu
 - **Custom Application Branding:** Official application logo integration in the Electron window icon, report headers, watermarks, and favicon.
 - **Empty Startup Screen:** Application now launches with an empty "New Report" view, preventing unnecessary auto-selection of the first test panel.
 - **Advanced Layout Responsiveness:** Improved Test Entry layout with adaptive grid breakpoints (`lg:`/`xl:`), fluid column widths, and smart-stacking strategies for tablets and small desktops. Provides superior usability even when side panels (Billing/Sidebar) are open.
-- **Premium Sidebar UX:** 
+- **Premium Sidebar UX:**
   - **Launch Stability:** Integrated a reactive `windowWidth` state to ensure the sidebar is correctly visible on fresh launch, solving the issue where static `window.innerWidth` checks would fail during the initial render stabilization.
   - **Mounting Protection:** Uses a `hasMounted` state to prevent transient viewport size fluctuations (e.g., 0px reports during app load) from triggering the sidebar's mobile auto-close logic, eliminating launch-time clipping.
   - **Persistent Branding:** Laboratory logo scales dynamically but remains visible in both expanded and collapsed states.
