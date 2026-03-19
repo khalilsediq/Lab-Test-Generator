@@ -92,6 +92,8 @@ This file provides a concise overview of the Lab Test Generator project for futu
 - **Diagnostic Infrastructure:** Integrated `db:ping` and verbose console logging in the Main Process to definitively verify IPC connectivity and handler registration.
 - **Patient Validation:** Mandatory Patient Name check in `BillingPanel.jsx` before registration, with clear UI feedback and red asterisk indicators in `PatientForm.jsx`.
 - **Unified Test Removal:** Standardized the deletion of any test panel from the central "Test Entry" view. Regardless of whether a test is added from the Sidebar (primary) or the internal dropdown (secondary), every panel now consistently features a "Remove" button, enabling full control over the report composition without reloading or clearing the entire form.
+- **React Stability & Performance:** Optimized `TestFields.jsx` by resolving React Hook rule violations and replacing cascading render effects (synchronous `useEffect` calls) with a more efficient `key`-based reset strategy.
+- **Controlled Input Reliability:** Implemented comprehensive state reset logic in `App.jsx` and added defensive `|| ""` guards to all `PatientForm.jsx` inputs, eliminating React "controlled to uncontrolled" warnings during patient registration.
 
 ## 5. Architectural Patterns & Lessons
 
@@ -110,6 +112,7 @@ This file provides a concise overview of the Lab Test Generator project for futu
 
 - Follow the **Stable Dependency** rule: In `useEffect` hooks, especially those fetching data, ensure all referenced functions are wrapped in `useCallback`.
 - **Fatal Error:** Changing the size or order of a dependency array between renders (e.g., during live-reload) will crash the application. Maintain a constant array structure.
+- **State Synchronization:** Avoid using `useEffect` to synchronize or reset internal component state based on prop changes. Instead, use a unique `key` (e.g., `panelId + gender`) to force a clean remount, which is more performant and prevents cascading renders.
 
 ## 6. Known Bugs & Gotchas
 
