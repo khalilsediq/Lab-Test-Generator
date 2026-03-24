@@ -86,6 +86,10 @@ function App() {
   const [trashedPanels, setTrashedPanels] = useState(() => load("trashedPanels", []));
   const [testPrices, setTestPrices] = useState({});
 
+  const [disabledParams, setDisabledParams] = useState(() => load("disabledParams", {}));
+  const [trashedParams, setTrashedParams] = useState(() => load("trashedParams", []));
+  const [addedParams, setAddedParams] = useState(() => load("addedParams", {}));
+
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [activeTab, setActiveTab] = useState('report');
   // Sidebar: open by default on desktop, closed on mobile
@@ -98,8 +102,20 @@ function App() {
   const testTemplates = useMemo(() => {
     // Merge static and custom, then filter out trashed ones from the main view
     const combined = [...staticTemplates, ...customTests];
-    return combined.filter((p) => !trashedPanels.includes(p.panel_id));
-  }, [customTests, trashedPanels]);
+    return combined.filter((p) => !trashedPanels.includes(p.panel_id)).map(panel => {
+      let params = [...(panel.parameters || [])];
+      
+      // Add dynamically added parameters
+      if (addedParams[panel.panel_id]) {
+        params = [...params, ...addedParams[panel.panel_id]];
+      }
+
+      // Filter out trashed parameters
+      params = params.filter(p => !trashedParams.some(tp => tp.panelId === panel.panel_id && tp.parameter.id === p.id));
+      
+      return { ...panel, parameters: params };
+    });
+  }, [customTests, trashedPanels, addedParams, trashedParams]);
 
   // Dedicated array for purely reading trash panels in the sidebar
   const trashedTemplates = useMemo(() => {
@@ -534,6 +550,71 @@ function App() {
     showToast("All custom tests deleted", "error");
   };
 
+  // --- Parameter Management Handlers --- //
+  
+  const handleToggleDisableParam = (panelId, paramId) => {
+    setDisabledParams(prev => {
+      const panelDisabled = prev[panelId] || [];
+      const updated = panelDisabled.includes(paramId) 
+        ? panelDisabled.filter(id => id !== paramId) 
+        : [...panelDisabled, paramId];
+      const newState = { ...prev, [panelId]: updated };
+      localStorage.setItem("disabledParams", JSON.stringify(newState));
+      return newState;
+    });
+  };
+
+  const handleAddParamToPanel = (panelId, newParam) => {
+    setAddedParams(prev => {
+      const panelAdded = prev[panelId] || [];
+      const newState = { ...prev, [panelId]: [...panelAdded, newParam] };
+      localStorage.setItem("addedParams", JSON.stringify(newState));
+      return newState;
+    });
+    showToast("Custom parameter added to panel");
+  };
+
+  const handleTrashParam = (panelId, panelName, parameter) => {
+    setTrashedParams(prev => {
+      const newState = [...prev, {
+        trashId: Math.random().toString(36).slice(2),
+        panelId,
+        panelName,
+        parameter,
+        trashedAt: new Date().toISOString()
+      }];
+      localStorage.setItem("trashedParams", JSON.stringify(newState));
+      return newState;
+    });
+    showToast("Parameter moved to Trash", "error");
+  };
+
+  const handleRestoreParam = (trashId) => {
+    setTrashedParams(prev => {
+      const newState = prev.filter(t => t.trashId !== trashId);
+      localStorage.setItem("trashedParams", JSON.stringify(newState));
+      return newState;
+    });
+    showToast("Parameter restored");
+  };
+
+  const handlePermanentDeleteParam = (trashId) => {
+    setTrashedParams(prev => {
+      const newState = prev.filter(t => t.trashId !== trashId);
+      localStorage.setItem("trashedParams", JSON.stringify(newState));
+      return newState;
+    });
+    showToast("Parameter permanently deleted", "error");
+  };
+
+  const handleEmptyParamTrash = () => {
+    setTrashedParams([]);
+    localStorage.setItem("trashedParams", JSON.stringify([]));
+    showToast("Parameter trash emptied", "error");
+  };
+
+  // ------------------------------------- //
+
   const handleSaveRange = (panelId, paramId, updatedRange) => {
     const updated = {
       ...editedRanges,
@@ -893,6 +974,10 @@ function App() {
               testPrices={testPrices}
               onUpdatePrice={handleUpdatePrice}
               onRemovePanel={handleRemovePanel}
+              disabledParams={disabledParams}
+              onToggleDisableParam={handleToggleDisableParam}
+              onAddParamToPanel={handleAddParamToPanel}
+              onTrashParam={handleTrashParam}
             />
 
             <div className="mt-8 flex justify-end max-w-4xl">
@@ -969,6 +1054,10 @@ function App() {
               onRestoreAll={handleRestoreAll}
               onPermanentDelete={handlePermanentDelete}
               onEmptyTrash={handleEmptyTrash}
+              trashedParams={trashedParams}
+              onRestoreParam={handleRestoreParam}
+              onPermanentDeleteParam={handlePermanentDeleteParam}
+              onEmptyParamTrash={handleEmptyParamTrash}
             />
           </div>
         </main>
@@ -989,6 +1078,7 @@ function App() {
         paramOrders={paramOrders}
         additionalPanels={previewPayload?.panels?.slice(1).map(p => p.panelId) || additionalPanels}
         editedPanelNames={editedPanelNames}
+        disabledParams={disabledParams}
       />
 
       {showCustomModal && (

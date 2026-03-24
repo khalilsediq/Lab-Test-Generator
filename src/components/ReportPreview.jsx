@@ -46,6 +46,7 @@ export default function ReportPreview({
   paramOrders,
   additionalPanels,
   editedPanelNames = {},
+  disabledParams = {},
 }) {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [pdfError,        setPdfError]        = useState(null);
@@ -315,7 +316,7 @@ export default function ReportPreview({
           try {
             window.require("electron");
             isElectron = true;
-          } catch (e) {
+          } catch {
             // Not a real Electron require
           }
         }
@@ -381,6 +382,7 @@ export default function ReportPreview({
     showHeader,
     showFooter,
     density,
+    disabledParams,
   };
 
   const densityInfo = DENSITY_CONFIG[density] || DENSITY_CONFIG.comfortable;

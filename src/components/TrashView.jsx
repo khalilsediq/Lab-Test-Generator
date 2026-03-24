@@ -8,9 +8,13 @@ export default function TrashView({
   onRestorePanel, 
   onRestoreAll,
   onPermanentDelete, 
-  onEmptyTrash 
+  onEmptyTrash,
+  trashedParams = [],
+  onRestoreParam,
+  onPermanentDeleteParam,
+  onEmptyParamTrash
 }) {
-  const [activeTab, setActiveTab] = useState('panels'); // 'panels' | 'patients'
+  const [activeTab, setActiveTab] = useState('panels'); // 'panels' | 'patients' | 'parameters'
   const [query, setQuery] = useState("");
   
   // Patient Trash Data
@@ -33,6 +37,9 @@ export default function TrashView({
     if (actionType === 'EMPTY_TRASH') onEmptyTrash();
     if (actionType === 'PERMANENT_DELETE') onPermanentDelete(actionId);
     if (actionType === 'RESTORE_ALL') onRestoreAll();
+    
+    if (actionType === 'EMPTY_PARAM_TRASH') onEmptyParamTrash();
+    if (actionType === 'PERMANENT_DELETE_PARAM') onPermanentDeleteParam(actionId);
     
     if (actionType === 'RESTORE_ALL_PATIENTS') {
       try {
@@ -124,6 +131,14 @@ export default function TrashView({
            (p.panelNames || "").toLowerCase().includes(q);
   });
 
+  const filteredParams = trashedParams.filter(tp => {
+    if (!query) return true;
+    const q = query.toLowerCase().trim();
+    return (tp.parameter?.name || "").toLowerCase().includes(q) ||
+           (tp.panelName || "").toLowerCase().includes(q) ||
+           (tp.panelId || "").toLowerCase().includes(q);
+  });
+
   return (
     <div className="flex-1 flex flex-col items-center bg-gray-50 overflow-y-auto p-4 sm:p-8 animate-in fade-in duration-200">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl shadow-red-500/5 ring-1 ring-gray-200 p-6 sm:p-10">
@@ -140,7 +155,7 @@ export default function TrashView({
               Trash Bin
             </h1>
             <p className="text-sm text-gray-500 mt-2">
-              Panels moved to trash won't appear in the sidebar or reports. Default tests can be restored at any time.
+              Panels and test rows moved to trash won't appear in reports. Standard parameters can be restored at any time.
             </p>
           </div>
           {activeTab === 'panels' ? (
@@ -172,7 +187,7 @@ export default function TrashView({
                 Empty Trash
               </button>
             </div>
-          ) : (
+          ) : activeTab === 'patients' ? (
             <div className="flex items-center gap-2 shrink-0">
                <button
                 onClick={() => setConfirmDialog({
@@ -195,6 +210,22 @@ export default function TrashView({
                   actionType: 'EMPTY_PATIENT_TRASH'
                 })}
                 disabled={trashedPatients.length === 0}
+                className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 font-bold text-sm rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Empty Trash
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setConfirmDialog({
+                  isOpen: true,
+                  title: "Empty Parameter Trash",
+                  message: "Are you sure you want to permanently delete all trashed test parameters? Standard parameters will remain hidden in trash, but custom ones will be gone forever.",
+                  actionType: 'EMPTY_PARAM_TRASH'
+                })}
+                disabled={trashedParams.length === 0}
                 className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 font-bold text-sm rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -228,6 +259,17 @@ export default function TrashView({
             Patient Records
             {patientsLoaded && <span className="ml-2 px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs">{trashedPatients.length}</span>}
           </button>
+          <button
+            onClick={() => setActiveTab('parameters')}
+            className={`pb-4 px-6 text-sm font-bold border-b-2 transition-colors ${
+              activeTab === 'parameters'
+                ? 'border-red-600 text-red-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Test Parameters
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs">{trashedParams.length}</span>
+          </button>
         </div>
 
         <div className="mb-6 flex gap-2">
@@ -237,7 +279,11 @@ export default function TrashView({
             </svg>
             <input
               type="text"
-              placeholder={activeTab === 'panels' ? "Search trashed panels..." : "Search trashed patients..."}
+              placeholder={
+                activeTab === 'panels' ? "Search trashed panels..." : 
+                activeTab === 'patients' ? "Search trashed patients..." : 
+                "Search trashed parameters..."
+              }
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all font-medium"
@@ -379,6 +425,72 @@ export default function TrashView({
                         message: `Are you sure you want to permanently delete "${patient.name}" and all their test records? This action cannot be undone.`,
                         actionId: patient.id,
                         actionType: 'PERMANENT_DELETE_PATIENT'
+                      })}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-bold text-red-600 bg-white hover:bg-red-50 rounded-lg transition-colors border border-red-200/50 shadow-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      Delete Forever
+                    </button>
+                  </div>
+                </div>
+              ))
+            )
+          )}
+
+          {activeTab === 'parameters' && (
+            filteredParams.length === 0 ? (
+              <div className="py-12 text-center flex flex-col items-center justify-center">
+                <div className="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mb-4 border border-gray-200 border-dashed">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                </div>
+                <p className="text-gray-500 text-sm font-medium">No trashed parameters</p>
+                {query && <p className="text-gray-400 text-xs mt-1">No matches for "{query}"</p>}
+              </div>
+            ) : (
+              filteredParams.map((item) => (
+                <div 
+                  key={item.trashId} 
+                  className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-gray-100 hover:border-gray-300 shadow-sm rounded-xl transition-all gap-4"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="hidden sm:flex shrink-0 w-10 h-10 bg-gray-50 text-gray-400 rounded-lg items-center justify-center border border-gray-100">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-800">
+                        {item.parameter?.name} 
+                        {item.parameter?.isCustom && <span className="text-[9px] font-bold bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md uppercase tracking-wide ml-2">Custom</span>}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-gray-500">From: <span className="font-semibold">{item.panelName || item.panelId}</span></span>
+                        <span className="text-xs text-gray-400 hidden sm:inline">•</span>
+                        <span className="text-xs text-red-500/80 font-medium hidden sm:inline">
+                          Trashed: {new Date(item.trashedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => onRestoreParam(item.trashId)}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-bold text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors border border-green-200/50 shadow-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                      Restore
+                    </button>
+                    
+                    <button
+                      onClick={() => setConfirmDialog({
+                        isOpen: true,
+                        title: "Delete Parameter Forever",
+                        message: `Are you sure you want to permanently delete "${item.parameter?.name}" from trash? This action cannot be undone.`,
+                        actionId: item.trashId,
+                        actionType: 'PERMANENT_DELETE_PARAM'
                       })}
                       className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-bold text-red-600 bg-white hover:bg-red-50 rounded-lg transition-colors border border-red-200/50 shadow-sm"
                     >

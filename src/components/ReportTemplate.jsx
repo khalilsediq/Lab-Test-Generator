@@ -144,6 +144,7 @@ export default function ReportTemplate({
   showFooter = true,
   density = "comfortable",
   editedPanelNames = {},
+  disabledParams = {},
 }) {
   const gender = patientDetails.gender;
   const dc = DENSITY_CONFIG[density] || DENSITY_CONFIG.comfortable;
@@ -396,8 +397,9 @@ export default function ReportTemplate({
           const rawFields =
             (panel.parameters || []).filter(
               (p) =>
-                p.gender_applicable === "all" ||
-                p.gender_applicable === gender.toLowerCase(),
+                (p.gender_applicable === "all" ||
+                 p.gender_applicable === gender.toLowerCase()) &&
+                !(disabledParams?.[panelId] || []).includes(p.id)
             ) || [];
           const savedOrder = paramOrders?.[panelId];
           const fields = applyOrder(rawFields, savedOrder);
