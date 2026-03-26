@@ -108,6 +108,8 @@ This file provides a concise overview of the Lab Test Generator project for futu
   - **Database**: 5 new functions in `database.mjs`: `getExpenseCategories()`, `getDailyReport()`, `getMonthlyReport()`, `getExpensesByDateRange()`, `deleteExpense()`. These join with patients/transactions for accurate revenue accounting, excluding soft-deleted patients.
   - **IPC**: 7 new handlers in `main.cjs` under the `exp:` namespace: `exp:get-categories`, `exp:get-daily-report`, `exp:get-monthly-report`, `exp:get-expenses-range`, `exp:save-expense`, `exp:delete-expense`, `exp:export-text`.
   - **Client**: 7 new wrappers added to `dbClient.js` under the `exp:` namespace.
+- **Responsive Layout Fix (v1.0.2):** Resolved an issue where Test Entry parameter names would vertically stack (1 character per line) on specific mid-range screen widths when both sidebars were open. Fixed by applying a `minmax(150px, 1fr)` constraint to the grid's parameter column and `overflow-x-auto` to the container, ensuring names remain readable while the input column maintains its required width.
+- **Auto-Update Readiness (v1.0.2):** Bumped the application version in `package.json` and `Sidebar.jsx` to `1.0.2` to integrate with the existing `electron-updater` configuration, preparing the application for manual and auto-updates via GitHub Releases.
 
 ---
 
@@ -157,5 +159,5 @@ The application is packaged for Windows (x64) using `electron-builder` with an N
    - `electron-builder --win --x64` to package the application.
 3. **Password Protection:** The NSIS installer features a custom authentication page prompt (implemented via `scripts/installer.nsh`) using `nsDialogs`, ensuring the password dialog is shown before the main installation wizard. The installation password is `bukhari_Lab1234`.
 4. **App Data Persistence:** Uninstalling the application **will not** delete the user's `userData` directory (`deleteAppDataOnUninstall: false`), ensuring the SQLite database (`bukhari_lab.db`) and saved reports remain safe across updates.
-5. **Output:** The compiled installer is located at `release/Bukhari Lab Setup 1.0.1.exe`.
+5. **Output:** The compiled installer is located at `release/Bukhari Lab Setup 1.0.2.exe`.
 6. **Publishing Updates:** Using the `npm run build:win -- -p always` flag, alongside a configured `GH_TOKEN` environment variable, `electron-builder` will push the newly generated `.exe` and `.blockmap` directly to GitHub Releases.

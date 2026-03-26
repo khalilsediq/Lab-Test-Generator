@@ -676,7 +676,7 @@ function PanelFieldsGroup({
   if (!panel) return null;
 
   return (
-    <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-2xl shadow-sm border border-gray-100 max-w-4xl transition-all duration-300 hover:shadow-md">
+    <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-2xl shadow-sm border border-gray-100 max-w-4xl transition-all duration-300 hover:shadow-md overflow-x-auto">
       {/* Header */}
       <div className="flex flex-col space-y-1 mb-6">
         <div className="flex items-center justify-between border-b pb-3 mb-3">
@@ -839,7 +839,7 @@ function PanelFieldsGroup({
       ) : (
         <>
           {/* Column headers */}
-          <div className="hidden xl:grid xl:grid-cols-[24px_1fr_200px_140px_130px] gap-2 px-3 pb-2 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          <div className="hidden xl:grid xl:grid-cols-[24px_minmax(150px,1fr)_200px_140px_130px] gap-2 px-3 pb-2 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-widest min-w-[700px]">
             <div />
             <div>Parameter</div>
             <div className="text-center">Result</div>
@@ -920,7 +920,7 @@ function PanelFieldsGroup({
                     ${isDisabled ? "opacity-40 grayscale" : ""}
                   `}
                 >
-                  <div className="grid xl:grid-cols-[24px_1fr_200px_140px_130px] gap-2 items-center">
+                  <div className="grid xl:grid-cols-[24px_minmax(150px,1fr)_200px_140px_130px] gap-2 items-center min-w-[700px] xl:min-w-0">
                     {/* Drag handle */}
                     <div className="cursor-grab text-gray-300 hover:text-gray-500 transition-colors active:cursor-grabbing">
                       <svg
