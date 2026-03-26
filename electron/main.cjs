@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const { autoUpdater, CancellationToken } = require("electron-updater");
 
 // Use dynamic import for the ESM database module
 let db;
@@ -165,3 +166,42 @@ ipcMain.handle("exp:export-text",         async (_, { content, defaultFilename }
 // Migration
 ipcMain.handle("db:check-migration-pending",          ()               => db.checkMigrationPending());
 ipcMain.handle("db:complete-localStorage-migration",  (_, entries)     => db.completeMigration(entries));
+
+// ── Auto Updater IPC Handlers ──────────────────────────────────────────────
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = false;
+
+autoUpdater.on('checking-for-update', () => {
+  if (mainWindow) mainWindow.webContents.send('updater:checking');
+});
+autoUpdater.on('update-available', (info) => {
+  if (mainWindow) mainWindow.webContents.send('updater:update-available', info);
+});
+autoUpdater.on('update-not-available', (info) => {
+  if (mainWindow) mainWindow.webContents.send('updater:update-not-available', info);
+});
+autoUpdater.on('error', (err) => {
+  if (mainWindow) mainWindow.webContents.send('updater:error', err == null ? "unknown" : (err.stack || err).toString());
+});
+autoUpdater.on('download-progress', (progressObj) => {
+  if (mainWindow) mainWindow.webContents.send('updater:download-progress', progressObj);
+});
+autoUpdater.on('update-downloaded', (info) => {
+  if (mainWindow) mainWindow.webContents.send('updater:update-downloaded', info);
+});
+
+let cancellationToken = null;
+
+ipcMain.handle('updater:check', () => autoUpdater.checkForUpdates());
+ipcMain.handle('updater:download', () => {
+  cancellationToken = new CancellationToken();
+  return autoUpdater.downloadUpdate(cancellationToken);
+});
+ipcMain.handle('updater:cancel', () => {
+  if (cancellationToken) {
+    cancellationToken.cancel();
+    cancellationToken = null;
+  }
+});
+ipcMain.handle('updater:install', () => autoUpdater.quitAndInstall());
+ipcMain.handle('app:version', () => app.getVersion());

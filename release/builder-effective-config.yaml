@@ -4,6 +4,10 @@ directories:
 appId: com.kstech.bukharilab
 productName: Bukhari Lab
 copyright: Copyright © 2026 KS Tech
+publish:
+  provider: github
+  owner: khalilsediq
+  repo: Lab-Test-Generator
 files:
   - filter:
       - dist/**/*

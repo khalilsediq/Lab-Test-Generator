@@ -157,4 +157,5 @@ The application is packaged for Windows (x64) using `electron-builder` with an N
    - `electron-builder --win --x64` to package the application.
 3. **Password Protection:** The NSIS installer features a custom authentication page prompt (implemented via `scripts/installer.nsh`) using `nsDialogs`, ensuring the password dialog is shown before the main installation wizard. The installation password is `bukhari_Lab1234`.
 4. **App Data Persistence:** Uninstalling the application **will not** delete the user's `userData` directory (`deleteAppDataOnUninstall: false`), ensuring the SQLite database (`bukhari_lab.db`) and saved reports remain safe across updates.
-5. **Output:** The compiled installer is located at `release/Bukhari Lab Setup 1.0.0.exe`.
+5. **Output:** The compiled installer is located at `release/Bukhari Lab Setup 1.0.1.exe`.
+6. **Publishing Updates:** Using the `npm run build:win -- -p always` flag, alongside a configured `GH_TOKEN` environment variable, `electron-builder` will push the newly generated `.exe` and `.blockmap` directly to GitHub Releases.

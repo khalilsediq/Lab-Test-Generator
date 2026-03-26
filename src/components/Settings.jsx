@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import TestPriceManager from './TestPriceManager';
 import ConfirmModal from './ConfirmModal';
 import SecuritySettings from './SecuritySettings';
+import ApplicationUpdater from './ApplicationUpdater';
 
 export default function Settings({ 
   testTemplates, 
@@ -73,11 +74,29 @@ export default function Settings({
               <span>Security</span>
             </button>
           </li>
+          <li>
+            <button
+              onClick={() => setActiveSection('updates')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+                activeSection === 'updates'
+                  ? 'bg-red-50 text-red-600 font-medium'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Updates</span>
+            </button>
+          </li>
         </ul>
       </div>
 
       {/* Right content */}
       <div className="flex-1 bg-white flex flex-col min-w-0 md:m-4 md:rounded-xl md:shadow-sm border border-gray-100 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+        {activeSection === 'updates' && (
+          <ApplicationUpdater />
+        )}
         {activeSection === 'security' && (
           <SecuritySettings onEnableSecurity={onEnableSecurity} onSecurityChanged={onSecurityChanged} />
         )}

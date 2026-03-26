@@ -64,4 +64,20 @@ export const dbClient = {
   // ── Migration ────────────────────────────────────────────────────────────
   checkMigrationPending: ()                 => ipcRenderer.invoke('db:check-migration-pending'),
   completeMigration:     (customTests)      => ipcRenderer.invoke('db:complete-localStorage-migration', customTests),
+
+  // ── Auto Updater ─────────────────────────────────────────────────────────
+  getAppVersion:   () => ipcRenderer.invoke('app:version'),
+  updaterCheck:    () => ipcRenderer.invoke('updater:check'),
+  updaterDownload: () => ipcRenderer.invoke('updater:download'),
+  updaterCancel:   () => ipcRenderer.invoke('updater:cancel'),
+  updaterInstall:  () => ipcRenderer.invoke('updater:install'),
+  onUpdaterEvent:  (channel, callback) => {
+    const validChannels = ['updater:checking', 'updater:update-available', 'updater:update-not-available', 'updater:error', 'updater:download-progress', 'updater:update-downloaded'];
+    if (validChannels.includes(channel)) {
+      ipcRenderer.on(channel, (event, ...args) => callback(...args));
+    }
+  },
+  offUpdaterEvent: (channel, callback) => {
+    ipcRenderer.removeListener(channel, callback);
+  }
 };

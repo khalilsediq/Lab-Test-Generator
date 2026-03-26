@@ -1,7 +1,7 @@
 {
   "name": "lab-test-generator",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "main": "electron/main.cjs",
   "author": "KS Tech",
@@ -16,6 +16,7 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.8.0",
+    "electron-updater": "^6.8.3",
     "html2canvas": "^1.4.1",
     "html2pdf.js": "^0.14.0",
     "jspdf": "^4.2.0",
@@ -47,6 +48,11 @@
     "appId": "com.kstech.bukharilab",
     "productName": "Bukhari Lab",
     "copyright": "Copyright © 2026 KS Tech",
+    "publish": {
+      "provider": "github",
+      "owner": "khalilsediq",
+      "repo": "Lab-Test-Generator"
+    },
     "directories": {
       "output": "release"
     },
@@ -60,14 +66,18 @@
       {
         "from": "src/assets",
         "to": "assets",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "public/icon.ico",
