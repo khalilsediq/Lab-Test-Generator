@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image  # type: ignore
 
 def remove_white_bg(input_path, output_path, tolerance=50):
     img = Image.open(input_path).convert("RGBA")

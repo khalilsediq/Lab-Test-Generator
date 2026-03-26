@@ -146,3 +146,15 @@ This file provides a concise overview of the Lab Test Generator project for futu
 1. **Initial Setup:** `npm install`
 2. **Start Dev Server:** `npm run dev` (Starts Vite and then Electron).
 3. **Build:** `npm run build`
+
+## 8. Production Build & Packaging
+
+The application is packaged for Windows (x64) using `electron-builder` with an NSIS installer.
+
+1. **Pre-requisites:** `sharp` and `electron-builder` are configured in `devDependencies`.
+2. **Build Process:** Run `npm run build:win`. This executes:
+   - `vite build` to compile the React frontend to `dist/`.
+   - `electron-builder --win --x64` to package the application.
+3. **Password Protection:** The NSIS installer features a custom authentication page prompt (implemented via `scripts/installer.nsh`) using `nsDialogs`, ensuring the password dialog is shown before the main installation wizard. The installation password is `bukhari_Lab1234`.
+4. **App Data Persistence:** Uninstalling the application **will not** delete the user's `userData` directory (`deleteAppDataOnUninstall: false`), ensuring the SQLite database (`bukhari_lab.db`) and saved reports remain safe across updates.
+5. **Output:** The compiled installer is located at `release/Bukhari Lab Setup 1.0.0.exe`.
