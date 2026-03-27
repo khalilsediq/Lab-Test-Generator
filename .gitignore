@@ -25,3 +25,6 @@ dist-ssr
 
 ##For reference folder.
 For-Reference/
+
+# Build output
+release/

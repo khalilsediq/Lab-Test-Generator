@@ -110,6 +110,8 @@ This file provides a concise overview of the Lab Test Generator project for futu
   - **Client**: 7 new wrappers added to `dbClient.js` under the `exp:` namespace.
 - **Responsive Layout Fix (v1.0.2):** Resolved an issue where Test Entry parameter names would vertically stack (1 character per line) on specific mid-range screen widths when both sidebars were open. Fixed by applying a `minmax(150px, 1fr)` constraint to the grid's parameter column and `overflow-x-auto` to the container, ensuring names remain readable while the input column maintains its required width.
 - **Auto-Update Readiness (v1.0.2):** Bumped the application version in `package.json` and `Sidebar.jsx` to `1.0.2` to integrate with the existing `electron-updater` configuration, preparing the application for manual and auto-updates via GitHub Releases.
+- **Expense Dashboard Revenue Fix (v1.0.3):** Fixed a timezone mismatch bug where the Expense Management Dashboard showed Rs. 0 revenue and 0 patients despite registered patients. The `toDateInputValue` helper in `ExpenseManager.jsx` used `toISOString().slice(0,10)` which returns **UTC** dates, but the SQLite database stores `transactions.createdAt` using `datetime('now','localtime')`. In UTC+5, after midnight local time, the dashboard queried for yesterday's date while all transactions had today's date — resulting in zero matches. Fixed by replacing with local-time `getFullYear()`/`getMonth()`/`getDate()` methods.
+- **Auto-Update Readiness (v1.0.3):** Bumped the application version in `package.json` and `Sidebar.jsx` to `1.0.3`.
 
 ---
 
@@ -159,5 +161,5 @@ The application is packaged for Windows (x64) using `electron-builder` with an N
    - `electron-builder --win --x64` to package the application.
 3. **Password Protection:** The NSIS installer features a custom authentication page prompt (implemented via `scripts/installer.nsh`) using `nsDialogs`, ensuring the password dialog is shown before the main installation wizard. The installation password is `bukhari_Lab1234`.
 4. **App Data Persistence:** Uninstalling the application **will not** delete the user's `userData` directory (`deleteAppDataOnUninstall: false`), ensuring the SQLite database (`bukhari_lab.db`) and saved reports remain safe across updates.
-5. **Output:** The compiled installer is located at `release/Bukhari Lab Setup 1.0.2.exe`.
+5. **Output:** The compiled installer is located at `release/Bukhari Lab Setup 1.0.3.exe`.
 6. **Publishing Updates:** Using the `npm run build:win -- -p always` flag, alongside a configured `GH_TOKEN` environment variable, `electron-builder` will push the newly generated `.exe` and `.blockmap` directly to GitHub Releases.

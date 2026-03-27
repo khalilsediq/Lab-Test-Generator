@@ -403,7 +403,7 @@ export default function Sidebar({
         
         <div className={`transition-all duration-300 w-full flex flex-col items-center overflow-hidden ${sidebarOpen ? "opacity-100 h-5 mt-2" : "opacity-0 h-0"}`}>
           <p className="text-center text-[9px] text-gray-700 leading-tight whitespace-nowrap">
-            Bukhari Lab System • v1.0.2
+            Bukhari Lab System • v1.0.3
           </p>
         </div>
       </div>

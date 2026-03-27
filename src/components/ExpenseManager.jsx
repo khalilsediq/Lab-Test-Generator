@@ -4,7 +4,12 @@ import ConfirmModal from './ConfirmModal';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const toDateInputValue = (d) => d.toISOString().slice(0, 10);
+const toDateInputValue = (d) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const today = () => toDateInputValue(new Date());
 
